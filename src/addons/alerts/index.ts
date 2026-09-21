@@ -136,6 +136,11 @@ export const alertsAddon: Addon = {
     const channelPoints = () => ctx.use<ChannelPointsService>(CHANNELPOINTS_SERVICE);
     const groupsOf = (rewardId: string) => channelPoints()?.groupsOf(rewardId).map((g) => g.id) ?? [];
 
+    // Andere Addons (z.B. Chat-Overlay) fragen: Soll diese Belohnung sichtbar sein?
+    ctx.provide('alerts', {
+      rewardAllowed: (rewardId: string) => rewardAllowed(settings.all(), rewardId, groupsOf(rewardId)),
+    });
+
     ctx.events.onAny(async (event) => {
       const picked = pickVariant(settings.all(), event, groupsOf);
       if (picked) await send(picked.category, picked.variant, event);

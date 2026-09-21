@@ -24,6 +24,9 @@ function subscriptionsFor(userId: string) {
     { type: 'channel.update', version: '2', condition: broadcaster },
     { type: 'stream.online', version: '1', condition: broadcaster },
     { type: 'stream.offline', version: '1', condition: broadcaster },
+    { type: 'channel.chat.message_delete', version: '1', condition: { ...broadcaster, user_id: userId } },
+    { type: 'channel.chat.clear', version: '1', condition: { ...broadcaster, user_id: userId } },
+    { type: 'channel.chat.clear_user_messages', version: '1', condition: { ...broadcaster, user_id: userId } },
   ];
 }
 

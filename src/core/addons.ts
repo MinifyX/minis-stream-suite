@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
+import { closeAppWindow, isAlwaysOnTop, isWindowOpen, openAppWindow, setAlwaysOnTop, type OpenOptions } from './appWindows';
 import { renderTemplate, type ChatService, type TemplateContext } from './chat';
 import { ConfigStore } from './config';
 import type { CoreConfig } from './coreConfig';
@@ -69,6 +70,14 @@ export interface AddonContext {
   use<T extends object>(name: string): T | undefined;
   /** Funktion, die beim Deaktivieren aufgerufen wird (z.B. Timer stoppen) */
   onDispose(fn: () => void): void;
+  /** Eigene App-Fenster (Seite relativ zu public/addons/<id>/) */
+  windows: {
+    open(name: string, page: string, options: OpenOptions): void;
+    close(name: string): void;
+    isOpen(name: string): boolean;
+    setAlwaysOnTop(name: string, on: boolean): void;
+    isAlwaysOnTop(name: string): boolean;
+  };
   /** Chat: senden (gemeinsame Warteschlange), eigene Nachrichten erkennen, {Variablen} einsetzen */
   chat: {
     send(message: string, replyTo?: string): Promise<void>;
@@ -174,6 +183,13 @@ export class AddonManager {
       use: <T extends object>(name: string) => this.services.get(name) as T | undefined,
       onDispose: (fn) => {
         cleanup.push(fn);
+      },
+      windows: {
+        open: (name, page, options) => openAppWindow(`${addon.id}:${name}`, `${server.url}/addons/${addon.id}/${page}`, options),
+        close: (name) => closeAppWindow(`${addon.id}:${name}`),
+        isOpen: (name) => isWindowOpen(`${addon.id}:${name}`),
+        setAlwaysOnTop: (name, on) => setAlwaysOnTop(`${addon.id}:${name}`, on),
+        isAlwaysOnTop: (name) => isAlwaysOnTop(`${addon.id}:${name}`),
       },
       chat: {
         send: (message, replyTo) => this.deps.chat.send(message, replyTo),

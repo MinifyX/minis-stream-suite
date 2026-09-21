@@ -10,6 +10,13 @@ export interface TwitchUserRef {
   name: string;
 }
 
+export interface ChatFragment {
+  type: 'text' | 'emote' | 'cheermote' | 'mention';
+  text: string;
+  /** Twitch-Emote-ID (nur bei type "emote") */
+  emoteId?: string;
+}
+
 export interface RewardRef {
   id: string;
   title: string;
@@ -24,7 +31,30 @@ type EventData =
   | { type: 'giftsub'; user: TwitchUserRef | null; tier: string; count: number }
   | { type: 'cheer'; user: TwitchUserRef | null; bits: number; message: string }
   | { type: 'raid'; user: TwitchUserRef; viewers: number }
-  | { type: 'chat'; messageId: string; user: TwitchUserRef; message: string; badges: string[] }
+  | {
+    type: 'chat';
+    messageId: string;
+    user: TwitchUserRef;
+    message: string;
+    /** Abzeichen-Arten, z.B. ["broadcaster", "subscriber"] */
+    badges: string[];
+    /** Abzeichen mit Version (für die Bilder), z.B. { set: "subscriber", id: "12" } */
+    badgeInfo: { set: string; id: string }[];
+    /** Namensfarbe (#RRGGBB) oder "" */
+    color: string;
+    /** Nachricht in Teilen: Text, Emotes, Erwähnungen */
+    fragments: ChatFragment[];
+    /** Kanalpunkte-Belohnung, falls die Nachricht dazu gehört */
+    rewardId: string | null;
+    /** z.B. "text", "channel_points_highlighted", "user_intro" */
+    messageType: string;
+    /** Antwort auf: Name des ursprünglichen Schreibers */
+    replyTo: string | null;
+  }
+  /** Mod hat eine Nachricht gelöscht */
+  | { type: 'chatdelete'; messageId: string }
+  /** Chat geleert (userId = null) oder alle Nachrichten eines Nutzers entfernt (Timeout/Bann) */
+  | { type: 'chatclear'; userId: string | null }
   /** Titel oder Kategorie (Spiel) des Kanals wurde geändert */
   | { type: 'channelupdate'; title: string; categoryId: string; categoryName: string }
   /** Stream ist live gegangen / wurde beendet */
@@ -38,6 +68,7 @@ export type EventOfType<T extends StreamEventType> = Extract<StreamEvent, { type
 
 export const EVENT_TYPES: StreamEventType[] = [
   'redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate', 'streamonline', 'streamoffline',
+  'chatdelete', 'chatclear',
 ];
 
 function userRef(id?: string | null, login?: string | null, name?: string | null): TwitchUserRef | null {
@@ -96,7 +127,23 @@ export function normalizeEvent(subscriptionType: string, e: any): StreamEvent | 
         user: userRef(e.chatter_user_id, e.chatter_user_login, e.chatter_user_name)!,
         message: e.message?.text ?? '',
         badges: (e.badges ?? []).map((b: { set_id: string }) => b.set_id),
+        badgeInfo: (e.badges ?? []).map((b: { set_id: string; id: string }) => ({ set: b.set_id, id: b.id })),
+        color: typeof e.color === 'string' ? e.color : '',
+        fragments: (e.message?.fragments ?? []).map((f: { type: string; text: string; emote?: { id: string } }) => ({
+          type: (['emote', 'cheermote', 'mention'].includes(f.type) ? f.type : 'text') as ChatFragment['type'],
+          text: f.text ?? '',
+          ...(f.type === 'emote' && f.emote?.id ? { emoteId: f.emote.id } : {}),
+        })),
+        rewardId: e.channel_points_custom_reward_id ?? null,
+        messageType: e.message_type ?? 'text',
+        replyTo: e.reply?.parent_user_name ?? null,
       };
+    case 'channel.chat.message_delete':
+      return { type: 'chatdelete', messageId: e.message_id };
+    case 'channel.chat.clear':
+      return { type: 'chatclear', userId: null };
+    case 'channel.chat.clear_user_messages':
+      return { type: 'chatclear', userId: e.target_user_id ?? null };
     case 'channel.update':
       return { type: 'channelupdate', title: e.title ?? '', categoryId: e.category_id ?? '', categoryName: e.category_name ?? '' };
     case 'stream.online':
@@ -139,8 +186,30 @@ export function makeTestEvent(type: StreamEventType, reward?: Partial<RewardRef>
       return { ...base, type, user: TEST_USER, bits: 500, message: 'Cheer500 GG!' };
     case 'raid':
       return { ...base, type, user: TEST_USER, viewers: 42 };
-    case 'chat':
-      return { ...base, type, messageId: 'test', user: TEST_USER, message: '!test', badges: [] };
+    case 'chat': {
+      const message = 'Hallo **Chat**, das ist [regenbogen]ein Test[/] mit *Markdown* HeyGuys';
+      return {
+        ...base,
+        type,
+        messageId: `test-${Date.now()}`,
+        user: TEST_USER,
+        message,
+        badges: ['subscriber'],
+        badgeInfo: [{ set: 'subscriber', id: '0' }],
+        color: '#1E90FF',
+        fragments: [
+          { type: 'text', text: 'Hallo **Chat**, das ist [regenbogen]ein Test[/] mit *Markdown* ' },
+          { type: 'emote', text: 'HeyGuys', emoteId: '30259' },
+        ],
+        rewardId: null,
+        messageType: 'text',
+        replyTo: null,
+      };
+    }
+    case 'chatdelete':
+      return { ...base, type, messageId: 'test' };
+    case 'chatclear':
+      return { ...base, type, userId: null };
     case 'channelupdate':
       return { ...base, type, title: 'Test-Stream', categoryId: '27471', categoryName: 'Minecraft' };
     case 'streamonline':

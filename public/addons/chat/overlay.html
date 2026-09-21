@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Chat-Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/chat/overlay.html
+    Größe z.B. 450 x 700. Hintergrund ist transparent.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    #chat { position: fixed; inset: 0; }
+  </style>
+</head>
+<body>
+  <div id="chat" class="cr-overlay"></div>
+  <script src="render.js"></script>
+  <script>
+    const chat = document.getElementById('chat');
+    let settings = null;
+
+    const api = (path) => fetch(`/api/addons/chat/${path}`).then((r) => r.json());
+
+    function trim() {
+      const max = settings.overlay.maxMessages;
+      while (chat.children.length > max) {
+        (settings.overlay.direction === 'top' ? chat.lastElementChild : chat.firstElementChild).remove();
+      }
+    }
+
+    function fadeOut(node, item) {
+      const seconds = settings.overlay.fadeOutSeconds;
+      if (!seconds) return;
+      const remaining = item.time + seconds * 1000 - Date.now();
+      if (remaining <= 0) {
+        node.remove();
+        return;
+      }
+      setTimeout(() => {
+        node.classList.add('cr-out');
+        setTimeout(() => node.remove(), 700);
+      }, remaining);
+    }
+
+    function add(item, animate) {
+      if (!ChatRender.overlayVisible(item, settings.overlay)) return;
+      const node = ChatRender.overlayItem(item, settings, animate);
+      if (settings.overlay.direction === 'top') chat.prepend(node);
+      else chat.append(node);
+      fadeOut(node, item);
+      trim();
+    }
+
+    async function start() {
+      const [s, assets, history] = await Promise.all([api('settings'), api('assets').catch(() => null), api('history')]);
+      settings = s;
+      ChatRender.setAssets(assets);
+      ChatRender.applyOverlayStyle(chat, settings.overlay);
+      chat.replaceChildren();
+      for (const item of history) add(item, false);
+    }
+
+    function connect() {
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=chat`);
+      ws.onmessage = async (msg) => {
+        const data = JSON.parse(msg.data);
+        if (!settings) return;
+        switch (data.kind) {
+          case 'item': add(data.item, true); break;
+          case 'delete': chat.querySelectorAll(`[data-id="${CSS.escape(data.id)}"]`).forEach((n) => n.remove()); break;
+          case 'clear':
+            if (!data.userId) chat.replaceChildren();
+            else chat.querySelectorAll(`[data-user="${CSS.escape(data.userId)}"]`).forEach((n) => n.remove());
+            break;
+          case 'settings': await start(); break;
+          case 'assets': ChatRender.setAssets(await api('assets').catch(() => null)); break;
+        }
+      };
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+
+    start().catch(() => setTimeout(start, 3000));
+    connect();
+  </script>
+</body>
+</html>

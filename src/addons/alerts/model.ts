@@ -327,6 +327,8 @@ export function categoryOf(event: StreamEvent): CategoryId | null {
     case 'channelupdate':
     case 'streamonline':
     case 'streamoffline':
+    case 'chatdelete':
+    case 'chatclear':
       return null;
     default:
       return event.type;

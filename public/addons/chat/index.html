@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Chat-Overlay & Fenster</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <h1>🗨️ Chat-Overlay & Fenster</h1>
+      <span class="spacer"></span>
+      <span class="save-state" id="save-state"></span>
+      <button class="btn primary" id="open-window">🪟 Chat-Fenster öffnen</button>
+    </header>
+
+    <nav class="tabs" id="tabs">
+      <button data-tab="overlay" class="active">🎨 OBS-Overlay</button>
+      <button data-tab="window">🪟 Chat-Fenster</button>
+      <button data-tab="general">⚙️ Markdown, Farben & Emotes</button>
+    </nav>
+
+    <section class="tab" id="tab-overlay">
+      <div class="split">
+        <div class="form" id="overlay-form"></div>
+        <aside class="preview-col">
+          <div class="card preview-card">
+            <div class="preview-head">
+              <strong>Vorschau</strong>
+              <span class="spacer"></span>
+              <span class="bg-swatches" id="bg-swatches"></span>
+            </div>
+            <div class="preview-stage bg-checker" id="preview-stage">
+              <div class="cr-overlay" id="preview"></div>
+            </div>
+            <div class="url-row">
+              <input type="text" id="overlay-url" readonly>
+              <button class="btn small" id="copy-overlay">Kopieren</button>
+            </div>
+            <p class="note">In OBS: Quelle hinzufügen → <b>Browser</b> → URL einfügen, z.B. 450 × 700.</p>
+            <div class="btn-row">
+              <button class="btn small" id="test-message">🧪 Test-Nachricht</button>
+              <button class="btn small" id="test-event">🧪 Test-Event (Sub)</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-window" hidden>
+      <div class="form narrow" id="window-form"></div>
+    </section>
+
+    <section class="tab" id="tab-general" hidden>
+      <div class="form narrow" id="general-form"></div>
+    </section>
+  </div>
+
+  <script src="/app/ui.js"></script>
+  <script src="render.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

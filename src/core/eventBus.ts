@@ -31,7 +31,8 @@ export class EventBus {
   }
 
   emit(event: StreamEvent): void {
-    if (event.type !== 'chat') this.log.info(describe(event));
+    // Chat-Nachrichten und Löschungen nicht ins Log schreiben (zu viele)
+    if (!['chat', 'chatdelete', 'chatclear'].includes(event.type)) this.log.info(describe(event));
     for (const key of [event.type, '*'] as const) {
       for (const handler of this.handlers.get(key) ?? []) {
         try {
