@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Alerts Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/alerts/overlay.html
+    Größe 1920 x 1080. Hintergrund ist transparent.
+  -->
+  <style>
+    html, body { margin: 0; background: transparent; overflow: hidden; font-family: "Segoe UI", system-ui, sans-serif; }
+    #stage { position: fixed; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 8vh; }
+    .alert {
+      min-width: 420px; max-width: 80vw; padding: 22px 36px; border-radius: 20px; text-align: center; color: #fff;
+      background: linear-gradient(135deg, rgba(145, 71, 255, 0.96), rgba(98, 40, 200, 0.96));
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      animation: pop-in 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+    }
+    .alert.out { animation: pop-out 0.4s ease-in both; }
+    .icon { font-size: 44px; line-height: 1; margin-bottom: 6px; }
+    .text { font-size: 34px; font-weight: 800; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
+    .sub { margin-top: 8px; font-size: 22px; opacity: 0.92; }
+    @keyframes pop-in { from { opacity: 0; transform: translateY(-40px) scale(0.9); } to { opacity: 1; transform: none; } }
+    @keyframes pop-out { to { opacity: 0; transform: translateY(-20px) scale(0.95); } }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <script>
+    const ICONS = { redemption: '✨', follow: '💜', sub: '⭐', resub: '⭐', giftsub: '🎁', cheer: '💎', raid: '🚀' };
+    const stage = document.getElementById('stage');
+    const queue = [];
+    let current = null;
+
+    function chime() {
+      try {
+        const ctx = (chime.ctx ||= new AudioContext());
+        const start = ctx.currentTime;
+        [660, 880, 1320].forEach((freq, i) => {
+          const t = start + i * 0.12;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.55);
+        });
+      } catch { /* kein Audio verfügbar */ }
+    }
+
+    function next() {
+      if (current || !queue.length) return;
+      const alert = queue.shift();
+      const el = document.createElement('div');
+      el.className = 'alert';
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      icon.textContent = ICONS[alert.type] || '🔔';
+      const text = document.createElement('div');
+      text.className = 'text';
+      text.textContent = alert.text;
+      el.append(icon, text);
+      if (alert.subtext) {
+        const sub = document.createElement('div');
+        sub.className = 'sub';
+        sub.textContent = alert.subtext;
+        el.append(sub);
+      }
+      stage.append(el);
+      if (alert.sound) chime();
+      current = { el, timer: setTimeout(hide, alert.durationMs) };
+    }
+
+    function hide() {
+      if (!current || current.leaving) return;
+      current.leaving = true;
+      const { el, timer } = current;
+      clearTimeout(timer);
+      el.classList.add('out');
+      setTimeout(() => {
+        el.remove();
+        current = null;
+        next();
+      }, 400);
+    }
+
+    function connect() {
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=alerts`);
+      ws.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        if (data.kind === 'alert') {
+          queue.push(data.alert);
+          next();
+        } else if (data.kind === 'skip') hide();
+      };
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+    connect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+/* Gemeinsames Design für die App und alle Addon-Seiten */
+:root {
+  --bg: #0e0e12;
+  --bg-2: #15151c;
+  --card: #1b1b24;
+  --card-2: #23232e;
+  --border: #2d2d3a;
+  --text: #ececf1;
+  --muted: #9a9aab;
+  --accent: #9147ff;
+  --accent-2: #772ce8;
+  --accent-soft: rgba(145, 71, 255, 0.16);
+  --ok: #2ecc71;
+  --warn: #f5b041;
+  --err: #ff5c5c;
+  --radius: 12px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
+a { color: #bf94ff; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 0 0 12px; }
+p { margin: 0 0 12px; }
+code { font-family: Consolas, monospace; background: var(--card-2); padding: 1px 5px; border-radius: 4px; }
+.muted { color: var(--muted); }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); background: var(--card-2); color: var(--text);
+  padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-weight: 600; text-decoration: none; white-space: nowrap;
+}
+.btn:hover { border-color: #45455a; background: #2b2b38; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-2); }
+.btn.small { padding: 4px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+input[type="text"], input[type="number"], input[type="search"] {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; border-radius: 8px; font: inherit;
+}
+input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.field label { font-weight: 600; }
+
+/* Schalter */
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; flex: none; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch span { position: absolute; inset: 0; background: #3a3a4a; border-radius: 22px; transition: 0.2s; cursor: pointer; }
+.switch span::before {
+  content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%; transition: 0.2s;
+}
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::before { transform: translateX(18px); }
+.switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.badge { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: var(--card-2); color: var(--muted); }
+.badge.ok { background: rgba(46, 204, 113, 0.15); color: var(--ok); }
+.badge.warn { background: rgba(245, 176, 65, 0.15); color: var(--warn); }
+.badge.err { background: rgba(255, 92, 92, 0.15); color: var(--err); }
+.badge.accent { background: var(--accent-soft); color: #cdaaff; }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--muted); flex: none; }
+.dot.ok { background: var(--ok); }
+.dot.warn { background: var(--warn); }
+.dot.err { background: var(--err); }
+
+.toast-host { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
+.toast {
+  background: var(--card-2); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  padding: 10px 14px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); animation: toast-in 0.2s;
+  max-width: 360px;
+}
+.toast.ok { border-left-color: var(--ok); }
+.toast.err { border-left-color: var(--err); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }

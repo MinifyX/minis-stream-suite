@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Mini's Stream Suite</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">M</span>
+      <div><strong>Mini's</strong><small>Stream Suite</small></div>
+    </div>
+    <nav>
+      <a href="#/overview"><span>🏠</span> Übersicht</a>
+      <a href="#/store"><span>🧩</span> Addon-Store</a>
+      <div class="nav-label">Addons</div>
+      <div id="addon-nav"></div>
+    </nav>
+    <div class="sidebar-footer" id="sidebar-status"></div>
+  </aside>
+
+  <main>
+    <section id="view-overview" class="view">
+      <header class="page-head">
+        <h1>Übersicht</h1>
+        <p class="muted">Verbindung zu Twitch, Test-Events und was gerade passiert.</p>
+      </header>
+      <div class="grid">
+        <div class="card" id="twitch-card"></div>
+        <div class="card">
+          <h2>Test-Events</h2>
+          <p class="muted">Schickt ein Fake-Event durch das ganze System, als käme es von Twitch. Filter gelten dabei wie im echten Stream.</p>
+          <div class="btn-row" id="test-buttons"></div>
+        </div>
+        <div class="card span-all">
+          <h2>Log</h2>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-store" class="view">
+      <header class="page-head">
+        <h1>Addon-Store</h1>
+        <p class="muted">Schalte Addons an oder aus. Aktive Addons erscheinen links in der Leiste.</p>
+      </header>
+      <div class="store-grid" id="store-grid"></div>
+    </section>
+
+    <section id="view-addon" class="view view-frame">
+      <iframe id="addon-frame" title="Addon"></iframe>
+    </section>
+  </main>
+
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
