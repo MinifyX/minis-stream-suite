@@ -45,6 +45,19 @@ interface Group extends GroupInfo {
   rewardIds: string[];
   /** Belohnungen dieser Gruppe gehören einer anderen App (z.B. HudFX) → nie übernehmen */
   foreign?: boolean;
+  /** Nur aktiv, wenn eines dieser Spiele (Twitch-Kategorien) gespielt wird */
+  gameRule?: GameRule | null;
+}
+
+interface Game {
+  id: string;
+  name: string;
+}
+
+interface GameRule {
+  games: Game[];
+  /** Was bei anderen Spielen passiert: ausblenden (Zuschauer sehen sie nicht) oder pausieren (sichtbar, aber gesperrt) */
+  mode: 'hide' | 'pause';
 }
 
 /** Belohnung, die gerade "übernommen" wird: Einstellungen gemerkt, Original wird von Hand gelöscht */
@@ -194,6 +207,144 @@ export const channelPointsAddon: Addon = {
         });
 
     const saveGroups = (groups: Group[]) => settings.set('groups', groups);
+
+    // ------------------------------------------------------------ Spiel-Regeln
+
+    /** Aktuelle Kategorie des Kanals (null = noch unbekannt) */
+    let currentGame: Game | null = null;
+    let lastApply: { at: number; game: string; changed: number; skipped: number } | null = null;
+
+    const loadCurrentGame = async (): Promise<Game | null> => {
+      const user = ctx.getUser();
+      if (!user) return null;
+      const res = await ctx.twitch.request<{ data: { game_id: string; game_name: string }[] }>('GET', '/channels', {
+        query: { broadcaster_id: user.id },
+      });
+      const info = res.data[0];
+      currentGame = info ? { id: info.game_id, name: info.game_name } : null;
+      return currentGame;
+    };
+
+    /**
+     * Schaltet alle Belohnungen mit Spiel-Regel passend zum aktuellen Spiel.
+     * Liegt eine Belohnung in mehreren Gruppen mit Regel, ist sie aktiv, sobald eine davon passt.
+     */
+    const applyGameRules = async (reason: string) => {
+      const ruled = settings.get('groups').filter((g) => g.gameRule?.games.length);
+      if (!ruled.length || !currentGame) return { changed: 0, skipped: [] as string[], failed: [] as string[] };
+
+      const wanted = new Map<string, { active: boolean; mode: GameRule['mode'] }>();
+      for (const group of ruled) {
+        const rule = group.gameRule!;
+        const matches = rule.games.some((g) => g.id === currentGame!.id);
+        for (const id of group.rewardIds) {
+          const prev = wanted.get(id);
+          wanted.set(id, {
+            active: (prev?.active ?? false) || matches,
+            // "Ausblenden" gewinnt, wenn sich Gruppen widersprechen
+            mode: prev?.mode === 'hide' || rule.mode === 'hide' ? 'hide' : 'pause',
+          });
+        }
+      }
+
+      const [all, manageable] = await Promise.all([fetchRewards(), fetchRewards(true)]);
+      const manageableIds = new Set(manageable.map((r) => r.id));
+      let changed = 0;
+      const skipped: string[] = [];
+      const failed: string[] = [];
+      for (const reward of all) {
+        const want = wanted.get(reward.id);
+        if (!want) continue;
+        if (!manageableIds.has(reward.id)) {
+          skipped.push(reward.title);
+          continue;
+        }
+        // Beim Wechsel ins passende Spiel wird beides zurückgesetzt (sichtbar + nicht pausiert)
+        const patch: { is_enabled?: boolean; is_paused?: boolean } = {};
+        if (want.active) {
+          if (!reward.is_enabled) patch.is_enabled = true;
+          if (reward.is_paused) patch.is_paused = false;
+        } else if (want.mode === 'hide') {
+          if (reward.is_enabled) patch.is_enabled = false;
+        } else if (!reward.is_paused) {
+          patch.is_paused = true;
+        }
+        if (!Object.keys(patch).length) continue;
+        try {
+          await patchReward(reward.id, patch);
+          changed++;
+        } catch (err) {
+          failed.push(`${reward.title}: ${(err as Error).message}`);
+        }
+      }
+      lastApply = { at: Date.now(), game: currentGame.name, changed, skipped: skipped.length };
+      ctx.log.info(`Spiel-Regeln (${reason}, Spiel „${currentGame.name}“): ${changed} geändert${skipped.length ? `, ${skipped.length} übersprungen (🔒)` : ''}`);
+      return { changed, skipped, failed };
+    };
+
+    // Kategorie gewechselt → Regeln anwenden
+    ctx.events.on('channelupdate', async (event) => {
+      if (event.test) return;
+      const changedGame = currentGame?.id !== event.categoryId;
+      currentGame = { id: event.categoryId, name: event.categoryName };
+      if (changedGame) await applyGameRules('Spielwechsel').catch((err) => ctx.log.warn('Spiel-Regeln fehlgeschlagen:', err));
+    });
+
+    // Beim Start: aktuelles Spiel holen und Regeln einmal anwenden (Login kann etwas dauern)
+    let startupTries = 0;
+    const startup = async () => {
+      if (!ctx.getUser()) {
+        if (++startupTries < 30) startupTimer = setTimeout(startup, 2000);
+        return;
+      }
+      try {
+        await loadCurrentGame();
+        await applyGameRules('Start');
+      } catch (err) {
+        ctx.log.warn('Spiel-Regeln beim Start fehlgeschlagen:', err);
+      }
+    };
+    let startupTimer: NodeJS.Timeout | null = setTimeout(startup, 1000);
+    ctx.onDispose(() => {
+      if (startupTimer) clearTimeout(startupTimer);
+    });
+
+    ctx.api.get('/game', async () => {
+      if (!currentGame) await loadCurrentGame().catch(() => null);
+      return { current: currentGame, lastApply };
+    });
+
+    /** Spiele/Kategorien bei Twitch suchen */
+    ctx.api.get('/games/search', async ({ query }) => {
+      const q = String(query.get('q') ?? '').trim();
+      if (!q) return [];
+      const res = await ctx.twitch.request<{ data: { id: string; name: string; box_art_url: string }[] }>('GET', '/search/categories', {
+        query: { query: q, first: '12' },
+      });
+      return res.data.map((g) => ({ id: g.id, name: g.name, image: g.box_art_url.replace('{width}', '52').replace('{height}', '72') }));
+    });
+
+    /** { id, rule: { games, mode } | null } – Spiel-Regel einer Gruppe setzen und gleich anwenden */
+    ctx.api.post('/groups/game-rule', async ({ body }) => {
+      const groups = settings.get('groups');
+      if (!groups.some((g) => g.id === body?.id)) throw new HttpError(404, 'Gruppe nicht gefunden');
+      let rule: GameRule | null = null;
+      if (body?.rule) {
+        const games: Game[] = (Array.isArray(body.rule.games) ? body.rule.games : [])
+          .filter((g: Partial<Game>) => typeof g?.id === 'string' && g.id && typeof g.name === 'string')
+          .map((g: Game) => ({ id: g.id, name: g.name.slice(0, 100) }));
+        rule = { games, mode: body.rule.mode === 'pause' ? 'pause' : 'hide' };
+      }
+      saveGroups(groups.map((g) => (g.id === body.id ? { ...g, gameRule: rule } : g)));
+      if (!currentGame) await loadCurrentGame().catch(() => null);
+      return applyGameRules('Regel geändert');
+    });
+
+    /** Regeln jetzt mit dem aktuellen Spiel anwenden */
+    ctx.api.post('/game-rules/apply', async () => {
+      await loadCurrentGame();
+      return { game: currentGame, ...(await applyGameRules('von Hand')) };
+    });
 
     /** Warum eine Belohnung als "andere App" gilt: 'self' (selbst markiert), Gruppenname oder null */
     const foreignReason = (rewardId: string): string | null => {

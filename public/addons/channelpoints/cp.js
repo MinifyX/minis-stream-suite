@@ -40,6 +40,11 @@ async function load() {
   } catch {
     state.mutedGroups = null;
   }
+  try {
+    state.game = await api(`${BASE}/game`);
+  } catch {
+    state.game = null;
+  }
   if (state.selected !== 'all' && state.selected !== 'none' && !groupById(state.selected)) state.selected = 'all';
   render();
 }
@@ -79,7 +84,12 @@ function renderHead() {
   }
   const { rewards, max } = state.data;
   const manageable = rewards.filter((r) => r.manageable).length;
+  const hasRules = state.data.groups.some((g) => g.gameRule?.games.length);
   const stats = h('div', { class: 'stat-row' },
+    state.game?.current
+      ? h('span', { class: 'badge accent', title: 'Aktuelle Kategorie deines Kanals' }, `🎮 ${state.game.current.name || 'Keine Kategorie'}`)
+      : null,
+    hasRules ? h('button', { class: 'btn small', title: 'Spiel-Regeln mit dem aktuellen Spiel neu anwenden', onclick: applyRulesNow }, '🎮 Regeln anwenden') : null,
     h('span', { class: `badge${rewards.length >= max ? ' err' : ''}` }, `${rewards.length} / ${max} Belohnungen`),
     h('span', { class: 'badge ok' }, `✎ ${manageable} von der Suite verwaltet`),
     rewards.length - manageable ? h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App (z.B. HudFX) angelegt' }, `🔒 ${rewards.length - manageable} nur lesen`) : null);
@@ -112,6 +122,7 @@ function renderHead() {
       h('button', { class: 'btn small', onclick: () => deleteGroup(group) }, '🗑')),
     h('div', { class: 'group-panel' },
       alertsRow,
+      gameRuleRow(group, members),
       h('div', { class: 'row' },
         h('span', { class: 'label' }, '🛡 Andere App'),
         toggle(!!group.foreign, (on) => setGroupForeign(group, on), 'Belohnungen gehören einer anderen App'),
@@ -129,6 +140,106 @@ function renderHead() {
         ? `Alle ${members.length} Belohnungen dieser Gruppe kann die Suite steuern.`
         : `${controllable} von ${members.length} Belohnungen kann die Suite steuern. Die anderen (🔒) wurden im Twitch-Dashboard oder von einer anderen App wie HudFX angelegt und werden übersprungen.`)),
     stats);
+}
+
+// ============================================================ Spiel-Regeln
+
+function gameRuleRow(group, members) {
+  const rule = group.gameRule;
+  const games = rule?.games ?? [];
+  const current = state.game?.current;
+  const locked = members.filter((r) => !r.manageable).length;
+
+  const status = !games.length
+    ? h('span', { class: 'muted' }, 'Aus: immer aktiv, egal welches Spiel.')
+    : current
+      ? games.some((g) => g.id === current.id)
+        ? h('span', { class: 'badge ok' }, `Gerade aktiv (${current.name})`)
+        : h('span', { class: 'badge warn' }, `Gerade ${rule.mode === 'hide' ? 'ausgeblendet' : 'pausiert'} (du spielst ${current.name || 'nichts'})`)
+      : null;
+
+  return h('div', { class: 'game-rule' },
+    h('div', { class: 'row' },
+      h('span', { class: 'label' }, '🎮 Nur bei Spiel'),
+      ...games.map((g) => h('span', { class: 'game-chip' }, g.name,
+        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => saveGameRule(group, games.filter((x) => x.id !== g.id), rule.mode) }, '✕'))),
+      h('button', { class: 'btn small', onclick: () => openGamePicker(group) }, '＋ Spiel'),
+      games.length
+        ? h('select', {
+          class: 'mode-select',
+          onchange: (e) => saveGameRule(group, games, e.target.value),
+        },
+        h('option', { value: 'hide', selected: rule.mode === 'hide' }, 'Sonst ausblenden'),
+        h('option', { value: 'pause', selected: rule.mode === 'pause' }, 'Sonst pausieren'))
+        : null,
+      status),
+    games.length && locked
+      ? h('div', { class: 'warn-note' }, `⚠ ${locked} Belohnung(en) dieser Gruppe sind 🔒 und werden nicht automatisch geschaltet. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet.`)
+      : null);
+}
+
+async function saveGameRule(group, games, mode = 'hide') {
+  const result = await call('groups/game-rule', { id: group.id, rule: games.length ? { games, mode } : null });
+  if (!result) return;
+  reportApply(result);
+  await load();
+}
+
+function reportApply(result) {
+  let message = result.changed ? `${result.changed} Belohnung(en) umgeschaltet` : 'Alles schon passend geschaltet';
+  if (result.skipped?.length) message += ` · ${result.skipped.length} 🔒 übersprungen`;
+  toast(message, result.failed?.length ? 'err' : 'ok');
+  if (result.failed?.length) toast(result.failed.join('\n'), 'err');
+}
+
+async function applyRulesNow() {
+  const result = await call('game-rules/apply', {});
+  if (!result) return;
+  reportApply(result);
+  await load();
+}
+
+function openGamePicker(group) {
+  const input = h('input', { type: 'search', placeholder: 'Spiel oder Kategorie suchen, z.B. Minecraft…' });
+  const results = h('div', { class: 'game-results' });
+  const current = state.game?.current;
+  const games = group.gameRule?.games ?? [];
+  const mode = group.gameRule?.mode ?? 'hide';
+
+  const pick = async (game) => {
+    close();
+    if (games.some((g) => g.id === game.id)) return;
+    await saveGameRule(group, [...games, { id: game.id, name: game.name }], mode);
+  };
+  const row = (game) => h('button', { class: 'game-result', onclick: () => pick(game) },
+    game.image ? h('img', { src: game.image, alt: '' }) : h('span', { class: 'game-ph' }, '🎮'),
+    h('span', {}, game.name));
+
+  let timer = null;
+  input.oninput = () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const q = input.value.trim();
+      if (!q) {
+        results.replaceChildren();
+        return;
+      }
+      try {
+        const found = await api(`${BASE}/games/search?q=${encodeURIComponent(q)}`);
+        results.replaceChildren(...(found.length ? found.map(row) : [h('div', { class: 'note' }, 'Nichts gefunden.')]));
+      } catch (err) {
+        results.replaceChildren(h('div', { class: 'warn-note' }, err.message));
+      }
+    }, 300);
+  };
+
+  const close = modal(`Spiel für „${group.name}“`, [
+    current?.id ? h('div', {}, h('div', { class: 'note' }, 'Gerade eingestellt:'), row(current)) : null,
+    input,
+    results,
+    h('div', { class: 'note' }, 'Die Belohnungen dieser Gruppe sind nur bei den gewählten Spielen aktiv. Bei jedem Kategoriewechsel schaltet die Suite sie automatisch um.'),
+  ]);
+  setTimeout(() => input.focus(), 0);
 }
 
 async function setGroupMuted(groupId, muted) {
@@ -304,7 +415,9 @@ function rewardRow(r) {
           ? h('span', { class: 'badge warn', title: 'Wird nicht übernommen. Bearbeiten nur im Twitch-Dashboard oder in der anderen App.' },
             r.foreign === 'self' ? '🛡 andere App' : `🛡 andere App (Gruppe ${r.foreign})`)
           : null,
-        ...groupsOf(r.id).map((g) => h('span', { class: 'group-chip', style: { background: `${g.color}55` } }, `${g.icon} ${g.name}`)))),
+        ...groupsOf(r.id).map((g) => h('span', { class: 'group-chip', style: { background: `${g.color}55` } }, `${g.icon} ${g.name}`)),
+        ...groupsOf(r.id).filter((g) => g.gameRule?.games.length).map((g) =>
+          h('span', { class: 'badge accent', title: `Über Gruppe ${g.name}` }, `🎮 nur bei ${g.gameRule.games.map((x) => x.name).join(', ')}`)))),
     h('div', { class: 'r-actions' },
       h('button', { class: 'icon-btn', title: 'Gruppen', onclick: () => openRewardGroups(r) }, '🏷'),
       ...actions));

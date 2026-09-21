@@ -24,14 +24,16 @@ type EventData =
   | { type: 'giftsub'; user: TwitchUserRef | null; tier: string; count: number }
   | { type: 'cheer'; user: TwitchUserRef | null; bits: number; message: string }
   | { type: 'raid'; user: TwitchUserRef; viewers: number }
-  | { type: 'chat'; messageId: string; user: TwitchUserRef; message: string; badges: string[] };
+  | { type: 'chat'; messageId: string; user: TwitchUserRef; message: string; badges: string[] }
+  /** Titel oder Kategorie (Spiel) des Kanals wurde geändert */
+  | { type: 'channelupdate'; title: string; categoryId: string; categoryName: string };
 
 /** `test: true` bei Events, die über einen Test-Button ausgelöst wurden. */
 export type StreamEvent = EventData & { test?: boolean };
 export type StreamEventType = StreamEvent['type'];
 export type EventOfType<T extends StreamEventType> = Extract<StreamEvent, { type: T }>;
 
-export const EVENT_TYPES: StreamEventType[] = ['redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat'];
+export const EVENT_TYPES: StreamEventType[] = ['redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate'];
 
 function userRef(id?: string | null, login?: string | null, name?: string | null): TwitchUserRef | null {
   if (!id) return null;
@@ -90,6 +92,8 @@ export function normalizeEvent(subscriptionType: string, e: any): StreamEvent | 
         message: e.message?.text ?? '',
         badges: (e.badges ?? []).map((b: { set_id: string }) => b.set_id),
       };
+    case 'channel.update':
+      return { type: 'channelupdate', title: e.title ?? '', categoryId: e.category_id ?? '', categoryName: e.category_name ?? '' };
     default:
       return null;
   }
@@ -128,5 +132,7 @@ export function makeTestEvent(type: StreamEventType, reward?: Partial<RewardRef>
       return { ...base, type, user: TEST_USER, viewers: 42 };
     case 'chat':
       return { ...base, type, messageId: 'test', user: TEST_USER, message: '!test', badges: [] };
+    case 'channelupdate':
+      return { ...base, type, title: 'Test-Stream', categoryId: '27471', categoryName: 'Minecraft' };
   }
 }

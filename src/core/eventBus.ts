@@ -4,6 +4,7 @@ import type { EventOfType, StreamEvent, StreamEventType } from './twitch/events'
 type AnyHandler = (event: StreamEvent) => unknown;
 
 function describe(event: StreamEvent): string {
+  if (event.type === 'channelupdate') return `${event.test ? '[Test] ' : ''}Kanal geändert: „${event.categoryName}“ – ${event.title}`;
   const who = 'user' in event && event.user ? event.user.name : 'Anonym';
   const extra = event.type === 'redemption' ? ` („${event.reward.title}“)` : '';
   return `${event.test ? '[Test] ' : ''}${event.type} von ${who}${extra}`;

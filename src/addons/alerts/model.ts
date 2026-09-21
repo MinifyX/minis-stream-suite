@@ -324,6 +324,7 @@ export function categoryOf(event: StreamEvent): CategoryId | null {
     case 'resub':
       return 'sub';
     case 'chat':
+    case 'channelupdate':
       return null;
     default:
       return event.type;

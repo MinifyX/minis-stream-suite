@@ -66,6 +66,8 @@ export interface AddonContext {
   provide(name: string, service: object): void;
   /** Schnittstelle eines anderen Addons holen – undefined, wenn es nicht aktiv ist */
   use<T extends object>(name: string): T | undefined;
+  /** Funktion, die beim Deaktivieren aufgerufen wird (z.B. Timer stoppen) */
+  onDispose(fn: () => void): void;
 }
 
 interface Deps {
@@ -162,6 +164,9 @@ export class AddonManager {
         cleanup.push(() => this.services.delete(name));
       },
       use: <T extends object>(name: string) => this.services.get(name) as T | undefined,
+      onDispose: (fn) => {
+        cleanup.push(fn);
+      },
     };
 
     this.active.set(addon.id, cleanup);
