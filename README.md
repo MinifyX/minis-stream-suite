@@ -12,6 +12,11 @@ Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalp
 - Belohnungen **anlegen, bearbeiten und löschen**: Kosten, Beschreibung, Farbe, Limits, Abklingzeit.
 - Im Dashboard angelegte Belohnungen **übernehmen**, damit die Suite sie steuern kann.
 
+- **Keybinds:** Beim Einlösen Tasten drücken (auch bei HudFX-Belohnungen). Wahlweise auf diesem PC oder per **🛰 Satellite** auf einem zweiten PC.
+- **Spiel-Regeln:** Gruppen nur bei bestimmten Spielen aktiv, automatisch beim Kategoriewechsel.
+
+**🛰 Satellite (Zwei-PC-Setup):** Die Suite läuft auf dem Stream-PC, die Tasten werden auf dem Gaming-PC gedrückt. Unter Kanalpunkte → 🛰 Satellite den Zugang einschalten und die Satellite-Datei (`.cmd`) herunterladen. Auf dem Gaming-PC doppelklicken, installieren muss man nichts. Die Verbindung läuft über das Heimnetz (Port 7475) und ist mit einem geheimen Schlüssel geschützt. Oberfläche und API der Suite bleiben nur auf dem Stream-PC erreichbar.
+
 > **Twitch-Einschränkung:** Eine App darf nur Belohnungen ändern, die sie selbst angelegt hat. Belohnungen aus dem Dashboard oder von anderen Apps (z.B. HudFX) sind 🔒 „nur lesen“. Sortieren und für Alerts stummschalten klappt trotzdem. Belohnungen von anderen Apps niemals übernehmen, sonst erkennt die andere App sie nicht mehr.
 
 **Alerts-Addon mit Alert-Editor:**

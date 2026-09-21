@@ -83,11 +83,31 @@ export function validateSteps(input: unknown): KeyStep[] {
   return steps;
 }
 
-// ------------------------------------------------------------------ PowerShell-Helfer
+/**
+ * Übersetzt eine Tastenfolge in einfache Befehle für den Helfer (und den Satellite):
+ *   "d <vk> <scan> <ext>" Taste runter · "u …" Taste hoch · "s <ms>" warten
+ */
+export function compileSteps(steps: KeyStep[]): string[] {
+  const lines: string[] = [];
+  const cmd = (key: string, up: boolean) => {
+    const def = KEYS[key];
+    if (!def) return;
+    lines.push('vk' in def ? `${up ? 'u' : 'd'} ${def.vk} 0 0` : `${up ? 'u' : 'd'} 0 ${def.scan} ${def.ext ? 1 : 0}`);
+  };
+  for (const step of steps) {
+    if (step.delayMs) lines.push(`s ${step.delayMs}`);
+    step.keys.forEach((k) => cmd(k, false));
+    lines.push(`s ${step.holdMs}`);
+    [...step.keys].reverse().forEach((k) => cmd(k, true));
+  }
+  return lines;
+}
 
-const HELPER = `
-$src = @"
-using System;
+/** Gesamtdauer einer Folge in ms */
+export const stepsDuration = (steps: KeyStep[]) => steps.reduce((sum, s) => sum + s.holdMs + s.delayMs, 0);
+
+/** C#-Code für SendInput – wird vom lokalen Helfer UND vom Satellite benutzt */
+export const SEND_INPUT_CSHARP = `using System;
 using System.Runtime.InteropServices;
 public static class SuiteKb {
   [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT { public int dx; public int dy; public uint mouseData; public uint dwFlags; public uint time; public IntPtr dwExtraInfo; }
@@ -107,7 +127,13 @@ public static class SuiteKb {
     i.u.ki.dwFlags = flags;
     return SendInput(1, new INPUT[] { i }, Marshal.SizeOf(typeof(INPUT)));
   }
-}
+}`;
+
+// ------------------------------------------------------------------ PowerShell-Helfer
+
+const HELPER = `
+$src = @"
+${SEND_INPUT_CSHARP}
 "@
 Add-Type -TypeDefinition $src
 [Console]::Out.WriteLine('ready')
@@ -207,19 +233,7 @@ export class Keyboard {
     const proc = this.proc;
     if (!proc) throw new Error('Tastatur-Helfer läuft nicht');
     const id = String(++this.counter);
-    const lines: string[] = [];
-    const cmd = (key: string, up: boolean) => {
-      const def = KEYS[key];
-      if (!def) return;
-      lines.push('vk' in def ? `${up ? 'u' : 'd'} ${def.vk} 0 0` : `${up ? 'u' : 'd'} 0 ${def.scan} ${def.ext ? 1 : 0}`);
-    };
-    for (const step of steps) {
-      if (step.delayMs) lines.push(`s ${step.delayMs}`);
-      step.keys.forEach((k) => cmd(k, false));
-      lines.push(`s ${step.holdMs}`);
-      [...step.keys].reverse().forEach((k) => cmd(k, true));
-    }
-    lines.push(`x ${id}`);
+    const lines = [...compileSteps(steps), `x ${id}`];
     const finished = new Promise<void>((resolve) => this.waiting.set(id, resolve));
     proc.stdin.write(`${lines.join('\n')}\n`);
     await finished;

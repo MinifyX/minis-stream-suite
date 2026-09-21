@@ -1,5 +1,6 @@
 import { app, shell } from 'electron';
 import { isTwitchUrl, openTwitchWindow } from './twitchWindow';
+import { satellite } from './satellite';
 import type { AddonManager, AddonManifest } from './addons';
 import type { EventBus } from './eventBus';
 import { getLogs } from './log';
@@ -62,6 +63,29 @@ export function registerCoreRoutes({ server, auth, eventsub, addons, upcomingAdd
     const url = String(body?.url ?? '');
     if (!isTwitchUrl(url)) throw new HttpError(400, 'Nur Twitch-Seiten können hier geöffnet werden.');
     openTwitchWindow(url);
+  });
+
+  // ------------------------------------------------------------ Satellite (zweiter PC)
+
+  get('/satellite', () => satellite.status());
+
+  post('/satellite/enabled', async ({ body }) => {
+    await satellite.setEnabled(body?.enabled === true);
+    return satellite.status();
+  });
+
+  post('/satellite/regenerate', () => {
+    satellite.regenerateToken();
+    return satellite.status();
+  });
+
+  /** Satellite-Datei mit eingebauter Adresse + Schlüssel */
+  post('/satellite/script', ({ body }) => {
+    try {
+      return { filename: 'Stream-Suite-Satellite.cmd', content: satellite.script(String(body?.address ?? '')) };
+    } catch (err) {
+      throw new HttpError(400, (err as Error).message);
+    }
   });
 
   get('/logs', () => getLogs());

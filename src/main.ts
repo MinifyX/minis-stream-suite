@@ -7,6 +7,7 @@ import { defaultCoreConfig, type CoreConfig } from './core/coreConfig';
 import { registerCoreRoutes } from './core/coreRoutes';
 import { EventBus } from './core/eventBus';
 import { keyboard } from './core/keyboard';
+import { satellite } from './core/satellite';
 import { createLogger } from './core/log';
 import { LocalServer } from './core/server';
 import { TwitchApi } from './core/twitch/api';
@@ -36,6 +37,7 @@ async function bootstrap(): Promise<void> {
   app.on('before-quit', () => {
     eventsub.stop();
     keyboard.stop();
+    satellite.stop();
     void addons.stopAll();
   });
 
@@ -46,6 +48,7 @@ async function bootstrap(): Promise<void> {
     throw new Error(inUse ? `Port ${PORT} ist schon belegt – läuft die Suite vielleicht schon?` : String(err));
   }
 
+  await satellite.init(config);
   await addons.startEnabled();
   await auth.init();
   createWindow(server.url);

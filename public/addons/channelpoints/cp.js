@@ -50,6 +50,11 @@ async function load() {
   } catch {
     state.keybinds = { enabled: false, binds: {} };
   }
+  try {
+    state.satellite = await api('core/satellite');
+  } catch {
+    state.satellite = null;
+  }
   if (state.selected !== 'all' && state.selected !== 'none' && !groupById(state.selected)) state.selected = 'all';
   render();
 }
@@ -96,6 +101,7 @@ function renderHead() {
       : null,
     hasRules ? h('button', { class: 'btn small', title: 'Spiel-Regeln mit dem aktuellen Spiel neu anwenden', onclick: applyRulesNow }, '🎮 Regeln anwenden') : null,
     keybindSwitch(),
+    satelliteButton(),
     h('span', { class: `badge${rewards.length >= max ? ' err' : ''}` }, `${rewards.length} / ${max} Belohnungen`),
     h('span', { class: 'badge ok' }, `✎ ${manageable} von der Suite verwaltet`),
     rewards.length - manageable ? h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App (z.B. HudFX) angelegt' }, `🔒 ${rewards.length - manageable} nur lesen`) : null);
@@ -395,7 +401,7 @@ function rewardRow(r) {
     status.push(h('span', {
       class: `badge${bind.enabled && state.keybinds.enabled ? ' accent' : ''}`,
       title: bind.enabled ? (state.keybinds.enabled ? 'Keybind aktiv' : 'Alle Keybinds sind per Not-Aus aus') : 'Keybind ausgeschaltet',
-    }, `⌨ ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}${bind.games.length ? ` (nur bei ${bind.games.map((g) => g.name).join(', ')})` : ''}`));
+    }, `${bind.target === 'satellite' ? '🛰' : '⌨'} ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}${bind.games.length ? ` (nur bei ${bind.games.map((g) => g.name).join(', ')})` : ''}`));
   }
   if (!r.enabled) status.push(h('span', { class: 'badge' }, 'ausgeblendet'));
   if (r.paused) status.push(h('span', { class: 'badge warn' }, 'pausiert'));
@@ -536,9 +542,136 @@ function keybindSwitch() {
     kb.enabled ? `⌨ ${count} Keybind(s) aktiv` : '⌨ Keybinds aus');
 }
 
+// ============================================================ Satellite
+
+function satelliteButton() {
+  const sat = state.satellite;
+  if (!sat) return null;
+  const [cls, text] = !sat.enabled ? ['', '🛰 Satellite: aus'] : sat.connected ? ['ok', `🛰 ${sat.name} verbunden`] : ['warn', '🛰 Satellite: wartet…'];
+  return h('button', { class: `badge-btn ${cls}`, title: 'Keybinds auf einem anderen PC (z.B. Gaming-PC) ausführen', onclick: openSatellite }, text);
+}
+
+function download(filename, content) {
+  const url = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+  const a = h('a', { href: url, download: filename });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function openSatellite() {
+  const body = h('div', { class: 'sat' });
+  let address = null;
+  let poll = null;
+
+  const refresh = async () => {
+    if (!body.isConnected) {
+      clearInterval(poll);
+      return;
+    }
+    try {
+      state.satellite = await api('core/satellite');
+    } catch {
+      return;
+    }
+    renderBody();
+  };
+
+  const setEnabled = async (on) => {
+    try {
+      state.satellite = await api('core/satellite/enabled', { enabled: on });
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+    renderBody();
+    render();
+  };
+
+  const downloadScript = async () => {
+    try {
+      const { filename, content } = await api('core/satellite/script', { address });
+      download(filename, content);
+      toast('Satellite-Datei gespeichert. Kopiere sie auf den Gaming-PC.', 'ok');
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  };
+
+  const regenerate = async () => {
+    if (!confirm('Neuen Schlüssel erzeugen? Bereits verteilte Satellite-Dateien funktionieren dann nicht mehr, du musst eine neue herunterladen.')) return;
+    try {
+      state.satellite = await api('core/satellite/regenerate', {});
+      toast('Neuer Schlüssel erzeugt. Lade die Satellite-Datei neu herunter.', 'ok');
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+    renderBody();
+  };
+
+  function renderBody() {
+    const sat = state.satellite;
+    if (!address || !sat.addresses.includes(address)) address = sat.addresses[0] ?? '127.0.0.1';
+    const status = !sat.enabled
+      ? h('div', { class: 'sat-status' }, h('span', { class: 'dot' }), 'Aus: Kein anderer PC kann sich verbinden.')
+      : sat.error
+        ? h('div', { class: 'sat-status err' }, h('span', { class: 'dot err' }), sat.error)
+        : sat.connected
+          ? h('div', { class: 'sat-status ok' }, h('span', { class: 'dot ok' }), `Verbunden mit „${sat.name}“ seit ${new Date(sat.since).toLocaleTimeString('de-DE')}`)
+          : h('div', { class: 'sat-status warn' }, h('span', { class: 'dot warn' }), `Wartet auf den Satellite (Port ${sat.port})…`);
+
+    body.replaceChildren(
+      h('p', { class: 'note' }, 'Der Satellite ist eine kleine Datei für deinen Gaming-PC. Keybinds mit Ziel „🛰 Satellite“ werden dann dort gedrückt statt auf diesem PC.'),
+      h('div', { class: 'opt-row' }, toggle(sat.enabled, setEnabled, 'Satellite-Zugang'), h('span', {}, 'Satellite-Zugang erlauben')),
+      status,
+      sat.enabled ? h('div', { class: 'sub' }, 'EINRICHTEN') : null,
+      sat.enabled
+        ? h('ol', { class: 'sat-steps' },
+          h('li', {}, 'Adresse dieses PCs im Heimnetz: ',
+            sat.addresses.length > 1
+              ? h('select', { class: 'inline-select', onchange: (e) => { address = e.target.value; } },
+                ...sat.addresses.map((a) => h('option', { value: a, selected: a === address }, a)))
+              : h('code', {}, address),
+            sat.addresses.length ? null : h('span', { class: 'warn-note' }, ' (keine Netzwerkadresse gefunden – ist der PC im Netzwerk?)')),
+          h('li', {}, h('button', { class: 'btn primary small', onclick: downloadScript }, '⬇ Satellite-Datei herunterladen')),
+          h('li', {}, 'Die Datei auf den Gaming-PC kopieren, z.B. per USB-Stick oder Netzwerkordner.'),
+          h('li', {}, 'Auf dem Gaming-PC doppelklicken. Ein Fenster zeigt „Verbunden!“, das Fenster offen lassen.'),
+          h('li', {}, 'Im Keybind-Editor bei „Ausführen auf“ den ', h('b', {}, '🛰 Satellite'), ' wählen.'))
+        : null,
+      sat.enabled
+        ? h('div', { class: 'kb-tips' },
+          h('div', {}, '🔥 Beim ersten Einschalten fragt Windows auf diesem PC evtl., ob die Suite im Netzwerk erreichbar sein darf: „Private Netzwerke“ erlauben. Sonst kommt der Satellite nicht durch.'),
+          h('div', {}, '🔑 Die Datei enthält einen geheimen Schlüssel. Nicht öffentlich teilen (z.B. nicht in Discord posten).'),
+          h('div', {}, '⚠ Läuft das Spiel als Administrator, muss auch der Satellite als Administrator laufen (Rechtsklick → Als Administrator ausführen).'))
+        : null,
+      sat.enabled ? h('button', { class: 'btn small', onclick: regenerate }, '🔑 Neuen Schlüssel erzeugen') : null,
+    );
+  }
+
+  renderBody();
+  modal('🛰 Satellite', [body], [h('button', { class: 'btn', onclick: () => { $('#modal-host').replaceChildren(); load(); } }, 'Schließen')]);
+  poll = setInterval(refresh, 2000);
+}
+
 function openKeybindEditor(reward) {
   const existing = state.keybinds.binds[reward.id];
-  const bind = structuredClone(existing ?? { enabled: true, steps: [{ keys: [], holdMs: 50, delayMs: 0 }], games: [] });
+  const bind = structuredClone(existing ?? { enabled: true, steps: [{ keys: [], holdMs: 50, delayMs: 0 }], games: [], target: 'local' });
+  bind.target ??= 'local';
+  const targetBox = h('div', { class: 'kb-target' });
+  const renderTarget = () => {
+    const sat = state.satellite;
+    const satLabel = sat?.connected ? `🛰 Satellite (${sat.name})` : '🛰 Satellite';
+    targetBox.replaceChildren(
+      h('div', { class: 'choice-row' },
+        h('button', { class: bind.target === 'local' ? 'selected' : '', onclick: () => { bind.target = 'local'; renderTarget(); } }, '🖥 Dieser PC'),
+        h('button', { class: bind.target === 'satellite' ? 'selected' : '', onclick: () => { bind.target = 'satellite'; renderTarget(); } }, satLabel)),
+      bind.target === 'satellite' && !sat?.connected
+        ? h('div', { class: 'warn-note' }, sat?.enabled
+          ? 'Gerade ist kein Satellite verbunden. Starte die Satellite-Datei auf dem anderen PC.'
+          : h('span', {}, 'Der Satellite-Zugang ist aus. ', h('a', { href: '#', onclick: (e) => { e.preventDefault(); openSatellite(); } }, 'Satellite einrichten')))
+        : null);
+  };
+  renderTarget();
   let recording = null; // { step, pressed: Set, el }
 
   const stepsBox = h('div', { class: 'kb-steps' });
@@ -647,16 +780,18 @@ function openKeybindEditor(reward) {
     const steps = cleanSteps();
     if (!steps.length) return toast('Erst eine Taste aufnehmen.', 'err');
     try {
-      await api(`${BASE}/keybinds/test`, { steps, waitMs: 3000 });
+      await api(`${BASE}/keybinds/test`, { steps, waitMs: 3000, target: bind.target });
     } catch (err) {
       return toast(err.message, 'err');
     }
-    toast('In 3 Sekunden werden die Tasten gedrückt, wechsle jetzt ins Ziel-Fenster…');
+    toast(bind.target === 'satellite'
+      ? 'In 3 Sekunden werden die Tasten auf dem Satellite-PC gedrückt.'
+      : 'In 3 Sekunden werden die Tasten gedrückt, wechsle jetzt ins Ziel-Fenster…');
   };
 
   const save = async (remove = false) => {
     stopRecording();
-    const payload = remove ? null : { enabled: bind.enabled, steps: cleanSteps(), games: bind.games };
+    const payload = remove ? null : { enabled: bind.enabled, steps: cleanSteps(), games: bind.games, target: bind.target };
     if (payload && !payload.steps.length) return toast('Erst eine Taste aufnehmen.', 'err');
     try {
       await api(`${BASE}/keybinds/save`, { rewardId: reward.id, title: reward.title, bind: payload });
@@ -672,6 +807,8 @@ function openKeybindEditor(reward) {
   renderGames();
   const close = modal(`⌨ Keybind: ${reward.title}`, [
     h('div', { class: 'opt-row' }, toggle(bind.enabled, (on) => { bind.enabled = on; }, 'Aktiv'), h('span', {}, 'Beim Einlösen Tasten drücken')),
+    h('div', { class: 'sub' }, 'AUSFÜHREN AUF'),
+    targetBox,
     h('div', { class: 'sub' }, 'TASTENFOLGE'),
     stepsBox,
     h('button', { class: 'btn small', onclick: () => { bind.steps.push({ keys: [], holdMs: 50, delayMs: 0 }); renderSteps(); } }, '＋ Schritt'),

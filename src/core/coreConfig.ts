@@ -5,10 +5,18 @@ export interface CoreConfig {
   tokens: string | null;
   /** IDs der aktivierten Addons. */
   enabledAddons: string[];
+  /** Satellite (zweiter PC, z.B. Gaming-PC) darf sich über das Heimnetz verbinden */
+  satelliteEnabled: boolean;
+  /** Geheimer Schlüssel, den der Satellite mitschicken muss */
+  satelliteToken: string;
+  satellitePort: number;
 }
 
 export const defaultCoreConfig: CoreConfig = {
   clientId: '',
   tokens: null,
   enabledAddons: ['alerts', 'channelpoints'],
+  satelliteEnabled: false,
+  satelliteToken: '',
+  satellitePort: 7475,
 };

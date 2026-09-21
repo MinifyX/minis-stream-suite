@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Addon } from '../../core/addons';
 import { keyboard, validateSteps, type KeyStep } from '../../core/keyboard';
+import { satellite } from '../../core/satellite';
 import { HttpError } from '../../core/server';
 import { CHANNELPOINTS_SERVICE, type ChannelPointsService, type GroupInfo } from './service';
 
@@ -86,6 +87,15 @@ interface Keybind {
   games: Game[];
   /** Nur zur Info: Name der Belohnung */
   title: string;
+  /** Wo die Tasten gedrückt werden: auf diesem PC oder auf dem Satellite (z.B. Gaming-PC) */
+  target: KeyTarget;
+}
+
+type KeyTarget = 'local' | 'satellite';
+
+/** Tastenfolge auf dem gewünschten PC ausführen */
+function runKeys(target: KeyTarget, steps: KeyStep[], label: string): Promise<void> {
+  return target === 'satellite' ? satellite.run(steps, label) : keyboard.run(steps, label);
 }
 
 const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [], keybindsEnabled: true, keybinds: {} };
@@ -368,7 +378,8 @@ export const channelPointsAddon: Addon = {
           return;
         }
       }
-      await keyboard.run(bind.steps, event.reward.title).catch((err) => ctx.log.warn(`Keybind „${event.reward.title}“ fehlgeschlagen:`, err));
+      await runKeys(bind.target ?? 'local', bind.steps, event.reward.title).catch((err) =>
+        ctx.log.warn(`Keybind „${event.reward.title}“ fehlgeschlagen:`, err));
     });
 
     const parseGames = (input: unknown): Game[] =>
@@ -403,6 +414,7 @@ export const channelPointsAddon: Addon = {
           steps,
           games: parseGames(body.bind.games),
           title: String(body.title ?? '').slice(0, 45),
+          target: body.bind.target === 'satellite' ? 'satellite' : 'local',
         };
       }
       settings.set('keybinds', binds);
@@ -417,9 +429,13 @@ export const channelPointsAddon: Addon = {
       } catch (err) {
         throw new HttpError(400, (err as Error).message);
       }
+      const target: KeyTarget = body?.target === 'satellite' ? 'satellite' : 'local';
+      if (target === 'satellite' && !satellite.connected) {
+        throw new HttpError(400, 'Kein Satellite verbunden. Starte die Satellite-Datei auf dem anderen PC.');
+      }
       const waitMs = Math.max(0, Math.min(10_000, Number(body?.waitMs) || 0));
       setTimeout(() => {
-        keyboard.run(steps, 'Test').catch((err) => ctx.log.warn('Keybind-Test fehlgeschlagen:', err));
+        runKeys(target, steps, 'Test').catch((err) => ctx.log.warn('Keybind-Test fehlgeschlagen:', err));
       }, waitMs);
     });
 
