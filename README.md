@@ -15,6 +15,13 @@ Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalp
 - **Keybinds:** Beim Einlösen Tasten drücken (auch bei HudFX-Belohnungen). Wahlweise auf diesem PC oder per **🛰 Satellite** auf einem zweiten PC.
 - **Spiel-Regeln:** Gruppen nur bei bestimmten Spielen aktiv, automatisch beim Kategoriewechsel.
 
+**Chat-Commands-Addon:**
+
+- Eigene `!commands` mit Aliasen, Variablen (`{user}`, `{touser}`, `{count}`, `{random:1-6}`, `{pick:a|b}`, `{game}`, `{uptime}`, `{followage}` …), Rechten (Alle/Subs/VIPs/Mods/du) und Cooldowns (für alle und pro Zuschauer).
+- Optional ein Keybind pro Command, auf diesem PC oder per 🛰 Satellite.
+- Vorlagen, Trockenlauf-Test (sendet nichts) und Verlauf der letzten Aufrufe.
+- Antworten gehen mit deinem Twitch-Account in den Chat.
+
 **🛰 Satellite (Zwei-PC-Setup):** Die Suite läuft auf dem Stream-PC, die Tasten werden auf dem Gaming-PC gedrückt. Unter Kanalpunkte → 🛰 Satellite den Zugang einschalten und die Satellite-Datei (`.cmd`) herunterladen. Auf dem Gaming-PC doppelklicken, installieren muss man nichts. Die Verbindung läuft über das Heimnetz (Port 7475) und ist mit einem geheimen Schlüssel geschützt. Oberfläche und API der Suite bleiben nur auf dem Stream-PC erreichbar.
 
 > **Twitch-Einschränkung:** Eine App darf nur Belohnungen ändern, die sie selbst angelegt hat. Belohnungen aus dem Dashboard oder von anderen Apps (z.B. HudFX) sind 🔒 „nur lesen“. Sortieren und für Alerts stummschalten klappt trotzdem. Belohnungen von anderen Apps niemals übernehmen, sonst erkennt die andere App sie nicht mehr.
@@ -104,6 +111,7 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 - [x] Alert-Editor mit Varianten, eigenen Medien, Sprachausgabe und Effekten
 - [x] Kanalpunkte-Addon: Belohnungen verwalten, Gruppen (z.B. „HudFX“), Gruppen pausieren und für Alerts stummschalten
 - [ ] Kanalpunkte: Warteschlange (Einlösungen erledigen oder erstatten), Gruppen automatisch beim Stream-Start/-Ende schalten
-- [ ] Chat-Commands
+- [x] Chat-Commands
+- [ ] Timer-Nachrichten, eigener Bot-Account
 - [ ] Installer (.exe) und Autostart
 - [ ] Addon-Store mit Addons von außerhalb

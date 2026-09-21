@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Chat-Commands</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="/app/keys.css">
+  <link rel="stylesheet" href="cmd.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <div class="title-row">
+        <h1>💬 Chat-Commands</h1>
+        <span class="spacer"></span>
+        <button class="btn" id="templates">📋 Vorlagen</button>
+        <button class="btn primary" id="new-command">＋ Neuer Command</button>
+      </div>
+      <div class="settings-row" id="settings-row"></div>
+    </header>
+
+    <div class="layout">
+      <main>
+        <input type="search" id="search" placeholder="Command suchen…">
+        <div id="commands"></div>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>🧪 Testen</h2>
+          <p class="note">Simuliert eine Chat-Nachricht. Es wird nichts in den Chat geschickt und nichts gezählt.</p>
+          <div class="test-row">
+            <select id="test-role">
+              <option value="everyone">als Zuschauer</option>
+              <option value="subscriber">als Sub</option>
+              <option value="vip">als VIP</option>
+              <option value="moderator">als Mod</option>
+              <option value="broadcaster">als du selbst</option>
+            </select>
+            <input type="text" id="test-message" placeholder="!discord">
+            <button class="btn" id="test-run">Testen</button>
+          </div>
+          <div id="test-result"></div>
+        </section>
+
+        <section class="card">
+          <h2>🕘 Verlauf</h2>
+          <div id="history" class="history"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div id="modal-host"></div>
+
+  <script src="/app/ui.js"></script>
+  <script src="/app/keys.js"></script>
+  <script src="cmd.js"></script>
+</body>
+</html>

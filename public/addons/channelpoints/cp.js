@@ -491,38 +491,9 @@ async function deleteReward(r) {
 
 // ============================================================ Keybinds
 
-const KEY_NAMES = {
-  ControlLeft: 'Strg', ControlRight: 'Strg rechts', ShiftLeft: 'Shift', ShiftRight: 'Shift rechts',
-  AltLeft: 'Alt', AltRight: 'AltGr', MetaLeft: 'Win', MetaRight: 'Win rechts', ContextMenu: 'Menü',
-  Space: 'Leertaste', Enter: 'Enter', NumpadEnter: 'Num Enter', Escape: 'Esc', Tab: 'Tab', Backspace: 'Rücktaste',
-  CapsLock: 'Feststell', Delete: 'Entf', Insert: 'Einfg', Home: 'Pos1', End: 'Ende', PageUp: 'Bild ↑', PageDown: 'Bild ↓',
-  ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', PrintScreen: 'Druck', ScrollLock: 'Rollen',
-  NumpadMultiply: 'Num *', NumpadAdd: 'Num +', NumpadSubtract: 'Num -', NumpadDecimal: 'Num ,', NumpadDivide: 'Num /',
-  MediaPlayPause: '⏯ Play/Pause', MediaTrackNext: '⏭ Nächster Titel', MediaTrackPrevious: '⏮ Voriger Titel', MediaStop: '⏹ Stopp',
-  AudioVolumeMute: '🔇 Stumm', AudioVolumeDown: '🔉 Leiser', AudioVolumeUp: '🔊 Lauter',
-};
-const SPECIAL_KEYS = [
-  ...Array.from({ length: 12 }, (_, i) => `F${13 + i}`),
-  'MediaPlayPause', 'MediaTrackNext', 'MediaTrackPrevious', 'MediaStop', 'AudioVolumeMute', 'AudioVolumeDown', 'AudioVolumeUp',
-  'MetaLeft', 'PrintScreen', 'ContextMenu',
-];
-const MODIFIER_CODES = ['ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'];
-
-// Beschriftung passend zum eigenen Tastaturlayout (z.B. QWERTZ: KeyY = „Z“)
-let layoutMap = null;
-navigator.keyboard?.getLayoutMap?.().then((map) => { layoutMap = map; render(); }).catch(() => {});
-
-function keyLabel(code) {
-  if (KEY_NAMES[code]) return KEY_NAMES[code];
-  if (/^Numpad\d$/.test(code)) return `Num ${code.slice(6)}`;
-  const fromLayout = layoutMap?.get(code);
-  if (fromLayout) return fromLayout.toUpperCase();
-  if (/^Key[A-Z]$/.test(code)) return code.slice(3);
-  if (/^Digit\d$/.test(code)) return code.slice(5);
-  return code;
-}
-
-const comboLabel = (keys) => keys.map(keyLabel).join(' + ');
+const { comboLabel } = window.KeyUI;
+// Tastenbeschriftungen nach eigenem Layout, sobald bekannt
+window.KeyUI.onLayoutReady(() => render());
 
 function keybindSwitch() {
   const kb = state.keybinds;
@@ -655,109 +626,10 @@ function openSatellite() {
 
 function openKeybindEditor(reward) {
   const existing = state.keybinds.binds[reward.id];
-  const bind = structuredClone(existing ?? { enabled: true, steps: [{ keys: [], holdMs: 50, delayMs: 0 }], games: [], target: 'local' });
+  const bind = structuredClone(existing ?? { enabled: true, steps: [], games: [], target: 'local' });
   bind.target ??= 'local';
-  const targetBox = h('div', { class: 'kb-target' });
-  const renderTarget = () => {
-    const sat = state.satellite;
-    const satLabel = sat?.connected ? `🛰 Satellite (${sat.name})` : '🛰 Satellite';
-    targetBox.replaceChildren(
-      h('div', { class: 'choice-row' },
-        h('button', { class: bind.target === 'local' ? 'selected' : '', onclick: () => { bind.target = 'local'; renderTarget(); } }, '🖥 Dieser PC'),
-        h('button', { class: bind.target === 'satellite' ? 'selected' : '', onclick: () => { bind.target = 'satellite'; renderTarget(); } }, satLabel)),
-      bind.target === 'satellite' && !sat?.connected
-        ? h('div', { class: 'warn-note' }, sat?.enabled
-          ? 'Gerade ist kein Satellite verbunden. Starte die Satellite-Datei auf dem anderen PC.'
-          : h('span', {}, 'Der Satellite-Zugang ist aus. ', h('a', { href: '#', onclick: (e) => { e.preventDefault(); openSatellite(); } }, 'Satellite einrichten')))
-        : null);
-  };
-  renderTarget();
-  let recording = null; // { step, pressed: Set, el }
-
-  const stepsBox = h('div', { class: 'kb-steps' });
+  const editor = window.KeyUI.stepsEditor(bind.steps);
   const gamesBox = h('div', { class: 'kb-games' });
-
-  const stopRecording = () => {
-    if (!recording) return;
-    window.removeEventListener('keydown', onKeyDown, true);
-    window.removeEventListener('keyup', onKeyUp, true);
-    recording = null;
-    renderSteps();
-  };
-  function onKeyDown(e) {
-    // Dialog wurde geschlossen (z.B. Klick daneben) → Aufnahme beenden, Tasten nicht mehr abfangen
-    if (!stepsBox.isConnected) {
-      window.removeEventListener('keydown', onKeyDown, true);
-      window.removeEventListener('keyup', onKeyUp, true);
-      recording = null;
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    if (!recording || e.repeat) return;
-    recording.pressed.add(e.code);
-    recording.el.textContent = comboLabel([...recording.pressed]) || '…';
-  }
-  function onKeyUp(e) {
-    if (!stepsBox.isConnected) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (!recording || !recording.pressed.size) return;
-    // Sobald die erste Taste losgelassen wird, ist die Kombination fertig
-    recording.step.keys = [...recording.pressed].sort((a, b) => Number(MODIFIER_CODES.includes(b)) - Number(MODIFIER_CODES.includes(a)));
-    stopRecording();
-  }
-  const startRecording = (step, el) => {
-    stopRecording();
-    recording = { step, pressed: new Set(), el };
-    el.textContent = 'Drück die Taste(n)…';
-    el.classList.add('recording');
-    window.addEventListener('keydown', onKeyDown, true);
-    window.addEventListener('keyup', onKeyUp, true);
-  };
-
-  const num = (value, onchange, title) => h('input', {
-    type: 'number', min: 0, max: 30000, step: 10, value, title,
-    onchange: (e) => onchange(Math.max(0, Math.min(30000, Math.round(Number(e.target.value) || 0)))),
-  });
-
-  function renderSteps() {
-    stepsBox.replaceChildren(...bind.steps.map((step, i) => {
-      const comboEl = h('button', {
-        class: `kb-combo${step.keys.length ? '' : ' empty'}`,
-        title: 'Klicken und Taste(n) drücken',
-        onclick: (e) => startRecording(step, e.currentTarget),
-      }, step.keys.length ? comboLabel(step.keys) : '⏺ Aufnehmen');
-      const special = h('select', {
-        class: 'kb-special',
-        title: 'Tasten, die man nicht direkt drücken kann',
-        onchange: (e) => {
-          if (!e.target.value) return;
-          // Modifier behalten (z.B. Strg + F13), Rest ersetzen
-          step.keys = [...step.keys.filter((k) => MODIFIER_CODES.includes(k) && k !== e.target.value), e.target.value];
-          renderSteps();
-        },
-      }, h('option', { value: '' }, '＋ Sondertaste'), ...SPECIAL_KEYS.map((k) => h('option', { value: k }, keyLabel(k))));
-      const modToggle = (code, label) => h('button', {
-        class: `kb-mod${step.keys.includes(code) ? ' on' : ''}`,
-        onclick: () => {
-          step.keys = step.keys.includes(code) ? step.keys.filter((k) => k !== code) : [code, ...step.keys];
-          renderSteps();
-        },
-      }, label);
-
-      return h('div', { class: 'kb-step' },
-        h('div', { class: 'kb-step-head' },
-          h('span', { class: 'kb-num' }, i + 1),
-          comboEl,
-          bind.steps.length > 1 ? h('button', { class: 'icon-btn', title: 'Schritt entfernen', onclick: () => { bind.steps.splice(i, 1); renderSteps(); } }, '✕') : null),
-        h('div', { class: 'kb-step-opts' },
-          modToggle('ControlLeft', 'Strg'), modToggle('ShiftLeft', 'Shift'), modToggle('AltLeft', 'Alt'),
-          special,
-          h('label', {}, 'halten', num(step.holdMs, (v) => { step.holdMs = v; }, 'Wie lange die Tasten gedrückt bleiben'), 'ms'),
-          h('label', {}, 'Pause davor', num(step.delayMs, (v) => { step.delayMs = v; }, 'Wartezeit vor diesem Schritt'), 'ms')));
-    }));
-  }
 
   function renderGames() {
     gamesBox.replaceChildren(
@@ -773,11 +645,9 @@ function openKeybindEditor(reward) {
       bind.games.length ? null : h('span', { class: 'note' }, 'Kein Spiel gewählt: wird immer ausgeführt.'));
   }
 
-  const cleanSteps = () => bind.steps.filter((s) => s.keys.length);
-
   const test = async () => {
-    stopRecording();
-    const steps = cleanSteps();
+    editor.stop();
+    const steps = editor.clean();
     if (!steps.length) return toast('Erst eine Taste aufnehmen.', 'err');
     try {
       await api(`${BASE}/keybinds/test`, { steps, waitMs: 3000, target: bind.target });
@@ -790,8 +660,8 @@ function openKeybindEditor(reward) {
   };
 
   const save = async (remove = false) => {
-    stopRecording();
-    const payload = remove ? null : { enabled: bind.enabled, steps: cleanSteps(), games: bind.games, target: bind.target };
+    editor.stop();
+    const payload = remove ? null : { enabled: bind.enabled, steps: editor.clean(), games: bind.games, target: bind.target };
     if (payload && !payload.steps.length) return toast('Erst eine Taste aufnehmen.', 'err');
     try {
       await api(`${BASE}/keybinds/save`, { rewardId: reward.id, title: reward.title, bind: payload });
@@ -803,27 +673,21 @@ function openKeybindEditor(reward) {
     await load();
   };
 
-  renderSteps();
   renderGames();
   const close = modal(`⌨ Keybind: ${reward.title}`, [
     h('div', { class: 'opt-row' }, toggle(bind.enabled, (on) => { bind.enabled = on; }, 'Aktiv'), h('span', {}, 'Beim Einlösen Tasten drücken')),
     h('div', { class: 'sub' }, 'AUSFÜHREN AUF'),
-    targetBox,
+    window.KeyUI.targetPicker(bind, state.satellite, openSatellite),
     h('div', { class: 'sub' }, 'TASTENFOLGE'),
-    stepsBox,
-    h('button', { class: 'btn small', onclick: () => { bind.steps.push({ keys: [], holdMs: 50, delayMs: 0 }); renderSteps(); } }, '＋ Schritt'),
+    editor.el,
     h('div', { class: 'sub' }, 'NUR BEI SPIEL'),
     gamesBox,
-    h('div', { class: 'kb-tips' },
-      h('div', {}, '💡 Die Tasten gehen an das Fenster, das gerade im Vordergrund ist, meist also dein Spiel.'),
-      h('div', {}, '💡 Für OBS: Leg in OBS einen Hotkey auf F13–F24 (hier als Sondertaste) und nimm denselben hier. Die Tasten kollidieren nie mit dem Spiel.'),
-      h('div', {}, '⚠ Läuft das Spiel als Administrator, muss die Suite auch als Administrator laufen, sonst blockiert Windows die Tasten.'),
-      h('div', {}, '⚠ Manche Spiele mit Anti-Cheat ignorieren simulierte Tasten oder sehen sie nicht gern. Im Zweifel lieber OBS-Hotkeys nutzen.')),
+    window.KeyUI.tips(),
   ], [
     existing ? h('button', { class: 'btn', onclick: () => save(true) }, '🗑 Entfernen') : null,
     h('span', { class: 'spacer' }),
     h('button', { class: 'btn', onclick: test }, '▶ Testen (3 s)'),
-    h('button', { class: 'btn', onclick: () => { stopRecording(); close(); } }, 'Abbrechen'),
+    h('button', { class: 'btn', onclick: () => { editor.stop(); close(); } }, 'Abbrechen'),
     h('button', { class: 'btn primary', onclick: () => save(false) }, 'Speichern'),
   ].filter(Boolean));
 }

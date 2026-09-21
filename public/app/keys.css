@@ -1,0 +1,30 @@
+/* Gemeinsames Design für Keybind-Editoren (Kanalpunkte, Chat-Commands) */
+.kb-editor { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.kb-editor > .kb-steps { align-self: stretch; }
+.kb-steps { display: flex; flex-direction: column; gap: 8px; }
+.kb-step { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.kb-step-head { display: flex; align-items: center; gap: 8px; }
+.kb-num { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; background: var(--card-2); font-size: 12px; font-weight: 700; flex: none; }
+.kb-combo {
+  flex: 1; text-align: left; padding: 8px 12px; border-radius: 8px; cursor: pointer; font: 700 14px Consolas, monospace;
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+}
+.kb-combo.kb-combo-empty { color: var(--muted); font-family: inherit; font-weight: 600; }
+.kb-combo.recording { border-color: var(--err); color: var(--err); animation: kb-rec 1s infinite; }
+@keyframes kb-rec { 50% { border-color: transparent; } }
+.kb-step-opts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.kb-step-opts label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.kb-step-opts input[type="number"] { width: 72px; padding: 4px 6px; }
+.kb-mod { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; font: inherit; font-weight: 600; }
+.kb-mod.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.kb-special { width: auto; padding: 4px 6px; font-size: 12px; }
+.kb-tips { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); background: var(--bg-2); border-radius: 8px; padding: 10px 12px; }
+.kb-target { display: flex; flex-direction: column; gap: 6px; }
+.choice-row { display: flex; gap: 6px; }
+.choice-row button {
+  flex: 1; padding: 9px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg-2); color: var(--muted);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.choice-row button.selected { border-color: var(--accent); color: #fff; background: var(--accent-soft); }
+.icon-btn { background: none; border: 1px solid transparent; color: var(--muted); cursor: pointer; font-size: 15px; padding: 5px 8px; border-radius: 8px; }
+.icon-btn:hover { color: var(--text); background: var(--card-2); border-color: var(--border); }

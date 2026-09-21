@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Addon } from '../../core/addons';
-import { keyboard, validateSteps, type KeyStep } from '../../core/keyboard';
-import { satellite } from '../../core/satellite';
+import { parseTarget, runKeys, targetProblem, type KeyTarget } from '../../core/keyActions';
+import { validateSteps, type KeyStep } from '../../core/keyboard';
 import { HttpError } from '../../core/server';
 import { CHANNELPOINTS_SERVICE, type ChannelPointsService, type GroupInfo } from './service';
 
@@ -91,12 +91,6 @@ interface Keybind {
   target: KeyTarget;
 }
 
-type KeyTarget = 'local' | 'satellite';
-
-/** Tastenfolge auf dem gewünschten PC ausführen */
-function runKeys(target: KeyTarget, steps: KeyStep[], label: string): Promise<void> {
-  return target === 'satellite' ? satellite.run(steps, label) : keyboard.run(steps, label);
-}
 
 const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [], keybindsEnabled: true, keybinds: {} };
 const MAX_REWARDS = 50;
@@ -414,7 +408,7 @@ export const channelPointsAddon: Addon = {
           steps,
           games: parseGames(body.bind.games),
           title: String(body.title ?? '').slice(0, 45),
-          target: body.bind.target === 'satellite' ? 'satellite' : 'local',
+          target: parseTarget(body.bind.target),
         };
       }
       settings.set('keybinds', binds);
@@ -429,10 +423,9 @@ export const channelPointsAddon: Addon = {
       } catch (err) {
         throw new HttpError(400, (err as Error).message);
       }
-      const target: KeyTarget = body?.target === 'satellite' ? 'satellite' : 'local';
-      if (target === 'satellite' && !satellite.connected) {
-        throw new HttpError(400, 'Kein Satellite verbunden. Starte die Satellite-Datei auf dem anderen PC.');
-      }
+      const target = parseTarget(body?.target);
+      const problem = targetProblem(target);
+      if (problem) throw new HttpError(400, problem);
       const waitMs = Math.max(0, Math.min(10_000, Number(body?.waitMs) || 0));
       setTimeout(() => {
         runKeys(target, steps, 'Test').catch((err) => ctx.log.warn('Keybind-Test fehlgeschlagen:', err));
