@@ -43,6 +43,8 @@ interface RewardData {
 
 interface Group extends GroupInfo {
   rewardIds: string[];
+  /** Belohnungen dieser Gruppe gehören einer anderen App (z.B. HudFX) → nie übernehmen */
+  foreign?: boolean;
 }
 
 /** Belohnung, die gerade "übernommen" wird: Einstellungen gemerkt, Original wird von Hand gelöscht */
@@ -55,9 +57,11 @@ interface PendingImport {
 interface Settings {
   groups: Group[];
   imports: PendingImport[];
+  /** Einzelne Belohnungen, die einer anderen App gehören → nie übernehmen */
+  foreignRewards: string[];
 }
 
-const DEFAULTS: Settings = { groups: [], imports: [] };
+const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [] };
 const MAX_REWARDS = 50;
 
 function toData(r: HelixReward): RewardData {
@@ -191,6 +195,12 @@ export const channelPointsAddon: Addon = {
 
     const saveGroups = (groups: Group[]) => settings.set('groups', groups);
 
+    /** Warum eine Belohnung als "andere App" gilt: 'self' (selbst markiert), Gruppenname oder null */
+    const foreignReason = (rewardId: string): string | null => {
+      if (settings.get('foreignRewards').includes(rewardId)) return 'self';
+      return settings.get('groups').find((g) => g.foreign && g.rewardIds.includes(rewardId))?.name ?? null;
+    };
+
     /** Belohnung in allen Gruppen durch eine neue ID ersetzen (nach dem Übernehmen) */
     const replaceInGroups = (oldId: string, newId: string) =>
       saveGroups(settings.get('groups').map((g) => ({ ...g, rewardIds: g.rewardIds.map((id) => (id === oldId ? newId : id)) })));
@@ -224,6 +234,7 @@ export const channelPointsAddon: Addon = {
             enabled: r.is_enabled,
             paused: r.is_paused,
             manageable: manageableIds.has(r.id),
+            foreign: manageableIds.has(r.id) ? null : foreignReason(r.id),
             redeemedThisStream: r.redemptions_redeemed_current_stream,
             data: toData(r),
           }))
@@ -238,13 +249,14 @@ export const channelPointsAddon: Addon = {
       if (!name) throw new HttpError(400, 'Die Gruppe braucht einen Namen.');
       const color = /^#[0-9a-f]{6}$/i.test(body?.color) ? String(body.color).toUpperCase() : '#9146FF';
       const icon = String(body?.icon ?? '📁').slice(0, 8) || '📁';
+      const foreign = body?.foreign === true;
       const groups = settings.get('groups');
       const existing = groups.find((g) => g.id === body?.id);
       if (existing) {
-        saveGroups(groups.map((g) => (g.id === existing.id ? { ...g, name, color, icon } : g)));
-        return { ...existing, name, color, icon };
+        saveGroups(groups.map((g) => (g.id === existing.id ? { ...g, name, color, icon, foreign } : g)));
+        return { ...existing, name, color, icon, foreign };
       }
-      const group: Group = { id: randomUUID(), name, color, icon, rewardIds: Array.isArray(body?.rewardIds) ? body.rewardIds.map(String) : [] };
+      const group: Group = { id: randomUUID(), name, color, icon, foreign, rewardIds: Array.isArray(body?.rewardIds) ? body.rewardIds.map(String) : [] };
       saveGroups([...groups, group]);
       return group;
     });
@@ -280,6 +292,22 @@ export const channelPointsAddon: Addon = {
       const groups = settings.get('groups');
       if (!groups.some((g) => g.id === body?.id)) throw new HttpError(404, 'Gruppe nicht gefunden');
       saveGroups(groups.map((g) => (g.id === body.id ? { ...g, rewardIds } : g)));
+    });
+
+    /** { id, foreign } – nur den "andere App"-Schalter einer Gruppe ändern */
+    ctx.api.post('/groups/foreign', ({ body }) => {
+      const groups = settings.get('groups');
+      if (!groups.some((g) => g.id === body?.id)) throw new HttpError(404, 'Gruppe nicht gefunden');
+      saveGroups(groups.map((g) => (g.id === body.id ? { ...g, foreign: body.foreign === true } : g)));
+    });
+
+    /** { id, foreign } – einzelne Belohnung als "gehört einer anderen App" markieren */
+    ctx.api.post('/rewards/foreign', ({ body }) => {
+      const id = String(body?.id ?? '');
+      if (!id) throw new HttpError(400, 'id fehlt');
+      const list = settings.get('foreignRewards').filter((x) => x !== id);
+      if (body?.foreign === true) list.push(id);
+      settings.set('foreignRewards', list);
     });
 
     /** Aktion für alle Belohnungen einer Gruppe: pause | resume | enable | disable */
@@ -342,6 +370,7 @@ export const channelPointsAddon: Addon = {
           throw explain(err);
         });
       saveGroups(settings.get('groups').map((g) => ({ ...g, rewardIds: g.rewardIds.filter((id) => id !== body?.id) })));
+      settings.set('foreignRewards', settings.get('foreignRewards').filter((id) => id !== body?.id));
       ctx.log.info('Belohnung gelöscht');
     });
 
@@ -351,6 +380,12 @@ export const channelPointsAddon: Addon = {
     ctx.api.post('/imports/start', async ({ body }) => {
       const reward = (await fetchRewards()).find((r) => r.id === body?.id);
       if (!reward) throw new HttpError(404, 'Belohnung nicht gefunden');
+      const reason = foreignReason(reward.id);
+      if (reason) {
+        throw new HttpError(400, reason === 'self'
+          ? 'Diese Belohnung ist als „von einer anderen App“ markiert und wird nicht übernommen.'
+          : `Diese Belohnung liegt in der Gruppe „${reason}“, die als „andere App“ markiert ist. Sie wird nicht übernommen.`);
+      }
       const imports = settings.get('imports').filter((i) => i.oldId !== reward.id);
       settings.set('imports', [...imports, { oldId: reward.id, data: toData(reward), startedAt: Date.now() }]);
     });

@@ -113,6 +113,13 @@ function renderHead() {
     h('div', { class: 'group-panel' },
       alertsRow,
       h('div', { class: 'row' },
+        h('span', { class: 'label' }, '🛡 Andere App'),
+        toggle(!!group.foreign, (on) => setGroupForeign(group, on), 'Belohnungen gehören einer anderen App'),
+        h('span', { class: 'muted' }, group.foreign
+          ? 'An: Diese Belohnungen gehören einer anderen App (z.B. HudFX) und werden nie übernommen.'
+          : 'Aus: Belohnungen können übernommen werden.'),
+        group.foreign ? dashboardButton('↗ Im Dashboard bearbeiten') : null),
+      h('div', { class: 'row' },
         h('span', { class: 'label' }, '⚡ Ganze Gruppe'),
         h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'pause') }, '⏸ Pausieren'),
         h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'resume') }, '▶ Fortsetzen'),
@@ -170,7 +177,7 @@ function renderImports() {
     h('strong', {}, `⏳ „${imp.data.title}“ wird übernommen`),
     h('ol', {},
       h('li', {}, imp.originalExists
-        ? h('span', {}, 'Lösche die Original-Belohnung im ', h('a', { href: dashboardUrl(), target: '_blank' }, 'Twitch-Dashboard'), '.')
+        ? h('span', {}, 'Lösche die Original-Belohnung im ', h('a', { href: '#', onclick: (e) => { e.preventDefault(); openDashboard(); } }, 'Twitch-Dashboard'), '.')
         : h('span', {}, '✓ Original ist gelöscht.')),
       h('li', {}, 'Klick auf „Jetzt neu anlegen“. Die Suite legt sie mit denselben Einstellungen neu an und übernimmt Gruppen und Alert-Einstellungen.')),
     h('div', { class: 'row' },
@@ -211,7 +218,7 @@ function openImport(reward) {
       onclick: async () => {
         if (await call('imports/start', { id: reward.id })) {
           close();
-          window.open(dashboardUrl(), '_blank');
+          openDashboard();
           await load();
         }
       },
@@ -268,7 +275,17 @@ function rewardRow(r) {
       h('button', { class: 'icon-btn', title: 'Löschen', onclick: () => deleteReward(r) }, '🗑'),
       toggle(r.enabled, async (on) => { if (await call('rewards/toggle', { id: r.id, enabled: on })) await load(); }, `${r.title} sichtbar`));
   } else {
-    actions.push(h('button', { class: 'btn small', title: 'Von der Suite verwalten lassen', onclick: () => openImport(r) }, '⇪ Übernehmen'));
+    actions.push(dashboardButton());
+    if (r.foreign === null || r.foreign === 'self') {
+      actions.push(h('button', {
+        class: `icon-btn${r.foreign ? ' on' : ''}`,
+        title: r.foreign
+          ? 'Markiert als „von einer anderen App“. Klicken zum Aufheben.'
+          : 'Als „von einer anderen App“ (z.B. HudFX) markieren. Dann kann sie nicht versehentlich übernommen werden.',
+        onclick: () => setRewardForeign(r, !r.foreign),
+      }, '🛡'));
+    }
+    if (!r.foreign) actions.push(h('button', { class: 'btn small', title: 'Von der Suite verwalten lassen', onclick: () => openImport(r) }, '⇪ Übernehmen'));
   }
 
   return h('div', { class: `reward${!r.enabled || r.paused ? ' off' : ''}` },
@@ -283,10 +300,40 @@ function rewardRow(r) {
         r.manageable
           ? h('span', { class: 'badge ok', title: 'Von der Suite angelegt – kann bearbeitet und pausiert werden' }, '✎ verwaltet')
           : h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App angelegt – nur lesen' }, '🔒 nur lesen'),
+        r.foreign
+          ? h('span', { class: 'badge warn', title: 'Wird nicht übernommen. Bearbeiten nur im Twitch-Dashboard oder in der anderen App.' },
+            r.foreign === 'self' ? '🛡 andere App' : `🛡 andere App (Gruppe ${r.foreign})`)
+          : null,
         ...groupsOf(r.id).map((g) => h('span', { class: 'group-chip', style: { background: `${g.color}55` } }, `${g.icon} ${g.name}`)))),
     h('div', { class: 'r-actions' },
       h('button', { class: 'icon-btn', title: 'Gruppen', onclick: () => openRewardGroups(r) }, '🏷'),
       ...actions));
+}
+
+/** Öffnet die Twitch-Belohnungsverwaltung in einem Fenster der Suite */
+async function openDashboard() {
+  try {
+    await api('core/twitch-window', { url: dashboardUrl() });
+  } catch (err) {
+    toast(`${err.message}. Öffne im Browser…`, 'err');
+    window.open(dashboardUrl(), '_blank');
+  }
+}
+
+function dashboardButton(label = '↗ Dashboard') {
+  return h('button', {
+    class: 'btn small',
+    title: 'Öffnet die Belohnungsverwaltung von Twitch in einem Fenster der Suite. Dort kannst du Bild, Farbe & Co. ändern. Die Belohnung bleibt dieselbe, also funktioniert sie in HudFX weiter.',
+    onclick: openDashboard,
+  }, label);
+}
+
+async function setRewardForeign(r, foreign) {
+  if (await call('rewards/foreign', { id: r.id, foreign }, foreign ? `„${r.title}“ als „andere App“ markiert` : 'Markierung entfernt')) await load();
+}
+
+async function setGroupForeign(group, foreign) {
+  if (await call('groups/foreign', { id: group.id, foreign }, foreign ? 'Gruppe als „andere App“ markiert' : 'Markierung entfernt')) await load();
 }
 
 async function deleteReward(r) {
@@ -314,6 +361,10 @@ function openGroupEditor(group) {
   const isNew = !group;
   let icon = group?.icon ?? '📁';
   let color = group?.color ?? GROUP_COLORS[0];
+  let foreign = !!group?.foreign;
+  const foreignRow = h('div', { class: 'opt-row' },
+    toggle(foreign, (on) => { foreign = on; }, 'Andere App'),
+    h('span', {}, 'Belohnungen gehören einer anderen App (z.B. HudFX)'));
   const name = h('input', { type: 'text', value: group?.name ?? '', placeholder: 'z.B. HudFX', maxlength: 40 });
   const iconRow = h('div', { class: 'emoji-row' });
   const colorRow = h('div', { class: 'emoji-row' });
@@ -323,12 +374,18 @@ function openGroupEditor(group) {
   };
   renderPickers();
 
-  const close = modal(isNew ? 'Neue Gruppe' : 'Gruppe bearbeiten', [field('Name', name), field('Symbol', iconRow), field('Farbe', colorRow)], [
+  const close = modal(isNew ? 'Neue Gruppe' : 'Gruppe bearbeiten', [
+    field('Name', name),
+    field('Symbol', iconRow),
+    field('Farbe', colorRow),
+    foreignRow,
+    h('div', { class: 'note' }, 'Belohnungen einer anderen App kann die Suite sortieren und für Alerts stummschalten, aber nicht übernehmen. Bearbeiten geht über „↗ Dashboard“.'),
+  ], [
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
     h('button', {
       class: 'btn primary',
       onclick: async () => {
-        const saved = await call('groups/save', { id: group?.id, name: name.value, icon, color }, isNew ? 'Gruppe angelegt' : 'Gespeichert');
+        const saved = await call('groups/save', { id: group?.id, name: name.value, icon, color, foreign }, isNew ? 'Gruppe angelegt' : 'Gespeichert');
         if (!saved) return;
         close();
         state.selected = saved.id;
@@ -444,7 +501,8 @@ function openRewardEditor(reward) {
     option('Abklingzeit', 'is_global_cooldown_enabled', 'global_cooldown_seconds', 'Sekunden'),
     option('Einlösungen sofort als erledigt markieren', 'should_redemptions_skip_request_queue'),
     groupPick ? field('Gruppen', groupPick.list) : null,
-    h('div', { class: 'note' }, 'Ein eigenes Bild kann Twitch nicht per App setzen. Das geht nur im Twitch-Dashboard.'),
+    h('div', { class: 'note' }, 'Ein eigenes Bild kann Twitch nicht per App setzen. Das geht nur im ',
+      h('a', { href: '#', onclick: (e) => { e.preventDefault(); openDashboard(); } }, 'Twitch-Dashboard'), '.'),
   ], [
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
     h('button', {

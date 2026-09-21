@@ -1,4 +1,5 @@
 import { app, shell } from 'electron';
+import { isTwitchUrl, openTwitchWindow } from './twitchWindow';
 import type { AddonManager, AddonManifest } from './addons';
 import type { EventBus } from './eventBus';
 import { getLogs } from './log';
@@ -54,6 +55,13 @@ export function registerCoreRoutes({ server, auth, eventsub, addons, upcomingAdd
   post('/logout', () => {
     auth.logout();
     return auth.state;
+  });
+
+  /** Twitch-Seite (z.B. Dashboard) in einem Fenster der Suite öffnen */
+  post('/twitch-window', ({ body }) => {
+    const url = String(body?.url ?? '');
+    if (!isTwitchUrl(url)) throw new HttpError(400, 'Nur Twitch-Seiten können hier geöffnet werden.');
+    openTwitchWindow(url);
   });
 
   get('/logs', () => getLogs());

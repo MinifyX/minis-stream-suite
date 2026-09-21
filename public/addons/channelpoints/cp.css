@@ -88,3 +88,5 @@ textarea, select {
 .check-list input { accent-color: var(--accent); width: 16px; height: 16px; }
 .check-list .cost { margin-left: auto; color: var(--muted); font-size: 12px; }
 .counter { font-size: 11px; color: var(--muted); text-align: right; }
+
+.icon-btn.on { color: var(--warn); border-color: rgba(245, 176, 65, .5); }
