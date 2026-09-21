@@ -45,6 +45,11 @@ async function load() {
   } catch {
     state.game = null;
   }
+  try {
+    state.keybinds = await api(`${BASE}/keybinds`);
+  } catch {
+    state.keybinds = { enabled: false, binds: {} };
+  }
   if (state.selected !== 'all' && state.selected !== 'none' && !groupById(state.selected)) state.selected = 'all';
   render();
 }
@@ -90,6 +95,7 @@ function renderHead() {
       ? h('span', { class: 'badge accent', title: 'Aktuelle Kategorie deines Kanals' }, `🎮 ${state.game.current.name || 'Keine Kategorie'}`)
       : null,
     hasRules ? h('button', { class: 'btn small', title: 'Spiel-Regeln mit dem aktuellen Spiel neu anwenden', onclick: applyRulesNow }, '🎮 Regeln anwenden') : null,
+    keybindSwitch(),
     h('span', { class: `badge${rewards.length >= max ? ' err' : ''}` }, `${rewards.length} / ${max} Belohnungen`),
     h('span', { class: 'badge ok' }, `✎ ${manageable} von der Suite verwaltet`),
     rewards.length - manageable ? h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App (z.B. HudFX) angelegt' }, `🔒 ${rewards.length - manageable} nur lesen`) : null);
@@ -200,16 +206,27 @@ async function applyRulesNow() {
 }
 
 function openGamePicker(group) {
+  const games = group.gameRule?.games ?? [];
+  const mode = group.gameRule?.mode ?? 'hide';
+  gamePicker(`Spiel für „${group.name}“`, 'Die Belohnungen dieser Gruppe sind nur bei den gewählten Spielen aktiv. Bei jedem Kategoriewechsel schaltet die Suite sie automatisch um.', async (game) => {
+    if (games.some((g) => g.id === game.id)) return;
+    await saveGameRule(group, [...games, { id: game.id, name: game.name }], mode);
+  });
+}
+
+/** Dialog zum Suchen eines Spiels (Twitch-Kategorie). onPick bekommt { id, name }. */
+function gamePicker(title, hint, onPick) {
   const input = h('input', { type: 'search', placeholder: 'Spiel oder Kategorie suchen, z.B. Minecraft…' });
   const results = h('div', { class: 'game-results' });
   const current = state.game?.current;
-  const games = group.gameRule?.games ?? [];
-  const mode = group.gameRule?.mode ?? 'hide';
 
+  // Bei verschachtelten Dialogen (Keybind-Editor) den alten Inhalt merken und danach wiederherstellen
+  const host = $('#modal-host');
+  const previous = [...host.childNodes];
   const pick = async (game) => {
     close();
-    if (games.some((g) => g.id === game.id)) return;
-    await saveGameRule(group, [...games, { id: game.id, name: game.name }], mode);
+    host.replaceChildren(...previous);
+    await onPick({ id: game.id, name: game.name });
   };
   const row = (game) => h('button', { class: 'game-result', onclick: () => pick(game) },
     game.image ? h('img', { src: game.image, alt: '' }) : h('span', { class: 'game-ph' }, '🎮'),
@@ -233,12 +250,12 @@ function openGamePicker(group) {
     }, 300);
   };
 
-  const close = modal(`Spiel für „${group.name}“`, [
+  const close = modal(title, [
     current?.id ? h('div', {}, h('div', { class: 'note' }, 'Gerade eingestellt:'), row(current)) : null,
     input,
     results,
-    h('div', { class: 'note' }, 'Die Belohnungen dieser Gruppe sind nur bei den gewählten Spielen aktiv. Bei jedem Kategoriewechsel schaltet die Suite sie automatisch um.'),
-  ]);
+    h('div', { class: 'note' }, hint),
+  ], previous.length ? [h('button', { class: 'btn', onclick: () => { close(); host.replaceChildren(...previous); } }, 'Zurück')] : null);
   setTimeout(() => input.focus(), 0);
 }
 
@@ -372,7 +389,14 @@ function renderRewards() {
 }
 
 function rewardRow(r) {
+  const bind = state.keybinds?.binds[r.id];
   const status = [];
+  if (bind) {
+    status.push(h('span', {
+      class: `badge${bind.enabled && state.keybinds.enabled ? ' accent' : ''}`,
+      title: bind.enabled ? (state.keybinds.enabled ? 'Keybind aktiv' : 'Alle Keybinds sind per Not-Aus aus') : 'Keybind ausgeschaltet',
+    }, `⌨ ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}${bind.games.length ? ` (nur bei ${bind.games.map((g) => g.name).join(', ')})` : ''}`));
+  }
   if (!r.enabled) status.push(h('span', { class: 'badge' }, 'ausgeblendet'));
   if (r.paused) status.push(h('span', { class: 'badge warn' }, 'pausiert'));
   const actions = [];
@@ -419,6 +443,11 @@ function rewardRow(r) {
         ...groupsOf(r.id).filter((g) => g.gameRule?.games.length).map((g) =>
           h('span', { class: 'badge accent', title: `Über Gruppe ${g.name}` }, `🎮 nur bei ${g.gameRule.games.map((x) => x.name).join(', ')}`)))),
     h('div', { class: 'r-actions' },
+      h('button', {
+        class: `icon-btn${bind?.enabled ? ' on-accent' : ''}`,
+        title: bind ? `Keybind: ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}` : 'Keybind hinzufügen: Tastendruck beim Einlösen',
+        onclick: () => openKeybindEditor(r),
+      }, '⌨'),
       h('button', { class: 'icon-btn', title: 'Gruppen', onclick: () => openRewardGroups(r) }, '🏷'),
       ...actions));
 }
@@ -452,6 +481,214 @@ async function setGroupForeign(group, foreign) {
 async function deleteReward(r) {
   if (!confirm(`Belohnung „${r.title}“ bei Twitch löschen? Das kann nicht rückgängig gemacht werden.`)) return;
   if (await call('rewards/delete', { id: r.id }, 'Belohnung gelöscht')) await load();
+}
+
+// ============================================================ Keybinds
+
+const KEY_NAMES = {
+  ControlLeft: 'Strg', ControlRight: 'Strg rechts', ShiftLeft: 'Shift', ShiftRight: 'Shift rechts',
+  AltLeft: 'Alt', AltRight: 'AltGr', MetaLeft: 'Win', MetaRight: 'Win rechts', ContextMenu: 'Menü',
+  Space: 'Leertaste', Enter: 'Enter', NumpadEnter: 'Num Enter', Escape: 'Esc', Tab: 'Tab', Backspace: 'Rücktaste',
+  CapsLock: 'Feststell', Delete: 'Entf', Insert: 'Einfg', Home: 'Pos1', End: 'Ende', PageUp: 'Bild ↑', PageDown: 'Bild ↓',
+  ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', PrintScreen: 'Druck', ScrollLock: 'Rollen',
+  NumpadMultiply: 'Num *', NumpadAdd: 'Num +', NumpadSubtract: 'Num -', NumpadDecimal: 'Num ,', NumpadDivide: 'Num /',
+  MediaPlayPause: '⏯ Play/Pause', MediaTrackNext: '⏭ Nächster Titel', MediaTrackPrevious: '⏮ Voriger Titel', MediaStop: '⏹ Stopp',
+  AudioVolumeMute: '🔇 Stumm', AudioVolumeDown: '🔉 Leiser', AudioVolumeUp: '🔊 Lauter',
+};
+const SPECIAL_KEYS = [
+  ...Array.from({ length: 12 }, (_, i) => `F${13 + i}`),
+  'MediaPlayPause', 'MediaTrackNext', 'MediaTrackPrevious', 'MediaStop', 'AudioVolumeMute', 'AudioVolumeDown', 'AudioVolumeUp',
+  'MetaLeft', 'PrintScreen', 'ContextMenu',
+];
+const MODIFIER_CODES = ['ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'];
+
+// Beschriftung passend zum eigenen Tastaturlayout (z.B. QWERTZ: KeyY = „Z“)
+let layoutMap = null;
+navigator.keyboard?.getLayoutMap?.().then((map) => { layoutMap = map; render(); }).catch(() => {});
+
+function keyLabel(code) {
+  if (KEY_NAMES[code]) return KEY_NAMES[code];
+  if (/^Numpad\d$/.test(code)) return `Num ${code.slice(6)}`;
+  const fromLayout = layoutMap?.get(code);
+  if (fromLayout) return fromLayout.toUpperCase();
+  if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+  if (/^Digit\d$/.test(code)) return code.slice(5);
+  return code;
+}
+
+const comboLabel = (keys) => keys.map(keyLabel).join(' + ');
+
+function keybindSwitch() {
+  const kb = state.keybinds;
+  if (!kb) return null;
+  const count = Object.values(kb.binds).filter((b) => b.enabled).length;
+  if (!Object.keys(kb.binds).length) return null;
+  return h('span', { class: `kill-switch${kb.enabled ? '' : ' off'}`, title: 'Not-Aus für alle Keybinds' },
+    toggle(kb.enabled, async (on) => {
+      try {
+        state.keybinds.enabled = (await api(`${BASE}/keybinds/enabled`, { enabled: on })).enabled;
+        toast(on ? 'Keybinds an' : 'Alle Keybinds aus', on ? 'ok' : 'info');
+      } catch (err) {
+        toast(err.message, 'err');
+      }
+      render();
+    }, 'Keybinds an/aus'),
+    kb.enabled ? `⌨ ${count} Keybind(s) aktiv` : '⌨ Keybinds aus');
+}
+
+function openKeybindEditor(reward) {
+  const existing = state.keybinds.binds[reward.id];
+  const bind = structuredClone(existing ?? { enabled: true, steps: [{ keys: [], holdMs: 50, delayMs: 0 }], games: [] });
+  let recording = null; // { step, pressed: Set, el }
+
+  const stepsBox = h('div', { class: 'kb-steps' });
+  const gamesBox = h('div', { class: 'kb-games' });
+
+  const stopRecording = () => {
+    if (!recording) return;
+    window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('keyup', onKeyUp, true);
+    recording = null;
+    renderSteps();
+  };
+  function onKeyDown(e) {
+    // Dialog wurde geschlossen (z.B. Klick daneben) → Aufnahme beenden, Tasten nicht mehr abfangen
+    if (!stepsBox.isConnected) {
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('keyup', onKeyUp, true);
+      recording = null;
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (!recording || e.repeat) return;
+    recording.pressed.add(e.code);
+    recording.el.textContent = comboLabel([...recording.pressed]) || '…';
+  }
+  function onKeyUp(e) {
+    if (!stepsBox.isConnected) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!recording || !recording.pressed.size) return;
+    // Sobald die erste Taste losgelassen wird, ist die Kombination fertig
+    recording.step.keys = [...recording.pressed].sort((a, b) => Number(MODIFIER_CODES.includes(b)) - Number(MODIFIER_CODES.includes(a)));
+    stopRecording();
+  }
+  const startRecording = (step, el) => {
+    stopRecording();
+    recording = { step, pressed: new Set(), el };
+    el.textContent = 'Drück die Taste(n)…';
+    el.classList.add('recording');
+    window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('keyup', onKeyUp, true);
+  };
+
+  const num = (value, onchange, title) => h('input', {
+    type: 'number', min: 0, max: 30000, step: 10, value, title,
+    onchange: (e) => onchange(Math.max(0, Math.min(30000, Math.round(Number(e.target.value) || 0)))),
+  });
+
+  function renderSteps() {
+    stepsBox.replaceChildren(...bind.steps.map((step, i) => {
+      const comboEl = h('button', {
+        class: `kb-combo${step.keys.length ? '' : ' empty'}`,
+        title: 'Klicken und Taste(n) drücken',
+        onclick: (e) => startRecording(step, e.currentTarget),
+      }, step.keys.length ? comboLabel(step.keys) : '⏺ Aufnehmen');
+      const special = h('select', {
+        class: 'kb-special',
+        title: 'Tasten, die man nicht direkt drücken kann',
+        onchange: (e) => {
+          if (!e.target.value) return;
+          // Modifier behalten (z.B. Strg + F13), Rest ersetzen
+          step.keys = [...step.keys.filter((k) => MODIFIER_CODES.includes(k) && k !== e.target.value), e.target.value];
+          renderSteps();
+        },
+      }, h('option', { value: '' }, '＋ Sondertaste'), ...SPECIAL_KEYS.map((k) => h('option', { value: k }, keyLabel(k))));
+      const modToggle = (code, label) => h('button', {
+        class: `kb-mod${step.keys.includes(code) ? ' on' : ''}`,
+        onclick: () => {
+          step.keys = step.keys.includes(code) ? step.keys.filter((k) => k !== code) : [code, ...step.keys];
+          renderSteps();
+        },
+      }, label);
+
+      return h('div', { class: 'kb-step' },
+        h('div', { class: 'kb-step-head' },
+          h('span', { class: 'kb-num' }, i + 1),
+          comboEl,
+          bind.steps.length > 1 ? h('button', { class: 'icon-btn', title: 'Schritt entfernen', onclick: () => { bind.steps.splice(i, 1); renderSteps(); } }, '✕') : null),
+        h('div', { class: 'kb-step-opts' },
+          modToggle('ControlLeft', 'Strg'), modToggle('ShiftLeft', 'Shift'), modToggle('AltLeft', 'Alt'),
+          special,
+          h('label', {}, 'halten', num(step.holdMs, (v) => { step.holdMs = v; }, 'Wie lange die Tasten gedrückt bleiben'), 'ms'),
+          h('label', {}, 'Pause davor', num(step.delayMs, (v) => { step.delayMs = v; }, 'Wartezeit vor diesem Schritt'), 'ms')));
+    }));
+  }
+
+  function renderGames() {
+    gamesBox.replaceChildren(
+      ...bind.games.map((g) => h('span', { class: 'game-chip' }, g.name,
+        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => { bind.games = bind.games.filter((x) => x.id !== g.id); renderGames(); } }, '✕'))),
+      h('button', {
+        class: 'btn small',
+        onclick: () => gamePicker('Spiel für diesen Keybind', 'Der Keybind wird nur ausgeführt, wenn du eines dieser Spiele spielst.', (game) => {
+          if (!bind.games.some((g) => g.id === game.id)) bind.games.push(game);
+          renderGames();
+        }),
+      }, '＋ Spiel'),
+      bind.games.length ? null : h('span', { class: 'note' }, 'Kein Spiel gewählt: wird immer ausgeführt.'));
+  }
+
+  const cleanSteps = () => bind.steps.filter((s) => s.keys.length);
+
+  const test = async () => {
+    stopRecording();
+    const steps = cleanSteps();
+    if (!steps.length) return toast('Erst eine Taste aufnehmen.', 'err');
+    try {
+      await api(`${BASE}/keybinds/test`, { steps, waitMs: 3000 });
+    } catch (err) {
+      return toast(err.message, 'err');
+    }
+    toast('In 3 Sekunden werden die Tasten gedrückt, wechsle jetzt ins Ziel-Fenster…');
+  };
+
+  const save = async (remove = false) => {
+    stopRecording();
+    const payload = remove ? null : { enabled: bind.enabled, steps: cleanSteps(), games: bind.games };
+    if (payload && !payload.steps.length) return toast('Erst eine Taste aufnehmen.', 'err');
+    try {
+      await api(`${BASE}/keybinds/save`, { rewardId: reward.id, title: reward.title, bind: payload });
+    } catch (err) {
+      return toast(err.message, 'err');
+    }
+    toast(remove ? 'Keybind entfernt' : 'Keybind gespeichert', 'ok');
+    close();
+    await load();
+  };
+
+  renderSteps();
+  renderGames();
+  const close = modal(`⌨ Keybind: ${reward.title}`, [
+    h('div', { class: 'opt-row' }, toggle(bind.enabled, (on) => { bind.enabled = on; }, 'Aktiv'), h('span', {}, 'Beim Einlösen Tasten drücken')),
+    h('div', { class: 'sub' }, 'TASTENFOLGE'),
+    stepsBox,
+    h('button', { class: 'btn small', onclick: () => { bind.steps.push({ keys: [], holdMs: 50, delayMs: 0 }); renderSteps(); } }, '＋ Schritt'),
+    h('div', { class: 'sub' }, 'NUR BEI SPIEL'),
+    gamesBox,
+    h('div', { class: 'kb-tips' },
+      h('div', {}, '💡 Die Tasten gehen an das Fenster, das gerade im Vordergrund ist, meist also dein Spiel.'),
+      h('div', {}, '💡 Für OBS: Leg in OBS einen Hotkey auf F13–F24 (hier als Sondertaste) und nimm denselben hier. Die Tasten kollidieren nie mit dem Spiel.'),
+      h('div', {}, '⚠ Läuft das Spiel als Administrator, muss die Suite auch als Administrator laufen, sonst blockiert Windows die Tasten.'),
+      h('div', {}, '⚠ Manche Spiele mit Anti-Cheat ignorieren simulierte Tasten oder sehen sie nicht gern. Im Zweifel lieber OBS-Hotkeys nutzen.')),
+  ], [
+    existing ? h('button', { class: 'btn', onclick: () => save(true) }, '🗑 Entfernen') : null,
+    h('span', { class: 'spacer' }),
+    h('button', { class: 'btn', onclick: test }, '▶ Testen (3 s)'),
+    h('button', { class: 'btn', onclick: () => { stopRecording(); close(); } }, 'Abbrechen'),
+    h('button', { class: 'btn primary', onclick: () => save(false) }, 'Speichern'),
+  ].filter(Boolean));
 }
 
 // ============================================================ Dialoge

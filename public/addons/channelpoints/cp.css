@@ -104,3 +104,30 @@ textarea, select {
 }
 .game-result:hover { border-color: var(--accent); }
 .game-result img, .game-ph { width: 26px; height: 36px; border-radius: 3px; object-fit: cover; flex: none; display: grid; place-items: center; }
+
+/* Keybinds */
+.icon-btn.on-accent { color: #d6bcff; border-color: rgba(145, 70, 255, .6); background: var(--accent-soft); }
+.kill-switch { display: inline-flex; align-items: center; gap: 8px; padding: 2px 10px 2px 4px; border-radius: 99px; background: var(--accent-soft); color: #d6bcff; font-size: 12px; font-weight: 600; }
+.kill-switch.off { background: rgba(255, 92, 92, .15); color: var(--err); }
+.kill-switch .switch { transform: scale(.8); }
+.sub { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--muted); margin-top: 4px; }
+.kb-steps { display: flex; flex-direction: column; gap: 8px; }
+.kb-step { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.kb-step-head { display: flex; align-items: center; gap: 8px; }
+.kb-num { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; background: var(--card-2); font-size: 12px; font-weight: 700; flex: none; }
+.kb-combo {
+  flex: 1; text-align: left; padding: 8px 12px; border-radius: 8px; cursor: pointer; font: 700 14px Consolas, monospace;
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+}
+.kb-combo.empty { color: var(--muted); font-family: inherit; font-weight: 600; }
+.kb-combo.recording { border-color: var(--err); color: var(--err); animation: rec 1s infinite; }
+@keyframes rec { 50% { border-color: transparent; } }
+.kb-step-opts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.kb-step-opts label { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.kb-step-opts input[type="number"] { width: 72px; padding: 4px 6px; }
+.kb-mod { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; font: inherit; font-weight: 600; }
+.kb-mod.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.kb-special { width: auto; padding: 4px 6px; font-size: 12px; }
+.kb-games { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kb-tips { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); background: var(--bg-2); border-radius: 8px; padding: 10px 12px; }
+.modal-foot .spacer { flex: 1; }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, shell } from 'electron';
+import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
 import path from 'node:path';
 import { builtInAddons, upcomingAddons } from './addons';
 import { AddonManager } from './core/addons';
@@ -6,6 +6,7 @@ import { ConfigStore } from './core/config';
 import { defaultCoreConfig, type CoreConfig } from './core/coreConfig';
 import { registerCoreRoutes } from './core/coreRoutes';
 import { EventBus } from './core/eventBus';
+import { keyboard } from './core/keyboard';
 import { createLogger } from './core/log';
 import { LocalServer } from './core/server';
 import { TwitchApi } from './core/twitch/api';
@@ -18,6 +19,8 @@ const PORT = 7474;
 let mainWindow: BrowserWindow | null = null;
 
 async function bootstrap(): Promise<void> {
+  // Kein Standardmenü: sonst lösen Tasten wie Strg+R beim Keybind-Aufnehmen Menü-Aktionen aus
+  Menu.setApplicationMenu(null);
   const config = new ConfigStore<CoreConfig>('config', defaultCoreConfig);
   const bus = new EventBus();
   const auth = new TwitchAuth(config, createLogger('Twitch'));
@@ -32,6 +35,7 @@ async function bootstrap(): Promise<void> {
   auth.on('logout', () => eventsub.stop());
   app.on('before-quit', () => {
     eventsub.stop();
+    keyboard.stop();
     void addons.stopAll();
   });
 

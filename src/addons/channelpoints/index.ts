@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Addon } from '../../core/addons';
+import { keyboard, validateSteps, type KeyStep } from '../../core/keyboard';
 import { HttpError } from '../../core/server';
 import { CHANNELPOINTS_SERVICE, type ChannelPointsService, type GroupInfo } from './service';
 
@@ -72,9 +73,22 @@ interface Settings {
   imports: PendingImport[];
   /** Einzelne Belohnungen, die einer anderen App gehören → nie übernehmen */
   foreignRewards: string[];
+  /** Not-Aus für alle Keybinds */
+  keybindsEnabled: boolean;
+  /** Reward-ID → Tastenfolge */
+  keybinds: Record<string, Keybind>;
 }
 
-const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [] };
+interface Keybind {
+  enabled: boolean;
+  steps: KeyStep[];
+  /** Nur bei diesen Spielen ausführen (leer = immer) */
+  games: Game[];
+  /** Nur zur Info: Name der Belohnung */
+  title: string;
+}
+
+const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [], keybindsEnabled: true, keybinds: {} };
 const MAX_REWARDS = 50;
 
 function toData(r: HelixReward): RewardData {
@@ -340,6 +354,75 @@ export const channelPointsAddon: Addon = {
       return applyGameRules('Regel geändert');
     });
 
+    // ------------------------------------------------------------ Keybinds
+
+    // Belohnung eingelöst → Tastenfolge ausführen (klappt für ALLE Belohnungen, auch fremde)
+    ctx.events.on('redemption', async (event) => {
+      if (event.test || !settings.get('keybindsEnabled')) return;
+      const bind = settings.get('keybinds')[event.reward.id];
+      if (!bind?.enabled || !bind.steps.length) return;
+      if (bind.games.length) {
+        if (!currentGame) await loadCurrentGame().catch(() => null);
+        if (!bind.games.some((g) => g.id === currentGame?.id)) {
+          ctx.log.info(`Keybind „${event.reward.title}“ übersprungen: falsches Spiel (${currentGame?.name ?? 'unbekannt'})`);
+          return;
+        }
+      }
+      await keyboard.run(bind.steps, event.reward.title).catch((err) => ctx.log.warn(`Keybind „${event.reward.title}“ fehlgeschlagen:`, err));
+    });
+
+    const parseGames = (input: unknown): Game[] =>
+      (Array.isArray(input) ? input : [])
+        .filter((g: Partial<Game>) => typeof g?.id === 'string' && g.id && typeof g.name === 'string')
+        .map((g: Game) => ({ id: g.id, name: g.name.slice(0, 100) }));
+
+    ctx.api.get('/keybinds', () => ({ enabled: settings.get('keybindsEnabled'), binds: settings.get('keybinds') }));
+
+    ctx.api.post('/keybinds/enabled', ({ body }) => {
+      settings.set('keybindsEnabled', body?.enabled === true);
+      ctx.log.info(body?.enabled ? 'Keybinds eingeschaltet' : 'Keybinds ausgeschaltet (Not-Aus)');
+      return { enabled: settings.get('keybindsEnabled') };
+    });
+
+    /** { rewardId, title, bind: { enabled, steps, games } | null } */
+    ctx.api.post('/keybinds/save', ({ body }) => {
+      const rewardId = String(body?.rewardId ?? '');
+      if (!rewardId) throw new HttpError(400, 'rewardId fehlt');
+      const binds = { ...settings.get('keybinds') };
+      if (!body.bind) {
+        delete binds[rewardId];
+      } else {
+        let steps: KeyStep[];
+        try {
+          steps = validateSteps(body.bind.steps);
+        } catch (err) {
+          throw new HttpError(400, (err as Error).message);
+        }
+        binds[rewardId] = {
+          enabled: body.bind.enabled !== false,
+          steps,
+          games: parseGames(body.bind.games),
+          title: String(body.title ?? '').slice(0, 45),
+        };
+      }
+      settings.set('keybinds', binds);
+      return binds[rewardId] ?? null;
+    });
+
+    /** Tastenfolge testen – nach einer Wartezeit, damit man ins Ziel-Fenster wechseln kann */
+    ctx.api.post('/keybinds/test', async ({ body }) => {
+      let steps: KeyStep[];
+      try {
+        steps = validateSteps(body?.steps);
+      } catch (err) {
+        throw new HttpError(400, (err as Error).message);
+      }
+      const waitMs = Math.max(0, Math.min(10_000, Number(body?.waitMs) || 0));
+      setTimeout(() => {
+        keyboard.run(steps, 'Test').catch((err) => ctx.log.warn('Keybind-Test fehlgeschlagen:', err));
+      }, waitMs);
+    });
+
     /** Regeln jetzt mit dem aktuellen Spiel anwenden */
     ctx.api.post('/game-rules/apply', async () => {
       await loadCurrentGame();
@@ -522,6 +605,9 @@ export const channelPointsAddon: Addon = {
         });
       saveGroups(settings.get('groups').map((g) => ({ ...g, rewardIds: g.rewardIds.filter((id) => id !== body?.id) })));
       settings.set('foreignRewards', settings.get('foreignRewards').filter((id) => id !== body?.id));
+      const binds = { ...settings.get('keybinds') };
+      delete binds[String(body?.id)];
+      settings.set('keybinds', binds);
       ctx.log.info('Belohnung gelöscht');
     });
 
@@ -552,6 +638,12 @@ export const channelPointsAddon: Addon = {
       if (all.length >= MAX_REWARDS) throw new HttpError(400, `Twitch erlaubt höchstens ${MAX_REWARDS} Belohnungen pro Kanal.`);
       const reward = await createReward(pending.data);
       replaceInGroups(pending.oldId, reward.id);
+      const binds = { ...settings.get('keybinds') };
+      if (binds[pending.oldId]) {
+        binds[reward.id] = binds[pending.oldId];
+        delete binds[pending.oldId];
+        settings.set('keybinds', binds);
+      }
       settings.set('imports', settings.get('imports').filter((i) => i.oldId !== pending.oldId));
       ctx.log.info(`Belohnung übernommen: ${reward.title}`);
       return { id: reward.id, oldId: pending.oldId };
