@@ -5,6 +5,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import type { Logger } from './log';
 
 export interface ApiRequest {
+  /** JSON-Body – bei Upload-Routen ein Buffer mit den Dateidaten */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: any;
   query: URLSearchParams;
@@ -20,6 +21,14 @@ export class HttpError extends Error {
     super(message);
   }
 }
+
+interface Route {
+  handler: ApiHandler;
+  upload: boolean;
+}
+
+const JSON_LIMIT = 2 * 1024 * 1024;
+const UPLOAD_LIMIT = 60 * 1024 * 1024;
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -46,38 +55,42 @@ function sendJson(res: http.ServerResponse, status: number, data: unknown): void
   res.end(JSON.stringify(data));
 }
 
-function readBody(req: http.IncomingMessage): Promise<unknown> {
+function readRaw(req: http.IncomingMessage, limit: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
     req.on('data', (chunk: Buffer) => {
       size += chunk.length;
-      if (size > 1_000_000) {
-        reject(new HttpError(413, 'Anfrage zu groß'));
+      if (size > limit) {
+        reject(new HttpError(413, `Datei zu groß (max. ${Math.round(limit / 1024 / 1024)} MB)`));
         req.destroy();
       } else chunks.push(chunk);
     });
-    req.on('end', () => {
-      const text = Buffer.concat(chunks).toString('utf8');
-      try {
-        resolve(text ? JSON.parse(text) : {});
-      } catch {
-        reject(new HttpError(400, 'Ungültiges JSON'));
-      }
-    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
+}
+
+async function readJson(req: http.IncomingMessage): Promise<unknown> {
+  const text = (await readRaw(req, JSON_LIMIT)).toString('utf8');
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new HttpError(400, 'Ungültiges JSON');
+  }
 }
 
 /**
  * Lokaler Webserver (nur auf diesem PC erreichbar). Er liefert
  *  - die Oberfläche der App (/app/…)
  *  - Overlays + Einstellungsseiten der Addons (/addons/<id>/…) – die Overlays bindet man in OBS ein
+ *  - hochgeladene Dateien der Addons (/addon-data/<id>/…)
  *  - die API für Oberfläche und Addons (/api/…)
  *  - einen WebSocket (/ws?channel=<addon-id>), über den Overlays live Daten bekommen
  */
 export class LocalServer {
-  private routes = new Map<string, ApiHandler>();
+  private routes = new Map<string, Route>();
+  private mounts = new Map<string, { dir: string; scope: string }>();
   private scopes = new Map<string, Set<string>>();
   private clients = new Set<{ ws: WebSocket; channel: string }>();
 
@@ -91,18 +104,25 @@ export class LocalServer {
     return `http://127.0.0.1:${this.port}`;
   }
 
-  /** API-Route registrieren. `scope` = wem sie gehört (z.B. Addon-ID), damit man sie wieder entfernen kann. */
-  route(scope: string, method: 'GET' | 'POST', urlPath: string, handler: ApiHandler): void {
+  /**
+   * API-Route registrieren. `scope` = wem sie gehört (z.B. Addon-ID), damit man sie wieder entfernen kann.
+   * Upload-Routen bekommen die rohen Dateidaten als Buffer.
+   */
+  route(scope: string, method: 'GET' | 'POST', urlPath: string, handler: ApiHandler, options: { upload?: boolean } = {}): void {
     const key = `${method} ${urlPath}`;
-    this.routes.set(key, handler);
-    let keys = this.scopes.get(scope);
-    if (!keys) this.scopes.set(scope, (keys = new Set()));
-    keys.add(key);
+    this.routes.set(key, { handler, upload: !!options.upload });
+    this.scopeKeys(scope).add(key);
+  }
+
+  /** Einen Ordner unter einem URL-Präfix ausliefern, z.B. /addon-data/alerts → …/addon-data/alerts */
+  mount(scope: string, prefix: string, dir: string): void {
+    this.mounts.set(prefix, { dir: path.resolve(dir), scope });
   }
 
   clearScope(scope: string): void {
     for (const key of this.scopes.get(scope) ?? []) this.routes.delete(key);
     this.scopes.delete(scope);
+    for (const [prefix, mount] of this.mounts) if (mount.scope === scope) this.mounts.delete(prefix);
   }
 
   /** Nachricht an alle Overlays eines Kanals schicken. */
@@ -144,6 +164,12 @@ export class LocalServer {
     });
   }
 
+  private scopeKeys(scope: string): Set<string> {
+    let keys = this.scopes.get(scope);
+    if (!keys) this.scopes.set(scope, (keys = new Set()));
+    return keys;
+  }
+
   /** Schutz gegen fremde Webseiten, die per DNS-Tricks auf den lokalen Server zugreifen wollen. */
   private isAllowedHost(req: http.IncomingMessage): boolean {
     const host = req.headers.host ?? '';
@@ -161,44 +187,74 @@ export class LocalServer {
       res.end();
       return;
     }
-    return this.serveStatic(url.pathname, res);
+
+    const pathname = decodeURIComponent(url.pathname);
+    for (const [prefix, mount] of this.mounts) {
+      if (pathname.startsWith(`${prefix}/`)) return this.serveFile(mount.dir, pathname.slice(prefix.length), req, res);
+    }
+    return this.serveFile(this.publicDir, pathname, req, res);
   }
 
   private async handleApi(req: http.IncomingMessage, res: http.ServerResponse, url: URL): Promise<void> {
-    const handler = this.routes.get(`${req.method} ${url.pathname}`);
-    if (!handler) return sendJson(res, 404, { error: 'Unbekannte API-Route' });
+    const route = this.routes.get(`${req.method} ${url.pathname}`);
+    if (!route) return sendJson(res, 404, { error: 'Unbekannte API-Route' });
 
     try {
       let body: unknown;
       if (req.method === 'POST') {
-        // JSON-Pflicht: Browser dürfen so etwas nicht ungefragt von fremden Seiten schicken
-        if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) {
-          throw new HttpError(415, 'JSON erwartet');
+        // Fremde Webseiten dürfen weder JSON noch eigene Header ungefragt an den Server schicken
+        if (route.upload) {
+          if (req.headers['x-suite-upload'] !== '1') throw new HttpError(400, 'Upload-Header fehlt');
+          body = await readRaw(req, UPLOAD_LIMIT);
+        } else {
+          if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) {
+            throw new HttpError(415, 'JSON erwartet');
+          }
+          body = await readJson(req);
         }
-        body = await readBody(req);
       }
-      const result = await handler({ body, query: url.searchParams });
+      const result = await route.handler({ body, query: url.searchParams });
       sendJson(res, 200, result ?? { ok: true });
     } catch (err) {
       const status = err instanceof HttpError ? err.status : 500;
       if (status >= 500) this.log.error(`${req.method} ${url.pathname}:`, err);
-      sendJson(res, status, { error: (err as Error).message });
+      if (!res.headersSent) sendJson(res, status, { error: (err as Error).message });
     }
   }
 
-  private serveStatic(pathname: string, res: http.ServerResponse): void {
-    let relative = decodeURIComponent(pathname);
+  /** Datei ausliefern – mit Range-Unterstützung, damit Videos und Sounds sauber abspielen. */
+  private serveFile(root: string, relative: string, req: http.IncomingMessage, res: http.ServerResponse): void {
     if (relative.endsWith('/')) relative += 'index.html';
-    const file = path.normalize(path.join(this.publicDir, relative));
-    if (!file.startsWith(this.publicDir + path.sep)) return sendJson(res, 403, { error: 'Forbidden' });
+    const file = path.normalize(path.join(root, relative));
+    if (!file.startsWith(root + path.sep)) return sendJson(res, 403, { error: 'Forbidden' });
 
     fs.stat(file, (err, stat) => {
       if (err || !stat.isFile()) return sendJson(res, 404, { error: 'Nicht gefunden' });
-      res.writeHead(200, {
+      const headers: http.OutgoingHttpHeaders = {
         'Content-Type': MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
-        'Content-Length': stat.size,
         'Cache-Control': 'no-cache',
-      });
+        'Accept-Ranges': 'bytes',
+      };
+
+      const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+      if (range && (range[1] || range[2])) {
+        let start = range[1] ? Number(range[1]) : stat.size - Number(range[2]);
+        let end = range[1] && range[2] ? Number(range[2]) : stat.size - 1;
+        start = Math.max(0, start);
+        end = Math.min(end, stat.size - 1);
+        if (start > end) {
+          res.writeHead(416, { 'Content-Range': `bytes */${stat.size}` });
+          res.end();
+          return;
+        }
+        res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${stat.size}`, 'Content-Length': end - start + 1 });
+        if (req.method === 'HEAD') return void res.end();
+        fs.createReadStream(file, { start, end }).pipe(res);
+        return;
+      }
+
+      res.writeHead(200, { ...headers, 'Content-Length': stat.size });
+      if (req.method === 'HEAD') return void res.end();
       fs.createReadStream(file).pipe(res);
     });
   }

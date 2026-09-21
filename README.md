@@ -2,7 +2,11 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.1):** Core plus **Alerts-Addon**. Damit kannst du pro Kanalpunkte-Belohnung festlegen, ob ein Alert kommt. So verrät zum Beispiel kein Alert mehr deinen HudFX-Jumpscare.
+**Aktueller Stand (v0.2):** Core plus **Alerts-Addon mit Alert-Editor**:
+
+- **Varianten** pro Event-Art (Follows, Abos, verschenkte Abos, Bits, Raids, Kanalpunkte) mit Bedingungen, z.B. „ab 1000 Bits“, „nur Verlängerungen ab 12 Monaten“ oder „nur diese Belohnungen“. Die oberste passende Variante gewinnt, oder es wird zufällig gewechselt.
+- **Editor** wie bei Twitch: Layout, Hintergrund, Schrift, Farben, Animationen, Bild/Video, Sound, Vorlesen (Windows-Stimmen) und Effekte (Konfetti, Feuerwerk, …), mit Live-Vorschau.
+- **Belohnungs-Filter**: Belohnungen, die nie einen Alert auslösen. So verrät kein Alert mehr deinen HudFX-Jumpscare.
 
 ## Starten
 
@@ -22,7 +26,7 @@ npm start
    - Client-Typ: **Öffentlich**
 2. Die **Client-ID** in der App unter *Übersicht* eintragen.
 3. **Mit Twitch verbinden** klicken und im Browser bestätigen.
-4. **In OBS:** Browser-Quelle mit `http://127.0.0.1:7474/addons/alerts/overlay.html` hinzufügen, 1920×1080.
+4. **In OBS:** Browser-Quelle mit `http://127.0.0.1:7474/addons/alerts/overlay.html` hinzufügen. Breite und Höhe wie im Editor unter „Vorschau“ (Standard 800×600).
 5. Die nativen Twitch-Alerts ausschalten, damit Alerts nicht doppelt erscheinen.
 
 ## Aufbau
@@ -41,10 +45,17 @@ src/
     coreRoutes.ts         API für die Oberfläche
   addons/
     index.ts              Liste aller Addons
-    alerts/index.ts       Alerts-Addon: Filter-Logik + API
+    alerts/index.ts       Alerts-Addon: API, Uploads, Test-Alerts
+    alerts/model.ts       Varianten, Bedingungen, Design + Auswahl-Logik
+    alerts/tts.ts         Sprachausgabe über Windows-Stimmen
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
-  addons/alerts/          Overlay für OBS + Einstellungsseite
+  addons/alerts/
+    editor.*              Alert-Editor
+    renderer.js           Zeichnet Alerts (für Overlay UND Vorschau)
+    library.js            Eingebaute Bilder (SVG) + Sounds (Web Audio)
+    effects.js            Konfetti, Feuerwerk, Herzen, Sterne
+    overlay.html          Browser-Quelle für OBS
 ```
 
 **Ablauf eines Events:** Twitch → `eventsub.ts` → `EventBus` → Addons (z.B. Alerts entscheidet: Alert ja oder nein) → WebSocket → Overlay in OBS.
@@ -69,8 +80,8 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 
 - [x] Core: Twitch-Login, EventSub, Overlay-Server, Addon-System
 - [x] Alerts mit Filter pro Belohnung
+- [x] Alert-Editor mit Varianten, eigenen Medien, Sprachausgabe und Effekten
 - [ ] Kanalpunkte-Addon: Belohnungen verwalten, Gruppen (z.B. „HudFX“), alle Belohnungen einer Gruppe pausieren
 - [ ] Chat-Commands
-- [ ] Eigene Sounds, Bilder und Designs für Alerts
 - [ ] Installer (.exe) und Autostart
 - [ ] Addon-Store mit Addons von außerhalb

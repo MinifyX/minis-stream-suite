@@ -1,3 +1,6 @@
+import { app } from 'electron';
+import fs from 'node:fs';
+import path from 'node:path';
 import { ConfigStore } from './config';
 import type { CoreConfig } from './coreConfig';
 import type { EventBus } from './eventBus';
@@ -52,7 +55,13 @@ export interface AddonContext {
   api: {
     get(path: string, handler: ApiHandler): void;
     post(path: string, handler: ApiHandler): void;
+    /** Datei-Upload: body ist ein Buffer, der Dateiname steht in query */
+    upload(path: string, handler: ApiHandler): void;
   };
+  /** Eigener Datenordner (z.B. für hochgeladene Dateien) … */
+  dataDir: string;
+  /** … und die URL, unter der er ausgeliefert wird, z.B. /addon-data/alerts */
+  dataUrl: string;
 }
 
 interface Deps {
@@ -117,6 +126,10 @@ export class AddonManager {
       return off;
     };
     const apiBase = `/api/addons/${addon.id}`;
+    const dataDir = path.join(app.getPath('userData'), 'addon-data', addon.id);
+    const dataUrl = `/addon-data/${addon.id}`;
+    fs.mkdirSync(dataDir, { recursive: true });
+    server.mount(addon.id, dataUrl, dataDir);
 
     const ctx: AddonContext = {
       log: createLogger(addon.name),
@@ -135,7 +148,10 @@ export class AddonManager {
       api: {
         get: (path, handler) => server.route(addon.id, 'GET', apiBase + path, handler),
         post: (path, handler) => server.route(addon.id, 'POST', apiBase + path, handler),
+        upload: (path, handler) => server.route(addon.id, 'POST', apiBase + path, handler, { upload: true }),
       },
+      dataDir,
+      dataUrl,
     };
 
     this.active.set(addon.id, cleanup);
