@@ -11,7 +11,8 @@
     "start": "tsc && electron .",
     "build": "tsc",
     "watch": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:extension": "node browser-extension/build.mjs"
   },
   "dependencies": {
     "ws": "^8.21.3"

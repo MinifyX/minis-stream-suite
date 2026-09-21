@@ -35,13 +35,17 @@ window.ChatRender = (() => {
     .cr-ev-user { font-weight: 800; }
     .cr-ev-detail { opacity: .85; font-size: .9em; margin-top: .15em; }
   `;
+  // Wohin die Styles kommen (Standard: <head>; die Browser-Erweiterung nutzt ein Shadow DOM)
+  let styleTarget = null;
+  const setStyleTarget = (node) => { styleTarget = node; };
+
   let cssInjected = false;
   function injectCss() {
     if (cssInjected) return;
     cssInjected = true;
     const style = document.createElement('style');
     style.textContent = CSS;
-    document.head.append(style);
+    (styleTarget ?? document.head).append(style);
   }
 
   /** Schriften: null = auf dem PC installiert, sonst Google-Fonts-Stärken */
@@ -78,6 +82,19 @@ window.ChatRender = (() => {
     let hash = 0;
     for (const ch of item.user.login || item.user.name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return DEFAULT_NAME_COLORS[hash % DEFAULT_NAME_COLORS.length];
+  }
+
+  /** Zu dunkle Farben auf dunklem Hintergrund aufhellen (wie Twitch es auch macht) */
+  function readableOnDark(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    if (lum >= 0.45) return hex;
+    const mix = Math.min(0.75, 0.45 - lum + 0.25); // Richtung Weiß mischen
+    r = Math.round(r + (255 - r) * mix);
+    g = Math.round(g + (255 - g) * mix);
+    b = Math.round(b + (255 - b) * mix);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
   }
 
   // ------------------------------------------------------------ Text: Emotes, Markdown, Farben
@@ -211,7 +228,8 @@ window.ChatRender = (() => {
       }
     }
     const name = el('span', 'cr-name', item.user.name);
-    name.style.color = options.fixedNameColor || nameColor(item);
+    const color = options.fixedNameColor || nameColor(item);
+    name.style.color = options.darkBackground && !options.fixedNameColor ? readableOnDark(color) : color;
     name.dataset.login = item.user.login;
     if (item.user.login && item.user.name.toLowerCase() !== item.user.login.toLowerCase()) {
       name.append(' ', el('span', 'cr-login', `(${item.user.login})`));
@@ -321,7 +339,7 @@ window.ChatRender = (() => {
     overlayCssInjected = true;
     const style = document.createElement('style');
     style.textContent = OVERLAY_CSS;
-    document.head.append(style);
+    (styleTarget ?? document.head).append(style);
   }
 
   /** Eintrag fürs Overlay bauen (Nachricht oder Event) */
@@ -336,7 +354,7 @@ window.ChatRender = (() => {
   }
 
   return {
-    setAssets, getAssets, message, event, plainText, nameColor, ROLE_LEVEL, FONTS, loadFont,
+    setAssets, getAssets, setStyleTarget, message, event, plainText, nameColor, readableOnDark, ROLE_LEVEL, FONTS, loadFont,
     applyOverlayStyle, overlayVisible, overlayItem, injectOverlayCss,
   };
 })();

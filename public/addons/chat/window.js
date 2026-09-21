@@ -42,7 +42,7 @@ function build(item) {
     }
     return node;
   }
-  const node = ChatRender.message(item, { settings, showBadges: w().showBadges, timestamps: w().timestamps });
+  const node = ChatRender.message(item, { settings, showBadges: w().showBadges, timestamps: w().timestamps, darkBackground: true });
   if (isHighlight(item)) node.classList.add('cr-hl');
   if (item.hiddenReward) {
     node.classList.add('cr-muted');
