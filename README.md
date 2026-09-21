@@ -2,7 +2,19 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.2):** Core plus **Alerts-Addon mit Alert-Editor**:
+**Aktueller Stand (v0.3):** Core plus zwei Addons.
+
+**Kanalpunkte-Addon:**
+
+- Belohnungen in **Gruppen** sortieren (z.B. „HudFX“). Eine Belohnung kann in mehreren Gruppen stecken.
+- Eine ganze Gruppe mit einem Klick **pausieren, fortsetzen, aus- oder einblenden**.
+- Eine ganze Gruppe für **Alerts stummschalten**. Das gilt automatisch auch für Belohnungen, die später dazukommen.
+- Belohnungen **anlegen, bearbeiten und löschen**: Kosten, Beschreibung, Farbe, Limits, Abklingzeit.
+- Im Dashboard angelegte Belohnungen **übernehmen**, damit die Suite sie steuern kann.
+
+> **Twitch-Einschränkung:** Eine App darf nur Belohnungen ändern, die sie selbst angelegt hat. Belohnungen aus dem Dashboard oder von anderen Apps (z.B. HudFX) sind 🔒 „nur lesen“. Sortieren und für Alerts stummschalten klappt trotzdem. Belohnungen von anderen Apps niemals übernehmen, sonst erkennt die andere App sie nicht mehr.
+
+**Alerts-Addon mit Alert-Editor:**
 
 - **Varianten** pro Event-Art (Follows, Abos, verschenkte Abos, Bits, Raids, Kanalpunkte) mit Bedingungen, z.B. „ab 1000 Bits“, „nur Verlängerungen ab 12 Monaten“ oder „nur diese Belohnungen“. Die oberste passende Variante gewinnt, oder es wird zufällig gewechselt.
 - **Editor** wie bei Twitch: Layout, Hintergrund, Schrift, Farben, Animationen, Bild/Video, Sound, Vorlesen (Windows-Stimmen) und Effekte (Konfetti, Feuerwerk, …), mit Live-Vorschau.
@@ -48,6 +60,8 @@ src/
     alerts/index.ts       Alerts-Addon: API, Uploads, Test-Alerts
     alerts/model.ts       Varianten, Bedingungen, Design + Auswahl-Logik
     alerts/tts.ts         Sprachausgabe über Windows-Stimmen
+    channelpoints/        Kanalpunkte-Addon (Gruppen, Belohnungen, Übernehmen)
+    channelpoints/service.ts  Schnittstelle für andere Addons (Gruppen → Alerts)
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
   addons/alerts/
@@ -56,6 +70,7 @@ public/
     library.js            Eingebaute Bilder (SVG) + Sounds (Web Audio)
     effects.js            Konfetti, Feuerwerk, Herzen, Sterne
     overlay.html          Browser-Quelle für OBS
+  addons/channelpoints/   Oberfläche des Kanalpunkte-Addons
 ```
 
 **Ablauf eines Events:** Twitch → `eventsub.ts` → `EventBus` → Addons (z.B. Alerts entscheidet: Alert ja oder nein) → WebSocket → Overlay in OBS.
@@ -73,6 +88,7 @@ Im `activate(ctx)` stehen dem Addon zur Verfügung:
 - `ctx.settings()` für eigene Einstellungen
 - `ctx.api` für eigene API-Routen
 - `ctx.overlay.broadcast()` um Daten an Overlays zu schicken
+- `ctx.provide()` / `ctx.use()` für Schnittstellen zwischen Addons (z.B. Kanalpunkte-Gruppen → Alerts)
 
 Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 
@@ -81,7 +97,8 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 - [x] Core: Twitch-Login, EventSub, Overlay-Server, Addon-System
 - [x] Alerts mit Filter pro Belohnung
 - [x] Alert-Editor mit Varianten, eigenen Medien, Sprachausgabe und Effekten
-- [ ] Kanalpunkte-Addon: Belohnungen verwalten, Gruppen (z.B. „HudFX“), alle Belohnungen einer Gruppe pausieren
+- [x] Kanalpunkte-Addon: Belohnungen verwalten, Gruppen (z.B. „HudFX“), Gruppen pausieren und für Alerts stummschalten
+- [ ] Kanalpunkte: Warteschlange (Einlösungen erledigen oder erstatten), Gruppen automatisch beim Stream-Start/-Ende schalten
 - [ ] Chat-Commands
 - [ ] Installer (.exe) und Autostart
 - [ ] Addon-Store mit Addons von außerhalb

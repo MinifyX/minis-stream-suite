@@ -1,0 +1,90 @@
+body { overflow: hidden; }
+[hidden] { display: none !important; }
+textarea, select {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; border-radius: 8px; font: inherit; resize: vertical;
+}
+
+.cp { display: grid; grid-template-columns: 250px minmax(0, 1fr); height: 100vh; }
+
+/* ------------------------------------------------------------ Gruppen (links) */
+.cp-side { background: var(--bg-2); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.side-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 10px; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--muted); }
+#group-nav { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+.g-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer;
+  background: none; border: 0; color: var(--text); font: inherit; font-weight: 500; text-align: left; width: 100%;
+}
+.g-item:hover { background: var(--card); }
+.g-item.active { background: var(--accent-soft); color: #d6bcff; }
+.g-item .g-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-item .count { font-size: 12px; color: var(--muted); }
+.g-sep { height: 1px; background: var(--border); margin: 8px 4px; }
+.dot-color { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.side-note { margin-top: auto; padding: 14px; font-size: 12px; color: var(--muted); }
+
+/* ------------------------------------------------------------ Hauptbereich */
+.cp-main { overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; }
+.cp-head { display: flex; flex-direction: column; gap: 10px; }
+.cp-title { display: flex; align-items: center; gap: 12px; }
+.cp-title h1 { margin: 0; }
+.cp-title .spacer { flex: 1; }
+.group-panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.group-panel .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.group-panel .label { font-weight: 600; min-width: 150px; }
+.stat-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.cp-toolbar { display: flex; gap: 8px; }
+.cp-toolbar input { flex: 1; }
+
+.import-banner {
+  background: rgba(245, 176, 65, .08); border: 1px solid rgba(245, 176, 65, .4); border-radius: 12px;
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.import-banner ol { margin: 0; padding-left: 20px; }
+.import-banner .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ------------------------------------------------------------ Belohnungen */
+.reward-list { display: flex; flex-direction: column; gap: 6px; }
+.reward {
+  display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 12px;
+  background: var(--card); border: 1px solid var(--border);
+}
+.reward.off { opacity: .6; }
+.r-img { width: 48px; height: 48px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.r-img img { width: 32px; height: 32px; }
+.r-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.r-title { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-prompt { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; }
+.r-actions { display: flex; gap: 6px; align-items: center; flex: none; }
+.icon-btn { background: none; border: 1px solid transparent; color: var(--muted); cursor: pointer; font-size: 15px; padding: 5px 8px; border-radius: 8px; }
+.icon-btn:hover { color: var(--text); background: var(--card-2); border-color: var(--border); }
+.group-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; color: #fff; }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+
+/* ------------------------------------------------------------ Dialoge */
+.modal-back { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); display: grid; place-items: center; z-index: 50; }
+.modal { width: min(560px, 92vw); max-height: 88vh; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+.modal-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.modal-head h2 { margin: 0; flex: 1; }
+.modal-body { overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { margin-bottom: 0; }
+.opt-row { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.opt-row > span { flex: 1; font-weight: 600; }
+.opt-row input[type="number"] { width: 110px; }
+.note { font-size: 12px; color: var(--muted); }
+.warn-note { font-size: 12px; color: var(--warn); }
+.color-row { display: flex; gap: 6px; }
+.color-row input[type="color"] { width: 42px; height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }
+.emoji-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.emoji-row button { font-size: 18px; width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg-2); cursor: pointer; }
+.emoji-row button.selected { border-color: #fff; }
+.check-list { display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow-y: auto; background: var(--bg); border-radius: 8px; padding: 6px; }
+.check-list label { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.check-list label:hover { background: var(--card-2); }
+.check-list input { accent-color: var(--accent); width: 16px; height: 16px; }
+.check-list .cost { margin-left: auto; color: var(--muted); font-size: 12px; }
+.counter { font-size: 11px; color: var(--muted); text-align: right; }

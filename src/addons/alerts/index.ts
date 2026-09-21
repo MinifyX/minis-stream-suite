@@ -13,6 +13,7 @@ import {
   describeEvent,
   fillPlain,
   pickVariant,
+  rewardAllowed,
   sanitizeCategories,
   type AlertSettings,
   type CategoryId,
@@ -20,6 +21,7 @@ import {
   type Variant,
 } from './model';
 import { Tts } from './tts';
+import { CHANNELPOINTS_SERVICE, type ChannelPointsService } from '../channelpoints/service';
 
 interface HelixReward {
   id: string;
@@ -130,8 +132,12 @@ export const alertsAddon: Addon = {
       });
     };
 
+    /** Gruppen aus dem Kanalpunkte-Addon (leer, wenn es aus ist) */
+    const channelPoints = () => ctx.use<ChannelPointsService>(CHANNELPOINTS_SERVICE);
+    const groupsOf = (rewardId: string) => channelPoints()?.groupsOf(rewardId).map((g) => g.id) ?? [];
+
     ctx.events.onAny(async (event) => {
-      const picked = pickVariant(settings.all(), event);
+      const picked = pickVariant(settings.all(), event, groupsOf);
       if (picked) await send(picked.category, picked.variant, event);
     });
 
@@ -156,6 +162,7 @@ export const alertsAddon: Addon = {
         settings.set('canvas', { width, height });
       }
       if (typeof body?.newRewardDefault === 'boolean') settings.set('newRewardDefault', body.newRewardDefault);
+      if (Array.isArray(body?.mutedGroups)) settings.set('mutedGroups', body.mutedGroups.map(String));
       return settings.all();
     });
 
@@ -168,7 +175,9 @@ export const alertsAddon: Addon = {
         query: { broadcaster_id: user.id },
       });
       const s = settings.all();
+      const cp = channelPoints();
       return {
+        groups: cp?.groups() ?? null,
         rewards: res.data
           .map((r) => ({
             id: r.id,
@@ -179,7 +188,8 @@ export const alertsAddon: Addon = {
             color: r.background_color,
             image: (r.image ?? r.default_image)?.url_1x ?? null,
             custom: r.id in s.rewards,
-            alert: s.rewards[r.id]?.alert ?? s.newRewardDefault,
+            groups: cp?.groupsOf(r.id).map((g) => g.id) ?? [],
+            alert: rewardAllowed(s, r.id, groupsOf(r.id)),
           }))
           .sort((a, b) => a.cost - b.cost),
       };
@@ -216,10 +226,28 @@ export const alertsAddon: Addon = {
       }
 
       const event = testEventFor(category, null, body.reward);
-      const picked = pickVariant(s, event);
+      const picked = pickVariant(s, event, groupsOf);
       if (!picked) return { shown: false };
       await send(picked.category, picked.variant, event);
       return { shown: true, variant: picked.variant.name };
+    });
+
+    /** Nach dem Übernehmen einer Belohnung (neue ID): Filter und Varianten umziehen */
+    ctx.api.post('/rewards/migrate', ({ body }) => {
+      const from = String(body?.from ?? '');
+      const to = String(body?.to ?? '');
+      if (!from || !to) throw new HttpError(400, 'from/to fehlt');
+      const rewards = { ...settings.get('rewards') };
+      if (rewards[from]) {
+        rewards[to] = rewards[from];
+        delete rewards[from];
+        settings.set('rewards', rewards);
+      }
+      const categories = settings.get('categories');
+      for (const v of categories.redemption.variants) {
+        v.conditions.rewardIds = v.conditions.rewardIds.map((id) => (id === from ? to : id));
+      }
+      settings.set('categories', categories);
     });
 
     ctx.api.post('/skip', () => ctx.overlay.broadcast({ kind: 'skip' }));

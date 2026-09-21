@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Kanalpunkte</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="cp.css">
+</head>
+<body>
+  <div class="cp">
+    <aside class="cp-side">
+      <div class="side-head">
+        <span>GRUPPEN</span>
+        <button class="btn small" id="new-group" title="Neue Gruppe">＋ Gruppe</button>
+      </div>
+      <nav id="group-nav"></nav>
+      <div class="side-note">
+        Gruppen sind wie Ordner: Eine Belohnung kann in mehreren stecken. Eine ganze Gruppe kannst du mit einem Klick pausieren oder im Alert-Editor stummschalten.
+      </div>
+    </aside>
+
+    <main class="cp-main">
+      <header class="cp-head" id="head"></header>
+      <div id="imports"></div>
+      <div class="cp-toolbar">
+        <input type="search" id="search" placeholder="Belohnung suchen…">
+        <button class="btn" id="reload" title="Neu laden">↻</button>
+        <button class="btn primary" id="new-reward">＋ Neue Belohnung</button>
+      </div>
+      <div id="rewards"></div>
+    </main>
+  </div>
+
+  <div id="modal-host"></div>
+
+  <script src="/app/ui.js"></script>
+  <script src="cp.js"></script>
+</body>
+</html>

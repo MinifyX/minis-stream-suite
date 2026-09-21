@@ -62,6 +62,10 @@ export interface AddonContext {
   dataDir: string;
   /** … und die URL, unter der er ausgeliefert wird, z.B. /addon-data/alerts */
   dataUrl: string;
+  /** Eine Schnittstelle für andere Addons anbieten (z.B. "channelpoints") */
+  provide(name: string, service: object): void;
+  /** Schnittstelle eines anderen Addons holen – undefined, wenn es nicht aktiv ist */
+  use<T extends object>(name: string): T | undefined;
 }
 
 interface Deps {
@@ -79,6 +83,7 @@ function manifestOf(addon: Addon): AddonManifest {
 
 export class AddonManager {
   private active = new Map<string, Array<() => void>>();
+  private services = new Map<string, object>();
   private log = createLogger('Addons');
 
   constructor(
@@ -152,6 +157,11 @@ export class AddonManager {
       },
       dataDir,
       dataUrl,
+      provide: (name, service) => {
+        this.services.set(name, service);
+        cleanup.push(() => this.services.delete(name));
+      },
+      use: <T extends object>(name: string) => this.services.get(name) as T | undefined,
     };
 
     this.active.set(addon.id, cleanup);

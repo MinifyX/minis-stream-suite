@@ -856,7 +856,57 @@ function renderRewardsView() {
   const box = $('#rewards-view');
   const search = h('input', { type: 'search', placeholder: 'Belohnung suchen…', value: state.rewardSearch });
   const list = h('div');
-  const visible = () => (state.rewards ?? []).filter((r) => r.title.toLowerCase().includes(state.rewardSearch.toLowerCase()));
+  const groups = state.rewardGroups ?? [];
+  const groupById = (id) => groups.find((g) => g.id === id);
+  const muted = new Set(state.s.mutedGroups ?? []);
+  const visible = () => (state.rewards ?? []).filter((r) =>
+    r.title.toLowerCase().includes(state.rewardSearch.toLowerCase())
+    && (!state.rewardGroupFilter || r.groups.includes(state.rewardGroupFilter)));
+
+  const setGroupMuted = async (groupId, isMuted) => {
+    const next = isMuted ? [...muted, groupId] : [...muted].filter((id) => id !== groupId);
+    try {
+      state.s.mutedGroups = (await api(`${BASE}/settings`, { mutedGroups: next })).mutedGroups;
+      await loadRewards();
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  };
+
+  /** Warum kommt (k)ein Alert? */
+  const reasonBadge = (r) => {
+    if (r.custom) return h('span', { class: 'badge accent' }, 'eigene Einstellung');
+    const mutedBy = r.groups.map(groupById).find((g) => g && muted.has(g.id));
+    if (mutedBy) return h('span', { class: 'badge warn' }, `stumm über Gruppe ${mutedBy.icon} ${mutedBy.name}`);
+    return h('span', { class: 'badge' }, 'Standard');
+  };
+
+  const groupSection = () => {
+    if (state.rewardGroups === undefined) return null;
+    if (state.rewardGroups === null) {
+      return h('p', { class: 'note' }, 'Tipp: Mit dem Addon „Kanalpunkte“ kannst du Belohnungen in Gruppen sortieren (z.B. HudFX) und hier eine ganze Gruppe auf einmal stummschalten.');
+    }
+    if (!groups.length) {
+      return h('p', { class: 'note' }, 'Noch keine Gruppen. Lege im Addon „Kanalpunkte“ welche an, z.B. „HudFX“. Dann kannst du sie hier auf einmal stummschalten.');
+    }
+    return h('div', { class: 'group-mute' },
+      h('div', { class: 'sub-head' }, 'GRUPPEN'),
+      ...groups.map((g) => h('div', { class: 'group-mute-row' },
+        h('span', { class: 'group-dot', style: { background: g.color } }),
+        h('span', { class: 'group-mute-name' }, `${g.icon} ${g.name}`),
+        h('span', { class: 'muted' }, muted.has(g.id) ? 'kein Alert' : 'Alert wie Standard'),
+        toggle(!muted.has(g.id), (on) => setGroupMuted(g.id, !on), `Alerts für Gruppe ${g.name}`))),
+      h('div', { class: 'note' }, 'Eine eigene Einstellung bei einer einzelnen Belohnung geht immer vor.'));
+  };
+
+  const groupFilterChips = () => groups.length
+    ? h('div', { class: 'chips group-chips' },
+      h('button', { class: `chip${state.rewardGroupFilter ? '' : ' active'}`, onclick: () => { state.rewardGroupFilter = null; renderRewardsView(); } }, 'Alle'),
+      ...groups.map((g) => h('button', {
+        class: `chip${state.rewardGroupFilter === g.id ? ' active' : ''}`,
+        onclick: () => { state.rewardGroupFilter = g.id; renderRewardsView(); },
+      }, `${g.icon} ${g.name}`)))
+    : null;
 
   const renderList = () => {
     if (!state.rewards) {
@@ -876,7 +926,8 @@ function renderRewardsView() {
             h('span', { class: 'muted' }, `${r.cost.toLocaleString('de-DE')} Punkte`),
             !r.enabled ? h('span', { class: 'badge' }, 'deaktiviert') : null,
             r.paused ? h('span', { class: 'badge warn' }, 'pausiert') : null,
-            r.custom ? h('span', { class: 'badge accent' }, 'eigene Einstellung') : h('span', { class: 'badge' }, 'Standard'))),
+            ...r.groups.map(groupById).filter(Boolean).map((g) => h('span', { class: 'badge', style: { background: `${g.color}33`, color: '#fff' } }, `${g.icon} ${g.name}`)),
+            reasonBadge(r))),
         h('div', { class: 'reward-actions' },
           r.custom ? h('button', { class: 'btn small', title: 'Auf Standard zurücksetzen', onclick: () => setRewardFilter({ [r.id]: null }) }, '↺') : null,
           h('button', { class: 'btn small', title: 'Prüft, ob ein Alert käme, und zeigt ihn im Overlay', onclick: () => testReward(r) }, 'Test'),
@@ -911,6 +962,9 @@ function renderRewardsView() {
       h('div', {},
         h('strong', {}, 'Standard: Alert für Belohnungen ohne eigene Einstellung'),
         h('small', { class: 'muted' }, 'Gilt auch für Belohnungen, die du später neu anlegst.'))),
+    groupSection(),
+    h('div', { class: 'sub-head' }, 'EINZELNE BELOHNUNGEN'),
+    groupFilterChips(),
     h('div', { class: 'toolbar' },
       search,
       h('button', { class: 'btn small', onclick: () => setVisible(true) }, 'Angezeigte: Alert an'),
@@ -927,13 +981,8 @@ async function setRewardFilter(changes) {
     toast(err.message, 'err');
     return;
   }
-  for (const r of state.rewards ?? []) {
-    if (!(r.id in changes)) continue;
-    const change = changes[r.id];
-    r.custom = change !== null;
-    r.alert = change ? change.alert : state.s.newRewardDefault;
-  }
-  if (state.view === 'rewards') renderRewardsView();
+  // Neu laden, weil beim Zurücksetzen Gruppen mitentscheiden
+  await loadRewards();
 }
 
 async function testReward(r) {
@@ -948,7 +997,10 @@ async function testReward(r) {
 
 async function loadRewards() {
   try {
-    state.rewards = (await api(`${BASE}/rewards`)).rewards;
+    const res = await api(`${BASE}/rewards`);
+    state.rewards = res.rewards;
+    state.rewardGroups = res.groups;
+    if (state.rewardGroupFilter && !res.groups?.some((g) => g.id === state.rewardGroupFilter)) state.rewardGroupFilter = null;
     state.rewardsError = '';
   } catch (err) {
     state.rewards = null;

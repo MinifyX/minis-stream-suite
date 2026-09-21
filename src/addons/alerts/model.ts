@@ -95,6 +95,19 @@ export interface AlertSettings {
   newRewardDefault: boolean;
   /** Belohnungs-Filter: Reward-ID → an/aus */
   rewards: Record<string, RewardSetting>;
+  /** Belohnungs-Filter: Kanalpunkte-Gruppen, die nie einen Alert auslösen */
+  mutedGroups: string[];
+}
+
+/**
+ * Darf eine Belohnung überhaupt einen Alert auslösen?
+ * Reihenfolge: eigene Einstellung der Belohnung → stumme Gruppe → Standard.
+ */
+export function rewardAllowed(settings: AlertSettings, rewardId: string, groupIds: string[]): boolean {
+  const own = settings.rewards[rewardId];
+  if (own) return own.alert;
+  if (groupIds.some((id) => settings.mutedGroups.includes(id))) return false;
+  return settings.newRewardDefault;
 }
 
 // ------------------------------------------------------------------ Standardwerte
@@ -241,6 +254,7 @@ export const DEFAULT_SETTINGS: AlertSettings = {
   categories: DEFAULT_CATEGORIES,
   newRewardDefault: true,
   rewards: {},
+  mutedGroups: [],
 };
 
 // ------------------------------------------------------------------ Aufräumen von Eingaben
@@ -343,15 +357,16 @@ export function matches(variant: Variant, event: StreamEvent): boolean {
 }
 
 /** Wählt die Variante für ein Event – oder null, wenn kein Alert kommen soll. */
-export function pickVariant(settings: AlertSettings, event: StreamEvent): { category: CategoryId; variant: Variant } | null {
+export function pickVariant(
+  settings: AlertSettings,
+  event: StreamEvent,
+  groupsOf: (rewardId: string) => string[] = () => [],
+): { category: CategoryId; variant: Variant } | null {
   const category = categoryOf(event);
   if (!category) return null;
   // Verschenkte Abos lösen pro Empfänger ein "sub" aus → das übernimmt der Gift-Alert
   if (event.type === 'sub' && event.isGift) return null;
-  if (event.type === 'redemption') {
-    const allowed = settings.rewards[event.reward.id]?.alert ?? settings.newRewardDefault;
-    if (!allowed) return null;
-  }
+  if (event.type === 'redemption' && !rewardAllowed(settings, event.reward.id, groupsOf(event.reward.id))) return null;
   const { randomize, variants } = settings.categories[category];
   const candidates = variants.filter((v) => v.enabled && matches(v, event));
   if (!candidates.length) return null;

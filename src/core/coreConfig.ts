@@ -10,5 +10,5 @@ export interface CoreConfig {
 export const defaultCoreConfig: CoreConfig = {
   clientId: '',
   tokens: null,
-  enabledAddons: ['alerts'],
+  enabledAddons: ['alerts', 'channelpoints'],
 };
