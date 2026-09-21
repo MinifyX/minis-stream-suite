@@ -114,36 +114,6 @@ function validateCommand(input: unknown, others: Command[]): Command {
   };
 }
 
-// ------------------------------------------------------------------ Zeit-Texte
-
-function duration(ms: number): string {
-  const min = Math.floor(ms / 60_000);
-  const days = Math.floor(min / 1440);
-  const hours = Math.floor((min % 1440) / 60);
-  const mins = min % 60;
-  const parts: string[] = [];
-  if (days) parts.push(`${days} ${days === 1 ? 'Tag' : 'Tage'}`);
-  if (hours) parts.push(`${hours} Std.`);
-  if (mins || !parts.length) parts.push(`${mins} Min.`);
-  return parts.join(' ');
-}
-
-function since(date: Date): string {
-  const now = new Date();
-  let months = (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-  if (now.getDate() < date.getDate()) months--;
-  const years = Math.floor(months / 12);
-  months %= 12;
-  if (!years && !months) {
-    const days = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
-    return `${days} ${days === 1 ? 'Tag' : 'Tagen'}`;
-  }
-  const parts: string[] = [];
-  if (years) parts.push(`${years} ${years === 1 ? 'Jahr' : 'Jahren'}`);
-  if (months) parts.push(`${months} ${months === 1 ? 'Monat' : 'Monaten'}`);
-  return parts.join(' und ');
-}
-
 // ------------------------------------------------------------------ Addon
 
 export const commandsAddon: Addon = {
@@ -160,120 +130,16 @@ export const commandsAddon: Addon = {
     const history: HistoryEntry[] = [];
     const lastGlobal = new Map<string, number>();
     const lastUser = new Map<string, number>();
-    /** IDs unserer eigenen Nachrichten – die kommen als Chat-Event zurück und dürfen nichts auslösen */
-    const sentIds = new Set<string>();
-
     const addHistory = (entry: Omit<HistoryEntry, 'time'>) => {
       history.push({ time: Date.now(), ...entry });
       if (history.length > 50) history.shift();
     };
 
-    // -------------------------------------------------------- Chat senden (mit Bremse gegen Spam)
-
-    let sendQueue: Promise<void> = Promise.resolve();
-    let queued = 0;
-    let lastSend = 0;
-
-    const sendChat = (message: string, replyTo?: string): Promise<void> => {
-      if (queued >= 10) {
-        ctx.log.warn('Zu viele Antworten auf einmal – eine wird übersprungen');
-        return Promise.resolve();
-      }
-      queued++;
-      const job = sendQueue.then(async () => {
-        const user = ctx.getUser();
-        if (!user) throw new Error('Nicht bei Twitch eingeloggt');
-        const wait = lastSend + 1100 - Date.now();
-        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-        lastSend = Date.now();
-        const res = await ctx.twitch.request<{ data: { message_id: string; is_sent: boolean; drop_reason?: { message: string } | null }[] }>(
-          'POST',
-          '/chat/messages',
-          { body: { broadcaster_id: user.id, sender_id: user.id, message, ...(replyTo ? { reply_parent_message_id: replyTo } : {}) } },
-        );
-        const result = res.data[0];
-        if (result?.message_id) {
-          sentIds.add(result.message_id);
-          if (sentIds.size > 200) sentIds.delete(sentIds.values().next().value!);
-        }
-        if (result && !result.is_sent) throw new Error(`Twitch hat die Nachricht nicht gesendet: ${result.drop_reason?.message ?? 'unbekannt'}`);
-      }).finally(() => {
-        queued--;
-      });
-      sendQueue = job.catch(() => {});
-      return job;
-    };
-
-    // -------------------------------------------------------- Variablen
-
-    const channelInfo = async () => {
-      const user = ctx.getUser();
-      if (!user) return null;
-      const res = await ctx.twitch.request<{ data: { game_name: string; title: string }[] }>('GET', '/channels', { query: { broadcaster_id: user.id } });
-      return res.data[0] ?? null;
-    };
-
-    const uptime = async () => {
-      const user = ctx.getUser();
-      if (!user) return 'unbekannt';
-      const res = await ctx.twitch.request<{ data: { started_at: string }[] }>('GET', '/streams', { query: { user_id: user.id } });
-      const started = res.data[0]?.started_at;
-      return started ? duration(Date.now() - new Date(started).getTime()) : 'gerade offline';
-    };
-
-    const followage = async (userId: string) => {
-      const broadcaster = ctx.getUser();
-      if (!broadcaster) return 'unbekannt';
-      if (userId === broadcaster.id) return 'schon immer (das ist der Kanal selbst)';
-      const res = await ctx.twitch.request<{ data: { followed_at: string }[] }>('GET', '/channels/followers', {
-        query: { broadcaster_id: broadcaster.id, user_id: userId },
-      });
-      const followed = res.data[0]?.followed_at;
-      return followed ? since(new Date(followed)) : 'gar nicht';
-    };
-
-    const VAR_RE = /\{(\w+)(?::([^}]*))?\}/g;
-
-    /** Setzt alle {Variablen} ein */
-    const render = async (cmd: Command, chatter: { id: string; name: string }, args: string[]): Promise<string> => {
-      const needed = new Set([...cmd.response.matchAll(VAR_RE)].map((m) => m[1].toLowerCase()));
-      const [info, up, follow] = await Promise.all([
-        needed.has('game') || needed.has('title') ? channelInfo().catch(() => null) : null,
-        needed.has('uptime') ? uptime().catch(() => 'unbekannt') : null,
-        needed.has('followage') ? followage(chatter.id).catch(() => 'unbekannt') : null,
-      ]);
-      const touser = (args[0] ?? '').replace(/^@/, '') || chatter.name;
-      const everyoneCommands = settings.get('commands').filter((c) => c.enabled && c.permission === 'everyone').map((c) => settings.get('prefix') + c.name);
-
-      return cmd.response
-        .replace(VAR_RE, (match, rawKey: string, param?: string) => {
-          const key = rawKey.toLowerCase();
-          const argMatch = /^arg([1-9])$/.exec(key);
-          if (argMatch) return args[Number(argMatch[1]) - 1] ?? '';
-          switch (key) {
-            case 'user': return chatter.name;
-            case 'touser': return touser;
-            case 'args': return args.join(' ');
-            case 'count': return String(cmd.count);
-            case 'channel': return ctx.getUser()?.displayName ?? '';
-            case 'game': return info?.game_name || 'keine Kategorie';
-            case 'title': return info?.title ?? '';
-            case 'uptime': return up ?? '';
-            case 'followage': return follow ?? '';
-            case 'commands': return everyoneCommands.join(' ');
-            case 'random': {
-              const [min, max] = (param ?? '1-100').split('-').map((n) => Math.round(Number(n)));
-              if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) return match;
-              return String(min + Math.floor(Math.random() * (max - min + 1)));
-            }
-            case 'pick': {
-              const options = (param ?? '').split('|').map((s) => s.trim()).filter(Boolean);
-              return options.length ? options[Math.floor(Math.random() * options.length)] : match;
-            }
-            default: return match;
-          }
-        })
-        .slice(0, 500);
+    /** Setzt alle {Variablen} ein (gemeinsamer Baustein im Core) */
+    const render = (cmd: Command, chatter: { id: string; name: string }, args: string[]) => {
+      const prefix = settings.get('prefix');
+      const everyone = settings.get('commands').filter((c) => c.enabled && c.permission === 'everyone').map((c) => prefix + c.name);
+      return ctx.chat.render(cmd.response, { user: chatter, args, values: { count: String(cmd.count), commands: everyone.join(' ') } });
     };
 
     // -------------------------------------------------------- Command-Erkennung
@@ -306,7 +172,7 @@ export const commandsAddon: Addon = {
     };
 
     ctx.events.on('chat', async (event: EventOfType<'chat'>) => {
-      if (event.test || sentIds.has(event.messageId)) return;
+      if (event.test || ctx.chat.isOwnMessage(event.messageId)) return;
       const found = findCommand(event.message);
       if (!found) return;
       const { cmd, args, used } = found;
@@ -330,7 +196,7 @@ export const commandsAddon: Addon = {
         let text = '';
         if (current.response) {
           text = await render(current, event.user, args);
-          if (text) await sendChat(text, current.reply ? event.messageId : undefined);
+          if (text) await ctx.chat.send(text, current.reply ? event.messageId : undefined);
         }
         if (current.keybind?.enabled) {
           void runKeys(current.keybind.target, current.keybind.steps, `${settings.get('prefix')}${current.name}`).catch((err) =>

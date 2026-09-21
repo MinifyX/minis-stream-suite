@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
 import path from 'node:path';
 import { builtInAddons, upcomingAddons } from './addons';
 import { AddonManager } from './core/addons';
+import { ChatService } from './core/chat';
 import { ConfigStore } from './core/config';
 import { defaultCoreConfig, type CoreConfig } from './core/coreConfig';
 import { registerCoreRoutes } from './core/coreRoutes';
@@ -28,7 +29,8 @@ async function bootstrap(): Promise<void> {
   const api = new TwitchApi(auth);
   const eventsub = new EventSubClient(auth, api, bus, createLogger('EventSub'));
   const server = new LocalServer(path.join(app.getAppPath(), 'public'), PORT, createLogger('Server'));
-  const addons = new AddonManager(builtInAddons, { bus, api, auth, server, config });
+  const chat = new ChatService(auth, api);
+  const addons = new AddonManager(builtInAddons, { bus, api, auth, server, config, chat });
 
   registerCoreRoutes({ server, auth, eventsub, addons, upcomingAddons, bus });
 

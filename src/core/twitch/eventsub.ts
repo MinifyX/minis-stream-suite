@@ -22,6 +22,8 @@ function subscriptionsFor(userId: string) {
     { type: 'channel.raid', version: '1', condition: { to_broadcaster_user_id: userId } },
     { type: 'channel.chat.message', version: '1', condition: { ...broadcaster, user_id: userId } },
     { type: 'channel.update', version: '2', condition: broadcaster },
+    { type: 'stream.online', version: '1', condition: broadcaster },
+    { type: 'stream.offline', version: '1', condition: broadcaster },
   ];
 }
 

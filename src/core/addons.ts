@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
+import { renderTemplate, type ChatService, type TemplateContext } from './chat';
 import { ConfigStore } from './config';
 import type { CoreConfig } from './coreConfig';
 import type { EventBus } from './eventBus';
@@ -68,6 +69,12 @@ export interface AddonContext {
   use<T extends object>(name: string): T | undefined;
   /** Funktion, die beim Deaktivieren aufgerufen wird (z.B. Timer stoppen) */
   onDispose(fn: () => void): void;
+  /** Chat: senden (gemeinsame Warteschlange), eigene Nachrichten erkennen, {Variablen} einsetzen */
+  chat: {
+    send(message: string, replyTo?: string): Promise<void>;
+    isOwnMessage(messageId: string): boolean;
+    render(template: string, context?: TemplateContext): Promise<string>;
+  };
 }
 
 interface Deps {
@@ -76,6 +83,7 @@ interface Deps {
   auth: TwitchAuth;
   server: LocalServer;
   config: ConfigStore<CoreConfig>;
+  chat: ChatService;
 }
 
 function manifestOf(addon: Addon): AddonManifest {
@@ -166,6 +174,11 @@ export class AddonManager {
       use: <T extends object>(name: string) => this.services.get(name) as T | undefined,
       onDispose: (fn) => {
         cleanup.push(fn);
+      },
+      chat: {
+        send: (message, replyTo) => this.deps.chat.send(message, replyTo),
+        isOwnMessage: (id) => this.deps.chat.isOwnMessage(id),
+        render: (template, context) => renderTemplate(template, api, auth, context),
       },
     };
 

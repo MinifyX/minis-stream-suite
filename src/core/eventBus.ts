@@ -5,6 +5,8 @@ type AnyHandler = (event: StreamEvent) => unknown;
 
 function describe(event: StreamEvent): string {
   if (event.type === 'channelupdate') return `${event.test ? '[Test] ' : ''}Kanal geändert: „${event.categoryName}“ – ${event.title}`;
+  if (event.type === 'streamonline') return `${event.test ? '[Test] ' : ''}Stream ist live 🔴`;
+  if (event.type === 'streamoffline') return `${event.test ? '[Test] ' : ''}Stream beendet`;
   const who = 'user' in event && event.user ? event.user.name : 'Anonym';
   const extra = event.type === 'redemption' ? ` („${event.reward.title}“)` : '';
   return `${event.test ? '[Test] ' : ''}${event.type} von ${who}${extra}`;

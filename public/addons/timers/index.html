@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Timer-Nachrichten</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="tm.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <div class="title-row">
+        <h1>⏰ Timer-Nachrichten</h1>
+        <span class="spacer"></span>
+        <button class="btn" id="templates">📋 Vorlagen</button>
+        <button class="btn primary" id="new-timer">＋ Neuer Timer</button>
+      </div>
+      <div class="info-row" id="info-row"></div>
+    </header>
+    <div id="timers"></div>
+  </div>
+
+  <div id="modal-host"></div>
+
+  <script src="/app/ui.js"></script>
+  <script src="tm.js"></script>
+</body>
+</html>

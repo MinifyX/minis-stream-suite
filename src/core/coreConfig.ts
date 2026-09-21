@@ -15,7 +15,7 @@ export interface CoreConfig {
 export const defaultCoreConfig: CoreConfig = {
   clientId: '',
   tokens: null,
-  enabledAddons: ['alerts', 'channelpoints', 'commands'],
+  enabledAddons: ['alerts', 'channelpoints', 'commands', 'timers'],
   satelliteEnabled: false,
   satelliteToken: '',
   satellitePort: 7475,

@@ -26,14 +26,19 @@ type EventData =
   | { type: 'raid'; user: TwitchUserRef; viewers: number }
   | { type: 'chat'; messageId: string; user: TwitchUserRef; message: string; badges: string[] }
   /** Titel oder Kategorie (Spiel) des Kanals wurde geändert */
-  | { type: 'channelupdate'; title: string; categoryId: string; categoryName: string };
+  | { type: 'channelupdate'; title: string; categoryId: string; categoryName: string }
+  /** Stream ist live gegangen / wurde beendet */
+  | { type: 'streamonline'; startedAt: string }
+  | { type: 'streamoffline' };
 
 /** `test: true` bei Events, die über einen Test-Button ausgelöst wurden. */
 export type StreamEvent = EventData & { test?: boolean };
 export type StreamEventType = StreamEvent['type'];
 export type EventOfType<T extends StreamEventType> = Extract<StreamEvent, { type: T }>;
 
-export const EVENT_TYPES: StreamEventType[] = ['redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate'];
+export const EVENT_TYPES: StreamEventType[] = [
+  'redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate', 'streamonline', 'streamoffline',
+];
 
 function userRef(id?: string | null, login?: string | null, name?: string | null): TwitchUserRef | null {
   if (!id) return null;
@@ -94,6 +99,10 @@ export function normalizeEvent(subscriptionType: string, e: any): StreamEvent | 
       };
     case 'channel.update':
       return { type: 'channelupdate', title: e.title ?? '', categoryId: e.category_id ?? '', categoryName: e.category_name ?? '' };
+    case 'stream.online':
+      return { type: 'streamonline', startedAt: e.started_at ?? new Date().toISOString() };
+    case 'stream.offline':
+      return { type: 'streamoffline' };
     default:
       return null;
   }
@@ -134,5 +143,9 @@ export function makeTestEvent(type: StreamEventType, reward?: Partial<RewardRef>
       return { ...base, type, messageId: 'test', user: TEST_USER, message: '!test', badges: [] };
     case 'channelupdate':
       return { ...base, type, title: 'Test-Stream', categoryId: '27471', categoryName: 'Minecraft' };
+    case 'streamonline':
+      return { ...base, type, startedAt: new Date().toISOString() };
+    case 'streamoffline':
+      return { ...base, type };
   }
 }

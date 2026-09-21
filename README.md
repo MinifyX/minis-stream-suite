@@ -22,6 +22,14 @@ Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalp
 - Vorlagen, Trockenlauf-Test (sendet nichts) und Verlauf der letzten Aufrufe.
 - Antworten gehen mit deinem Twitch-Account in den Chat.
 
+**Timer-Nachrichten-Addon:**
+
+- Automatische Chat-Nachrichten alle X Minuten, aber nur, wenn seitdem genug im Chat los war (kein Spam in einen leeren Chat).
+- Mehrere Nachrichten pro Timer, der Reihe nach oder zufällig. Nur wenn live (Stream-Start/-Ende kommt live per EventSub), optional nur bei bestimmten Spielen.
+- Mindestabstand zwischen Timern, Vorschau mit Variablen, „Jetzt senden“, Vorlagen und Live-Status pro Timer.
+
+Commands und Timer senden über eine gemeinsame Warteschlange im Core (`core/chat.ts`), damit zusammen nie Twitchs Limit gerissen wird.
+
 **🛰 Satellite (Zwei-PC-Setup):** Die Suite läuft auf dem Stream-PC, die Tasten werden auf dem Gaming-PC gedrückt. Unter Kanalpunkte → 🛰 Satellite den Zugang einschalten und die Satellite-Datei (`.cmd`) herunterladen. Auf dem Gaming-PC doppelklicken, installieren muss man nichts. Die Verbindung läuft über das Heimnetz (Port 7475) und ist mit einem geheimen Schlüssel geschützt. Oberfläche und API der Suite bleiben nur auf dem Stream-PC erreichbar.
 
 > **Twitch-Einschränkung:** Eine App darf nur Belohnungen ändern, die sie selbst angelegt hat. Belohnungen aus dem Dashboard oder von anderen Apps (z.B. HudFX) sind 🔒 „nur lesen“. Sortieren und für Alerts stummschalten klappt trotzdem. Belohnungen von anderen Apps niemals übernehmen, sonst erkennt die andere App sie nicht mehr.
@@ -112,6 +120,7 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 - [x] Kanalpunkte-Addon: Belohnungen verwalten, Gruppen (z.B. „HudFX“), Gruppen pausieren und für Alerts stummschalten
 - [ ] Kanalpunkte: Warteschlange (Einlösungen erledigen oder erstatten), Gruppen automatisch beim Stream-Start/-Ende schalten
 - [x] Chat-Commands
-- [ ] Timer-Nachrichten, eigener Bot-Account
+- [x] Timer-Nachrichten
+- [ ] Eigener Bot-Account für Chat-Antworten
 - [ ] Installer (.exe) und Autostart
 - [ ] Addon-Store mit Addons von außerhalb
