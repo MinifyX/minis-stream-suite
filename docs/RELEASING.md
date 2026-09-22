@@ -41,3 +41,19 @@ Schritte:
 5. Im Release-Workflow den Signier-Schritt ergänzen (`signpath/github-action-submit-signing-request`): Installer als Artefakt hochladen → SignPath signiert → signierte Datei ins Release. Die genaue Konfiguration gibt SignPath nach der Zusage vor.
 
 Das kostet nichts, dauert aber je nach Warteschlange ein paar Wochen.
+
+## Notfall: Release lokal bauen (ohne GitHub Actions)
+
+Falls GitHub Actions nicht startet (bei privaten Repos z.B. wegen fehlendem Guthaben), geht es auch vom eigenen PC. Wichtig: aus einer **sauberen Kopie** bauen, sonst landen private Addons im öffentlichen Installer.
+
+```bash
+git worktree add ../release-tmp v0.5.0      # saubere Kopie des Tags, ohne src/addons/private
+cd ../release-tmp
+npm ci
+npx tsc
+GH_TOKEN=$(gh auth token) npx electron-builder --win --publish always   # lädt einen Release-Entwurf hoch
+cd -
+git worktree remove --force ../release-tmp
+```
+
+Danach auf GitHub den Entwurf prüfen und veröffentlichen.
