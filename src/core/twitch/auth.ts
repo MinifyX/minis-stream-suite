@@ -16,7 +16,21 @@ export const SCOPES = [
   'bits:read',
   'user:read:chat',
   'user:write:chat',
+  // Umfragen-Addon: echte Twitch-Umfragen starten und live mitlesen
+  'channel:manage:polls',
+  // Bot-Account: prüfen, ob der Bot Mod ist, und ihn per Klick zum Mod machen
+  'channel:manage:moderators',
 ];
+
+/** Der Bot-Account braucht nur ein Recht: Nachrichten in den Chat schreiben */
+export const BOT_SCOPES = ['user:write:chat'];
+
+/** Welcher Login ist das? Dein Kanal (Hauptaccount) oder der Bot */
+export interface AuthOptions {
+  /** Unter diesem Schlüssel liegen die Tokens in config.json */
+  tokenKey: 'tokens' | 'botTokens';
+  scopes: string[];
+}
 
 const TOKEN_URL = 'https://id.twitch.tv/oauth2/token';
 
@@ -80,8 +94,15 @@ export class TwitchAuth extends EventEmitter {
   constructor(
     private config: ConfigStore<CoreConfig>,
     private log: Logger,
+    private options: AuthOptions = { tokenKey: 'tokens', scopes: SCOPES },
   ) {
     super();
+  }
+
+  /** Login wieder verwerfen und einen Grund anzeigen (z.B. „Das ist dein Hauptaccount“) */
+  reject(message: string): void {
+    this.logout();
+    this.setState({ state: 'error', message });
   }
 
   get clientId(): string {
@@ -112,7 +133,7 @@ export class TwitchAuth extends EventEmitter {
     if (!this.clientId) throw new Error('Bitte zuerst eine Twitch Client-ID eintragen.');
     const { ok, data } = await postForm('https://id.twitch.tv/oauth2/device', {
       client_id: this.clientId,
-      scopes: SCOPES.join(' '),
+      scopes: this.options.scopes.join(' '),
     });
     if (!ok) {
       throw new Error(
@@ -191,7 +212,7 @@ export class TwitchAuth extends EventEmitter {
       try {
         result = await postForm(TOKEN_URL, {
           client_id: this.clientId,
-          scopes: SCOPES.join(' '),
+          scopes: this.options.scopes.join(' '),
           device_code: deviceCode,
           grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
         });
@@ -232,7 +253,7 @@ export class TwitchAuth extends EventEmitter {
   /** Token prüfen, Nutzerdaten laden und den Login melden. */
   private async completeLogin(): Promise<void> {
     const info = await this.validate();
-    const missing = SCOPES.filter((scope) => !info.scopes.includes(scope));
+    const missing = this.options.scopes.filter((scope) => !info.scopes.includes(scope));
     if (missing.length) throw new Error(`Es fehlen Rechte (${missing.join(', ')}) – bitte neu verbinden.`);
 
     const token = await this.getAccessToken();
@@ -285,7 +306,7 @@ export class TwitchAuth extends EventEmitter {
   private clearSession(): void {
     this.tokens = null;
     this.user = null;
-    this.config.set('tokens', null);
+    this.config.set(this.options.tokenKey, null);
     this.stopValidateTimer();
   }
 
@@ -294,11 +315,11 @@ export class TwitchAuth extends EventEmitter {
     const stored = safeStorage.isEncryptionAvailable()
       ? `enc:${safeStorage.encryptString(json).toString('base64')}`
       : `raw:${json}`;
-    this.config.set('tokens', stored);
+    this.config.set(this.options.tokenKey, stored);
   }
 
   private loadTokens(): Tokens | null {
-    const stored = this.config.get('tokens');
+    const stored = this.config.get(this.options.tokenKey);
     if (!stored) return null;
     try {
       if (stored.startsWith('enc:')) return JSON.parse(safeStorage.decryptString(Buffer.from(stored.slice(4), 'base64')));

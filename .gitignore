@@ -4,3 +4,7 @@ out/
 *.log
 .env
 browser-extension/dist/
+release/
+
+# Private Addons (eigenes, privates Git-Repo – siehe src/addons/index.ts)
+src/addons/private/

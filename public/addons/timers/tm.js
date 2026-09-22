@@ -50,7 +50,7 @@ function renderInfo() {
       : live ? h('span', { class: 'badge live' }, '🔴 Live') : h('span', { class: 'badge' }, '⚫ Offline'),
     game?.name ? h('span', { class: 'badge accent' }, `🎮 ${game.name}`) : null,
     h('label', {}, 'Mindestabstand zwischen Timern', gap, 's'),
-    h('span', { class: 'note' }, 'Nachrichten gehen mit deinem Twitch-Account in den Chat.'),
+    h('span', { class: 'note' }, 'Nachrichten schreibt dein Bot-Account (falls verknüpft), sonst dein eigener Account.'),
   ].filter(Boolean));
 }
 

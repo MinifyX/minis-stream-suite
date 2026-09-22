@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Umfragen Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/polls/overlay.html
+    z.B. 600 x 500. Hintergrund ist durchsichtig, das Overlay erscheint nur während einer Umfrage.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; }
+    #poll {
+      --accent: #9147ff; --text: #fff; --bg: rgba(24, 24, 27, .85); --size: 22px;
+      position: absolute; top: 16px; left: 16px; width: 520px; box-sizing: border-box;
+      padding: 1em 1.1em; border-radius: .7em; background: var(--bg); color: var(--text);
+      font-size: var(--size); box-shadow: 0 .4em 1.4em rgba(0, 0, 0, .35);
+      opacity: 0; transform: translateY(-12px) scale(.98); transition: opacity .35s, transform .35s;
+    }
+    #poll.show { opacity: 1; transform: none; }
+    .head { display: flex; align-items: center; gap: .5em; font-size: .6em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+    .head .time { margin-left: auto; font-family: Consolas, monospace; font-size: 1.25em; letter-spacing: 0; opacity: 1; }
+    .title { font-weight: 800; font-size: 1.05em; line-height: 1.25; margin: .3em 0 .6em; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+    .timebar { height: .22em; border-radius: .11em; background: rgba(255, 255, 255, .15); overflow: hidden; margin-bottom: .7em; }
+    .timebar div { height: 100%; background: var(--accent); transition: width 1s linear; }
+    .choices { display: flex; flex-direction: column; gap: .4em; }
+    .choice { position: relative; border-radius: .45em; background: rgba(255, 255, 255, .08); overflow: hidden; }
+    .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); opacity: .45; transition: width .5s cubic-bezier(.2, .8, .2, 1); }
+    .choice.win .fill { opacity: .85; }
+    .row { position: relative; display: flex; align-items: center; gap: .5em; padding: .38em .6em; font-size: .78em; }
+    .num { font-weight: 800; min-width: 1.4em; height: 1.4em; border-radius: .35em; background: rgba(0, 0, 0, .3); display: grid; place-items: center; font-size: .85em; }
+    .label { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .votes { font-size: .8em; opacity: .75; font-family: Consolas, monospace; }
+    .pct { font-weight: 800; min-width: 3em; text-align: right; font-family: Consolas, monospace; }
+    .foot { margin-top: .6em; font-size: .6em; opacity: .8; display: flex; gap: .6em; flex-wrap: wrap; }
+    .foot code { background: rgba(0, 0, 0, .3); padding: .05em .4em; border-radius: .3em; font-family: Consolas, monospace; }
+    .winner { margin-top: .6em; font-size: .75em; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <div id="poll"></div>
+  <script>
+    const box = document.getElementById('poll');
+    let data = null;
+    let offset = 0;
+    let hideTimer = null;
+    let demoTimer = null;
+
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const pct = (v, t) => (t ? Math.round((v / t) * 100) : 0);
+    const fmt = (ms) => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+    const hexToRgba = (hex, alpha) => {
+      const n = parseInt(hex.slice(1), 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+    };
+
+    function applyStyle(o) {
+      box.style.setProperty('--accent', o.accent);
+      box.style.setProperty('--text', o.textColor);
+      box.style.setProperty('--bg', hexToRgba(o.background, o.backgroundOpacity / 100));
+      box.style.setProperty('--size', `${o.fontSize}px`);
+      box.style.width = `${o.width}px`;
+    }
+
+    function render() {
+      if (!data) return;
+      const o = data.overlay;
+      applyStyle(o);
+      const poll = data.poll;
+      const result = !poll ? data.result : null;
+      const shown = poll || result;
+      if (!shown) {
+        box.classList.remove('show');
+        return;
+      }
+      const total = shown.total ?? shown.choices.reduce((s, c) => s + c.votes, 0);
+      const max = Math.max(0, ...shown.choices.map((c) => c.votes));
+      const winners = result ? result.winners : [];
+      const left = poll ? poll.endsAt - (Date.now() + offset) : 0;
+      const duration = poll ? poll.endsAt - poll.startedAt : 1;
+
+      const votesText = o.showVotes ? ` · ${total} ${total === 1 ? 'Stimme' : 'Stimmen'}` : '';
+
+      // Gerüst nur neu bauen, wenn sich die Umfrage ändert – sonst nur Zahlen und Balken
+      // anpassen, damit die Balken flüssig wachsen
+      const key = JSON.stringify([shown.id, !!result, shown.choices.map((c) => c.title), o.showVotes, o.showTimer, o.showHowTo]);
+      if (box.dataset.key !== key) {
+        box.dataset.key = key;
+        box.innerHTML = `
+          <div class="head">📊 ${result ? 'Ergebnis' : 'Umfrage'}${o.showTimer && poll ? '<span class="time"></span>' : ''}</div>
+          <div class="title">${esc(shown.title)}</div>
+          ${o.showTimer && poll ? '<div class="timebar"><div></div></div>' : ''}
+          <div class="choices">
+            ${shown.choices.map((c, i) => `
+              <div class="choice">
+                <div class="fill" style="width:0%"></div>
+                <div class="row">
+                  <span class="num">${i + 1}</span>
+                  <span class="label">${winners.includes(i) ? '🏆 ' : ''}${esc(c.title)}</span>
+                  ${o.showVotes ? '<span class="votes"></span>' : ''}
+                  <span class="pct"></span>
+                </div>
+              </div>`).join('')}
+          </div>
+          ${poll && poll.mode === 'chat' && o.showHowTo
+            ? `<div class="foot">Abstimmen: <code>!${esc(data.voteCommand)} 1</code>${data.numberVotes ? ' oder einfach <code>1</code>' : ''}<span class="total"></span></div>`
+            : poll && poll.mode === 'twitch' ? '<div class="foot">Abstimmen oben im Twitch-Chat<span class="total"></span></div>' : ''}
+          ${result && !result.total ? '<div class="winner">Niemand hat abgestimmt</div>' : ''}
+          ${result && winners.length > 1 ? '<div class="winner">Gleichstand!</div>' : ''}
+        `;
+      }
+
+      const time = box.querySelector('.time');
+      if (time) time.textContent = fmt(left);
+      const bar = box.querySelector('.timebar div');
+      if (bar) bar.style.width = `${Math.max(0, Math.min(100, (left / duration) * 100))}%`;
+      const totalEl = box.querySelector('.total');
+      if (totalEl) totalEl.textContent = votesText;
+      box.querySelectorAll('.choice').forEach((el, i) => {
+        const c = shown.choices[i];
+        el.classList.toggle('win', winners.includes(i) || (!result && c.votes === max && max > 0));
+        requestAnimationFrame(() => { el.querySelector('.fill').style.width = `${pct(c.votes, total)}%`; });
+        const v = el.querySelector('.votes');
+        if (v) v.textContent = c.votes;
+        el.querySelector('.pct').textContent = `${pct(c.votes, total)}%`;
+      });
+      requestAnimationFrame(() => box.classList.add('show'));
+    }
+
+    function handle(msg) {
+      if (msg.kind !== 'state') return;
+      offset = msg.now - Date.now();
+      data = msg;
+      clearTimeout(hideTimer);
+      clearTimeout(demoTimer);
+      if (msg.result && !msg.poll) {
+        const remain = msg.overlay.showResultSeconds * 1000 - (msg.now - msg.result.endedAt);
+        hideTimer = setTimeout(() => { data = { ...data, result: null }; render(); }, Math.max(0, remain));
+      }
+      // Beispiel-Umfrage (Test-Button) nach ein paar Sekunden wieder ausblenden
+      if (msg.demo) {
+        let votes = 0;
+        demoTimer = setInterval(() => {
+          if (!data?.demo || ++votes > 12) {
+            clearInterval(demoTimer);
+            if (data?.demo) setTimeout(() => { if (data?.demo) { data = { ...data, poll: null, result: null }; render(); } }, 3000);
+            return;
+          }
+          const c = data.poll.choices[Math.floor(Math.random() * data.poll.choices.length)];
+          c.votes++;
+          data.poll.total++;
+          render();
+        }, 700);
+      }
+      render();
+    }
+
+    function connect() {
+      fetch('/api/addons/polls/overlay-state').then((r) => r.json()).then(handle).catch(() => {});
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=polls`);
+      ws.onmessage = (m) => handle(JSON.parse(m.data));
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+
+    // Restzeit jede Sekunde aktualisieren
+    setInterval(() => { if (data?.poll && !data.demo) render(); }, 1000);
+    connect();
+  </script>
+</body>
+</html>

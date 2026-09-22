@@ -23,6 +23,19 @@ import {
 import { Tts } from './tts';
 import { CHANNELPOINTS_SERVICE, type ChannelPointsService } from '../channelpoints/service';
 
+/**
+ * Schnittstelle für andere Addons: „dieser Alert erscheint JETZT im Overlay“.
+ * Ein Addon bietet sie mit ctx.provide(ALERT_SHOWN_SERVICE, { alertShown(event) {…} }) an,
+ * z.B. um Licht oder Sounds genau zum Alert zu starten.
+ */
+export const ALERT_SHOWN_SERVICE = 'alert-shown';
+export interface AlertShownListener {
+  alertShown(event: StreamEvent): void;
+}
+
+/** So viele gesendete Alerts merken, bis das Overlay meldet, dass sie starten */
+const MAX_PENDING_SHOWN = 50;
+
 interface HelixReward {
   id: string;
   title: string;
@@ -104,6 +117,9 @@ export const alertsAddon: Addon = {
     const mediaIndex = new ConfigStore<{ files: MediaFile[] }>('addons/alerts-media', { files: [] });
     const tts = new Tts(path.join(ctx.dataDir, 'tts'), `${ctx.dataUrl}/tts`);
 
+    /** Gesendete, aber noch nicht gestartete Alerts (für Addons, die genau zum Alert etwas starten) */
+    const pendingShown = new Map<string, StreamEvent>();
+
     /** Alert bauen (inkl. Sprachausgabe) und ans Overlay schicken */
     const send = async (category: CategoryId, variant: Variant, event: StreamEvent) => {
       const { values, userMessage } = describeEvent(event);
@@ -118,10 +134,13 @@ export const alertsAddon: Addon = {
           ctx.log.warn('Sprachausgabe fehlgeschlagen:', err);
         }
       }
+      const id = randomUUID();
+      pendingShown.set(id, event);
+      if (pendingShown.size > MAX_PENDING_SHOWN) pendingShown.delete(pendingShown.keys().next().value!);
       ctx.overlay.broadcast({
         kind: 'alert',
         alert: {
-          id: randomUUID(),
+          id,
           category,
           variant: variant.name,
           design,
@@ -256,6 +275,15 @@ export const alertsAddon: Addon = {
     });
 
     ctx.api.post('/skip', () => ctx.overlay.broadcast({ kind: 'skip' }));
+
+    /** Das Overlay meldet: dieser Alert startet jetzt. Nur einmal pro Alert, auch bei mehreren offenen Overlays. */
+    ctx.api.post('/shown', ({ body }) => {
+      const id = String(body?.id ?? '');
+      const event = pendingShown.get(id);
+      if (!event) return;
+      pendingShown.delete(id);
+      ctx.use<AlertShownListener>(ALERT_SHOWN_SERVICE)?.alertShown(event);
+    });
 
     // ------------------------------------------------------------ Sprachausgabe
 

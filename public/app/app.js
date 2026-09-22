@@ -143,17 +143,131 @@ function renderSidebarStatus() {
   $('#sidebar-status').replaceChildren(...[
     h('div', {}, h('span', { class: `dot ${loggedIn ? 'ok' : 'err'}` }), loggedIn ? `Twitch: ${auth.user.displayName}` : 'Twitch: nicht verbunden'),
     loggedIn ? h('div', {}, h('span', { class: `dot ${eventsub === 'connected' ? 'ok' : 'warn'}` }), eventsub === 'connected' ? 'Events: live' : 'Events: verbinde…') : null,
+    state.status.bot ? h('div', {}, '🤖', `Bot: ${state.status.bot.displayName}`) : null,
     h('div', {}, `v${state.status.version}`),
   ].filter(Boolean));
 }
 
+// ---------------------------------------------------------------- Bot-Account
+
+async function botCall(path, body) {
+  try {
+    state.bot = await api(`core/bot${path}`, body);
+    renderBotCard(true);
+    return true;
+  } catch (err) {
+    toast(err.message, 'err');
+    return false;
+  }
+}
+
+function renderBotCard(force = false) {
+  const bot = state.bot;
+  if (!bot) return;
+  const mainLoggedIn = state.status?.auth.state === 'logged-in';
+  const key = JSON.stringify(bot) + mainLoggedIn;
+  if (!force && key === state.botKey) return;
+  state.botKey = key;
+
+  const card = $('#bot-card');
+  const title = h('h2', {}, '🤖 Bot-Account');
+  const intro = h('p', { class: 'muted' },
+    'Optional: Ein zweiter Twitch-Account (z.B. „MinisBot“), der die Nachrichten der Suite schreibt: Commands, Timer, Umfragen, Lurk. Ohne Bot schreibt dein eigener Account.');
+
+  switch (bot.auth.state) {
+    case 'no-client-id':
+    case 'logged-out':
+      card.replaceChildren(title, intro,
+        h('ol', { class: 'steps' },
+          h('li', {}, 'Leg bei Twitch einen zweiten Account für den Bot an (falls noch nicht geschehen).'),
+          h('li', {}, 'Klick auf „Bot verknüpfen“. Es öffnet sich ein eigenes Fenster: Dort mit dem ', h('b', {}, 'Bot-Account'), ' anmelden und bestätigen.'),
+          h('li', {}, 'Mach den Bot zum Mod (geht danach mit einem Klick).')),
+        h('div', { class: 'btn-row' },
+          h('button', { class: 'btn primary', disabled: !mainLoggedIn, onclick: () => botCall('/login/start', {}) }, 'Bot verknüpfen'),
+          mainLoggedIn ? null : h('span', { class: 'muted' }, 'Erst oben deinen Kanal verbinden.')));
+      break;
+    case 'pending':
+      card.replaceChildren(title,
+        h('p', {}, 'Melde dich im geöffneten Fenster mit dem ', h('b', {}, 'Bot-Account'), ' an und bestätige. Falls nach einem Code gefragt wird:'),
+        h('div', { class: 'code-box' }, bot.auth.userCode),
+        h('p', { class: 'muted' }, 'Lieber im Browser? Öffne den Link in einem privaten Fenster, damit dein Hauptaccount angemeldet bleibt: ',
+          h('code', {}, bot.auth.verificationUri)),
+        h('div', { class: 'btn-row' },
+          h('button', { class: 'btn', onclick: () => botCall('/login/window', {}) }, 'Fenster erneut öffnen'),
+          h('button', { class: 'btn', onclick: () => botCall('/login/cancel', {}) }, 'Abbrechen')));
+      break;
+    case 'logged-in': {
+      const u = bot.auth.user;
+      const modLine = bot.isMod === true
+        ? h('span', { class: 'status-line' }, h('span', { class: 'dot ok' }), 'Ist Mod in deinem Kanal')
+        : bot.isMod === false
+          ? h('div', { class: 'status-line' }, h('span', { class: 'dot warn' }), 'Noch kein Mod: schreibt langsamer, Links können blockiert werden.',
+            h('button', { class: 'btn small', onclick: async () => { if (await botCall('/make-mod', {})) toast('Bot ist jetzt Mod', 'ok'); } }, '🛡 Zum Mod machen'))
+          : h('span', { class: 'status-line muted' }, h('span', { class: 'dot' }), 'Mod-Status unbekannt');
+      card.replaceChildren(title,
+        h('div', { class: 'user-row' },
+          u.avatar ? h('img', { class: 'avatar', src: u.avatar, alt: '' }) : null,
+          h('div', {}, h('strong', {}, u.displayName), h('div', { class: 'muted' }, `@${u.login}`))),
+        modLine,
+        h('div', { class: 'opt-line' },
+          toggle(bot.enabled, (on) => botCall('/settings', { enabled: on }), 'Bot schreibt die Nachrichten'),
+          h('span', {}, bot.enabled ? 'Der Bot schreibt die Nachrichten der Suite' : 'Pausiert: dein eigener Account schreibt')),
+        h('div', { class: 'opt-line' },
+          toggle(bot.fallback, (on) => botCall('/settings', { fallback: on }), 'Notfalls eigener Account'),
+          h('span', {}, 'Klappt es mit dem Bot nicht, notfalls mit deinem Account senden')),
+        h('div', { class: 'btn-row' },
+          h('button', { class: 'btn', disabled: !bot.enabled, onclick: async () => { if (await botCall('/test', {})) toast('Test-Nachricht gesendet', 'ok'); } }, '💬 Test-Nachricht'),
+          h('button', { class: 'btn', onclick: () => botCall('/check-mod', {}) }, '↻ Mod-Status prüfen'),
+          h('button', { class: 'btn', onclick: () => { if (confirm('Bot-Account trennen?')) botCall('/logout', {}); } }, 'Trennen')));
+      break;
+    }
+    case 'error':
+      card.replaceChildren(title,
+        h('p', { class: 'badge err' }, bot.auth.message),
+        h('div', { class: 'btn-row' },
+          h('button', { class: 'btn primary', disabled: !mainLoggedIn, onclick: () => botCall('/login/start', {}) }, 'Erneut verknüpfen'),
+          h('button', { class: 'btn', onclick: () => botCall('/logout', {}) }, 'Abbrechen')));
+      break;
+  }
+}
+
+// ---------------------------------------------------------------- App (Autostart, Tray)
+
+async function loadDesktop(body) {
+  try {
+    state.desktop = await api('core/desktop', body);
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+  renderDesktopCard();
+}
+
+function renderDesktopCard() {
+  const d = state.desktop;
+  if (!d) return;
+  $('#desktop-card').replaceChildren(...[
+    h('h2', {}, '🖥 App'),
+    h('div', { class: 'opt-line' },
+      toggle(d.autostart, (on) => loadDesktop({ autostart: on }), 'Mit Windows starten'),
+      h('span', {}, 'Mit Windows starten (unsichtbar im Infobereich)')),
+    d.autostartAvailable ? null : h('p', { class: 'muted small' }, 'Autostart geht nur in der installierten App, nicht beim Starten mit npm start.'),
+    h('div', { class: 'opt-line' },
+      toggle(d.closeToTray, (on) => loadDesktop({ closeToTray: on }), 'Beim Schließen weiterlaufen'),
+      h('span', {}, 'X schließt nur das Fenster, die Suite läuft im Infobereich weiter')),
+    h('p', { class: 'muted small' }, 'So bleiben Overlays, Commands und Bot aktiv, auch wenn das Fenster zu ist. Beenden: Rechtsklick auf das Symbol unten rechts.'),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn', onclick: () => api('core/desktop/open-data', {}).catch((err) => toast(err.message, 'err')) }, '📁 Datenordner öffnen'),
+      h('span', { class: 'muted small', style: { alignSelf: 'center' } }, `v${state.status?.version ?? ''}${d.packaged ? '' : ' · Entwicklermodus'}`))].filter(Boolean));
+}
+
 async function refreshStatus() {
   try {
-    state.status = await api('core/status');
+    [state.status, state.bot] = await Promise.all([api('core/status'), api('core/bot')]);
   } catch {
     return;
   }
   renderTwitchCard();
+  renderBotCard();
   renderSidebarStatus();
 }
 
@@ -226,6 +340,7 @@ window.addEventListener('hashchange', route);
 (async () => {
   await refreshStatus();
   await loadAddons();
+  await loadDesktop();
   route();
   refreshLogs();
   setInterval(refreshStatus, 2000);

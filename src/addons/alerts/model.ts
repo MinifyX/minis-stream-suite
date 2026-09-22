@@ -329,6 +329,7 @@ export function categoryOf(event: StreamEvent): CategoryId | null {
     case 'streamoffline':
     case 'chatdelete':
     case 'chatclear':
+    case 'poll':
       return null;
     default:
       return event.type;

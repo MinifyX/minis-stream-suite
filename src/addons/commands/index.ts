@@ -172,7 +172,7 @@ export const commandsAddon: Addon = {
     };
 
     ctx.events.on('chat', async (event: EventOfType<'chat'>) => {
-      if (event.test || ctx.chat.isOwnMessage(event.messageId)) return;
+      if (event.test || ctx.chat.isOwnMessage(event.messageId) || ctx.chat.isBot(event.user.id)) return;
       const found = findCommand(event.message);
       if (!found) return;
       const { cmd, args, used } = found;

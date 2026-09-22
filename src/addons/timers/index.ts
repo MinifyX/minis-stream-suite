@@ -140,7 +140,7 @@ export const timersAddon: Addon = {
       game = { id: e.categoryId, name: e.categoryName };
     });
     ctx.events.on('chat', (e) => {
-      if (e.test || ctx.chat.isOwnMessage(e.messageId)) return;
+      if (e.test || ctx.chat.isOwnMessage(e.messageId) || ctx.chat.isBot(e.user.id)) return;
       for (const t of settings.get('timers')) linesSince.set(t.id, (linesSince.get(t.id) ?? 0) + 1);
     });
 

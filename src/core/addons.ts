@@ -2,7 +2,7 @@ import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { closeAppWindow, isAlwaysOnTop, isWindowOpen, openAppWindow, setAlwaysOnTop, type OpenOptions } from './appWindows';
-import { renderTemplate, type ChatService, type TemplateContext } from './chat';
+import { renderTemplate, type ChatService, type SendOptions, type TemplateContext } from './chat';
 import { ConfigStore } from './config';
 import type { CoreConfig } from './coreConfig';
 import type { EventBus } from './eventBus';
@@ -23,6 +23,11 @@ export interface AddonManifest {
   icon: string;
   /** Einstellungsseite relativ zu public/addons/<id>/, z.B. "settings.html" */
   settingsPage?: string;
+  /**
+   * Ordner mit Oberfläche/Overlays, falls sie NICHT unter public/addons/<id>/ liegen
+   * (z.B. bei privaten Addons in src/addons/private/). Wird unter /addons/<id>/ ausgeliefert.
+   */
+  publicDir?: string;
 }
 
 export interface Addon extends AddonManifest {
@@ -80,8 +85,11 @@ export interface AddonContext {
   };
   /** Chat: senden (gemeinsame Warteschlange), eigene Nachrichten erkennen, {Variablen} einsetzen */
   chat: {
-    send(message: string, replyTo?: string): Promise<void>;
+    /** Zweiter Parameter: Nachrichten-ID (Antwort) oder Optionen. Schreibt über den Bot, falls verknüpft. */
+    send(message: string, options?: string | SendOptions): Promise<void>;
     isOwnMessage(messageId: string): boolean;
+    /** Ist das der Bot-Account der Suite? */
+    isBot(userId: string): boolean;
     render(template: string, context?: TemplateContext): Promise<string>;
   };
 }
@@ -154,6 +162,7 @@ export class AddonManager {
     const dataUrl = `/addon-data/${addon.id}`;
     fs.mkdirSync(dataDir, { recursive: true });
     server.mount(addon.id, dataUrl, dataDir);
+    if (addon.publicDir) server.mount(addon.id, `/addons/${addon.id}`, addon.publicDir);
 
     const ctx: AddonContext = {
       log: createLogger(addon.name),
@@ -192,7 +201,8 @@ export class AddonManager {
         isAlwaysOnTop: (name) => isAlwaysOnTop(`${addon.id}:${name}`),
       },
       chat: {
-        send: (message, replyTo) => this.deps.chat.send(message, replyTo),
+        send: (message, options) => this.deps.chat.send(message, options),
+        isBot: (userId) => this.deps.chat.isBot(userId),
         isOwnMessage: (id) => this.deps.chat.isOwnMessage(id),
         render: (template, context) => renderTemplate(template, api, auth, context),
       },

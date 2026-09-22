@@ -1,8 +1,8 @@
 {
   "name": "minis-stream-suite",
   "productName": "Mini's Stream Suite",
-  "version": "0.1.0",
-  "description": "Stream-Toolkit für Twitch mit Addons für Alerts, Kanalpunkte und Commands.",
+  "version": "0.4.0",
+  "description": "Stream-Toolkit für Twitch mit Addons für Alerts, Kanalpunkte, Commands, Umfragen und mehr.",
   "main": "dist/main.js",
   "private": true,
   "author": "Mini",
@@ -12,7 +12,38 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "build:extension": "node browser-extension/build.mjs"
+    "build:extension": "node browser-extension/build.mjs",
+    "dist": "tsc && electron-builder --win",
+    "pack": "tsc && electron-builder --win --dir"
+  },
+  "build": {
+    "appId": "de.minifyx.streamsuite",
+    "productName": "Mini's Stream Suite",
+    "artifactName": "Minis-Stream-Suite-Setup-${version}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.map",
+      "public/**/*",
+      "package.json",
+      "src/addons/private/**/ui/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mini's Stream Suite",
+      "deleteAppDataOnUninstall": false
+    }
   },
   "dependencies": {
     "ws": "^8.21.3"
@@ -21,6 +52,7 @@
     "@types/node": "^26.6.2",
     "@types/ws": "^8.18.1",
     "electron": "^44.4.3",
+    "electron-builder": "^26.15.3",
     "typescript": "^7.0.2"
   }
 }

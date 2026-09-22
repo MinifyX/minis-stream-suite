@@ -12,6 +12,7 @@ import type { EventSubClient } from './twitch/eventsub';
 interface Deps {
   server: LocalServer;
   auth: TwitchAuth;
+  botAuth: TwitchAuth;
   eventsub: EventSubClient;
   addons: AddonManager;
   upcomingAddons: AddonManifest[];
@@ -19,7 +20,7 @@ interface Deps {
 }
 
 /** API-Routen der Oberfläche (Login, Status, Addon-Verwaltung, Test-Events). */
-export function registerCoreRoutes({ server, auth, eventsub, addons, upcomingAddons, bus }: Deps): void {
+export function registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus }: Deps): void {
   const get = (path: string, handler: ApiHandler) => server.route('core', 'GET', `/api/core${path}`, handler);
   const post = (path: string, handler: ApiHandler) => server.route('core', 'POST', `/api/core${path}`, handler);
 
@@ -27,6 +28,7 @@ export function registerCoreRoutes({ server, auth, eventsub, addons, upcomingAdd
     version: app.getVersion(),
     clientId: auth.clientId,
     auth: auth.state,
+    bot: botAuth.user,
     eventsub: eventsub.status,
     baseUrl: server.url,
   }));
@@ -36,6 +38,8 @@ export function registerCoreRoutes({ server, auth, eventsub, addons, upcomingAdd
     if (!/^[a-z0-9]{20,40}$/i.test(clientId)) {
       throw new HttpError(400, 'Das sieht nicht wie eine gültige Client-ID aus.');
     }
+    // Tokens gehören zur Client-ID → auch der Bot muss sich neu anmelden
+    botAuth.logout();
     auth.setClientId(clientId);
     return auth.state;
   });

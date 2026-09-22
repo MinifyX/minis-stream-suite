@@ -59,7 +59,18 @@ type EventData =
   | { type: 'channelupdate'; title: string; categoryId: string; categoryName: string }
   /** Stream ist live gegangen / wurde beendet */
   | { type: 'streamonline'; startedAt: string }
-  | { type: 'streamoffline' };
+  | { type: 'streamoffline' }
+  /** Echte Twitch-Umfrage: gestartet, neue Stimmen oder beendet */
+  | {
+    type: 'poll';
+    phase: 'begin' | 'progress' | 'end';
+    pollId: string;
+    title: string;
+    choices: { id: string; title: string; votes: number }[];
+    /** Bei "end": completed (normal), terminated (vorzeitig beendet), archived (ausgeblendet) */
+    status: string;
+    endsAt: string | null;
+  };
 
 /** `test: true` bei Events, die über einen Test-Button ausgelöst wurden. */
 export type StreamEvent = EventData & { test?: boolean };
@@ -68,7 +79,7 @@ export type EventOfType<T extends StreamEventType> = Extract<StreamEvent, { type
 
 export const EVENT_TYPES: StreamEventType[] = [
   'redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate', 'streamonline', 'streamoffline',
-  'chatdelete', 'chatclear',
+  'chatdelete', 'chatclear', 'poll',
 ];
 
 function userRef(id?: string | null, login?: string | null, name?: string | null): TwitchUserRef | null {
@@ -150,6 +161,18 @@ export function normalizeEvent(subscriptionType: string, e: any): StreamEvent | 
       return { type: 'streamonline', startedAt: e.started_at ?? new Date().toISOString() };
     case 'stream.offline':
       return { type: 'streamoffline' };
+    case 'channel.poll.begin':
+    case 'channel.poll.progress':
+    case 'channel.poll.end':
+      return {
+        type: 'poll',
+        phase: subscriptionType === 'channel.poll.begin' ? 'begin' : subscriptionType === 'channel.poll.end' ? 'end' : 'progress',
+        pollId: e.id,
+        title: e.title ?? '',
+        choices: (e.choices ?? []).map((c: { id: string; title: string; votes?: number }) => ({ id: c.id, title: c.title, votes: c.votes ?? 0 })),
+        status: e.status ?? 'active',
+        endsAt: e.ends_at ?? null,
+      };
     default:
       return null;
   }
@@ -216,5 +239,16 @@ export function makeTestEvent(type: StreamEventType, reward?: Partial<RewardRef>
       return { ...base, type, startedAt: new Date().toISOString() };
     case 'streamoffline':
       return { ...base, type };
+    case 'poll':
+      return {
+        ...base,
+        type,
+        phase: 'progress',
+        pollId: 'test',
+        title: 'Test-Umfrage',
+        choices: [{ id: 'a', title: 'Ja', votes: 3 }, { id: 'b', title: 'Nein', votes: 1 }],
+        status: 'active',
+        endsAt: null,
+      };
   }
 }

@@ -25,6 +25,12 @@
     function next() {
       if (current || !queue.length) return;
       const alert = queue.shift();
+      // Der Suite melden, dass der Alert jetzt startet (z.B. damit das Licht-Addon zeitgleich loslegt)
+      fetch('/api/addons/alerts/shown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: alert.id }),
+      }).catch(() => {});
       current = AlertRenderer.play(stage, alert, {
         onDone: () => {
           current = null;

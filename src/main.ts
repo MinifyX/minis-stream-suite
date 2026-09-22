@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, Menu, shell } from 'electron';
+import { app, dialog, Menu } from 'electron';
 import path from 'node:path';
 import { builtInAddons, upcomingAddons } from './addons';
 import { AddonManager } from './core/addons';
@@ -12,13 +12,13 @@ import { satellite } from './core/satellite';
 import { createLogger } from './core/log';
 import { LocalServer } from './core/server';
 import { TwitchApi } from './core/twitch/api';
-import { TwitchAuth } from './core/twitch/auth';
+import { BOT_SCOPES, TwitchAuth } from './core/twitch/auth';
+import { registerBot } from './core/bot';
+import { startDesktop } from './core/desktop';
 import { EventSubClient } from './core/twitch/eventsub';
 
 /** Port des lokalen Servers (Overlays in OBS: http://127.0.0.1:7474/…) */
-const PORT = 7474;
-
-let mainWindow: BrowserWindow | null = null;
+const PORT = Number(process.env.SUITE_PORT) || 7474;
 
 async function bootstrap(): Promise<void> {
   // Kein Standardmenü: sonst lösen Tasten wie Strg+R beim Keybind-Aufnehmen Menü-Aktionen aus
@@ -29,10 +29,14 @@ async function bootstrap(): Promise<void> {
   const api = new TwitchApi(auth);
   const eventsub = new EventSubClient(auth, api, bus, createLogger('EventSub'));
   const server = new LocalServer(path.join(app.getAppPath(), 'public'), PORT, createLogger('Server'));
-  const chat = new ChatService(auth, api);
+  // Optionaler Bot-Account: eigener Login, eigene Tokens, schreibt die Chat-Nachrichten der Suite
+  const botAuth = new TwitchAuth(config, createLogger('Bot'), { tokenKey: 'botTokens', scopes: BOT_SCOPES });
+  const botApi = new TwitchApi(botAuth);
+  const chat = new ChatService(auth, api, botAuth, botApi, config);
   const addons = new AddonManager(builtInAddons, { bus, api, auth, server, config, chat });
 
-  registerCoreRoutes({ server, auth, eventsub, addons, upcomingAddons, bus });
+  registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus });
+  registerBot({ server, config, auth, api, botAuth, chat, log: createLogger('Bot') });
 
   auth.on('login', () => eventsub.start());
   auth.on('logout', () => eventsub.stop());
@@ -53,52 +57,18 @@ async function bootstrap(): Promise<void> {
   await satellite.init(config);
   await addons.startEnabled();
   await auth.init();
-  createWindow(server.url);
+  await botAuth.init();
+  startDesktop({ config, server });
 }
 
-function createWindow(baseUrl: string): void {
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 820,
-    minWidth: 900,
-    minHeight: 600,
-    title: "Mini's Stream Suite",
-    backgroundColor: '#0e0e12',
-    autoHideMenuBar: true,
-    webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
-  });
+// Für Entwickler: zweite Instanz mit eigenem Datenordner/Port starten, ohne die echte Suite anzufassen
+// (z.B. SUITE_DATA_DIR=C:\temp\suite-test SUITE_PORT=7480 npm start)
+if (process.env.SUITE_DATA_DIR) app.setPath('userData', process.env.SUITE_DATA_DIR);
 
-  // Externe Links (Twitch, Doku, …) im normalen Browser öffnen
-  const openExternal = (url: string) => {
-    if (/^https?:\/\//.test(url)) void shell.openExternal(url);
-  };
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    openExternal(url);
-    return { action: 'deny' };
-  });
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith(baseUrl)) {
-      event.preventDefault();
-      openExternal(url);
-    }
-  });
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  void mainWindow.loadURL(`${baseUrl}/app/`);
-}
-
-// Nur eine Instanz erlauben (sonst wäre der Port doppelt belegt)
+// Nur eine Instanz erlauben (sonst wäre der Port doppelt belegt). Ein zweiter Start zeigt das vorhandene Fenster.
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    if (!mainWindow) return;
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.focus();
-  });
-  app.on('window-all-closed', () => app.quit());
   app
     .whenReady()
     .then(bootstrap)

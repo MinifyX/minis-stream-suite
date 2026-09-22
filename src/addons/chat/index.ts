@@ -330,7 +330,7 @@ export const chatAddon: Addon = {
             hiddenReward: rewardHidden(event.rewardId),
             highlighted: event.messageType === 'channel_points_highlighted',
             replyTo: event.replyTo,
-            own: ctx.chat.isOwnMessage(event.messageId),
+            own: ctx.chat.isOwnMessage(event.messageId) || ctx.chat.isBot(event.user.id),
             test: !!event.test,
           });
           return;
@@ -411,7 +411,8 @@ export const chatAddon: Addon = {
       const message = String(body?.message ?? '').trim();
       if (!message) throw new HttpError(400, 'Leere Nachricht');
       if (!ctx.getUser()) throw new HttpError(401, 'Nicht bei Twitch eingeloggt');
-      await ctx.chat.send(message, typeof body?.replyTo === 'string' ? body.replyTo : undefined);
+      // Aus dem Chat-Fenster schreibst du selbst, nicht der Bot
+      await ctx.chat.send(message, { replyTo: typeof body?.replyTo === 'string' ? body.replyTo : undefined, as: 'broadcaster' });
     });
 
     /** Test-Nachricht bzw. Test-Event durch das ganze System schicken */

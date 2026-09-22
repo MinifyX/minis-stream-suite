@@ -1,17 +1,32 @@
+import type { ConfigStore } from './config';
+import type { CoreConfig } from './coreConfig';
 import { createLogger } from './log';
 import type { TwitchApi } from './twitch/api';
-import type { TwitchAuth } from './twitch/auth';
+import type { TwitchAuth, TwitchUser } from './twitch/auth';
 
 /**
  * Chat-Nachrichten senden (für alle Addons gemeinsam) und Variablen in Texten einsetzen.
  *
  * Alle Nachrichten laufen durch EINE Warteschlange mit Mindestabstand, damit Commands,
  * Timer & Co. zusammen nie Twitchs Limit reißen.
+ *
+ * Ist ein Bot-Account verknüpft (und eingeschaltet), schreibt der Bot. Sonst dein eigener Account.
  */
 
 const log = createLogger('Chat');
+/** Abstand zwischen zwei Nachrichten. Twitch erlaubt normalen Accounts 20, Mods 100 Nachrichten pro 30 s. */
 const MIN_GAP_MS = 1100;
+const MIN_GAP_NOT_MOD_MS = 1600;
 const MAX_QUEUE = 15;
+
+export interface SendOptions {
+  /** Als Antwort auf diese Nachricht (Thread) */
+  replyTo?: string;
+  /** "auto" = Bot, wenn verknüpft (Standard). "broadcaster" = immer dein Account (z.B. Chat-Fenster). */
+  as?: 'auto' | 'broadcaster';
+}
+
+type SendResult = { data: { message_id: string; is_sent: boolean; drop_reason?: { message: string } | null }[] };
 
 export class ChatService {
   private queue: Promise<void> = Promise.resolve();
@@ -19,14 +34,28 @@ export class ChatService {
   private lastSend = 0;
   /** IDs unserer eigenen Nachrichten – die kommen als Chat-Event zurück und dürfen nichts auslösen */
   private sentIds = new Set<string>();
+  /** Ist der Bot Mod im Kanal? (wird von der Bot-Verwaltung gesetzt, Mods dürfen schneller schreiben) */
+  botIsMod = false;
 
   constructor(
     private auth: TwitchAuth,
     private api: TwitchApi,
+    private botAuth: TwitchAuth,
+    private botApi: TwitchApi,
+    private config: ConfigStore<CoreConfig>,
   ) {}
 
-  /** Nachricht mit dem eingeloggten Account in den eigenen Chat schicken */
-  send(message: string, replyTo?: string): Promise<void> {
+  /** Der Bot, der gerade schreibt – oder null, wenn dein eigener Account schreibt */
+  get activeBot(): TwitchUser | null {
+    return this.config.get('botEnabled') ? this.botAuth.user : null;
+  }
+
+  /**
+   * Nachricht in den eigenen Chat schicken.
+   * Zweiter Parameter: Nachrichten-ID für eine Antwort (Kurzform) oder Optionen.
+   */
+  send(message: string, options: string | SendOptions = {}): Promise<void> {
+    const { replyTo, as = 'auto' } = typeof options === 'string' ? { replyTo: options } : options;
     const text = message.replace(/\s*\r?\n\s*/g, ' ').trim().slice(0, 500);
     if (!text) return Promise.resolve();
     if (this.queued >= MAX_QUEUE) {
@@ -36,16 +65,33 @@ export class ChatService {
     this.queued++;
     const job = this.queue
       .then(async () => {
-        const user = this.auth.user;
-        if (!user) throw new Error('Nicht bei Twitch eingeloggt');
-        const wait = this.lastSend + MIN_GAP_MS - Date.now();
+        const broadcaster = this.auth.user;
+        if (!broadcaster) throw new Error('Nicht bei Twitch eingeloggt');
+        const bot = as === 'auto' ? this.activeBot : null;
+        const gap = bot && !this.botIsMod ? MIN_GAP_NOT_MOD_MS : MIN_GAP_MS;
+        const wait = this.lastSend + gap - Date.now();
         if (wait > 0) await new Promise((r) => setTimeout(r, wait));
         this.lastSend = Date.now();
-        const res = await this.api.request<{ data: { message_id: string; is_sent: boolean; drop_reason?: { message: string } | null }[] }>(
-          'POST',
-          '/chat/messages',
-          { body: { broadcaster_id: user.id, sender_id: user.id, message: text, ...(replyTo ? { reply_parent_message_id: replyTo } : {}) } },
-        );
+
+        const post = (api: TwitchApi, senderId: string) =>
+          api.request<SendResult>('POST', '/chat/messages', {
+            body: { broadcaster_id: broadcaster.id, sender_id: senderId, message: text, ...(replyTo ? { reply_parent_message_id: replyTo } : {}) },
+          });
+
+        let res: SendResult;
+        if (bot) {
+          try {
+            res = await post(this.botApi, bot.id);
+          } catch (err) {
+            // Bot kann gerade nicht (z.B. gebannt, Login abgelaufen) → notfalls mit deinem Account
+            if (!this.config.get('botFallback')) throw err;
+            log.warn(`Bot ${bot.displayName} konnte nicht senden, nehme deinen Account:`, err);
+            res = await post(this.api, broadcaster.id);
+          }
+        } else {
+          res = await post(this.api, broadcaster.id);
+        }
+
         const result = res.data[0];
         if (result?.message_id) {
           this.sentIds.add(result.message_id);
@@ -64,6 +110,30 @@ export class ChatService {
   isOwnMessage(messageId: string): boolean {
     return this.sentIds.has(messageId);
   }
+
+  /** Ist das der verknüpfte Bot-Account? (dessen Nachrichten sollen nie Commands o.Ä. auslösen) */
+  isBot(userId: string): boolean {
+    return !!this.botAuth.user && this.botAuth.user.id === userId;
+  }
+}
+
+// ------------------------------------------------------------------ Rollen
+
+export const ROLES = ['everyone', 'subscriber', 'vip', 'moderator', 'broadcaster'] as const;
+export type Role = (typeof ROLES)[number];
+export const ROLE_LEVEL: Record<Role, number> = { everyone: 0, subscriber: 1, vip: 2, moderator: 3, broadcaster: 4 };
+
+/** Berechtigungsstufe eines Chatters aus seinen Abzeichen (0 = alle … 4 = du selbst) */
+export function roleLevel(badges: string[], isBroadcaster = false): number {
+  if (isBroadcaster || badges.includes('broadcaster')) return ROLE_LEVEL.broadcaster;
+  if (badges.includes('moderator') || badges.includes('lead_moderator')) return ROLE_LEVEL.moderator;
+  if (badges.includes('vip')) return ROLE_LEVEL.vip;
+  if (badges.includes('subscriber') || badges.includes('founder')) return ROLE_LEVEL.subscriber;
+  return ROLE_LEVEL.everyone;
+}
+
+export function parseRole(value: unknown, fallback: Role = 'everyone'): Role {
+  return ROLES.includes(value as Role) ? (value as Role) : fallback;
 }
 
 // ------------------------------------------------------------------ Variablen
@@ -77,7 +147,8 @@ export interface TemplateContext {
   values?: Record<string, string>;
 }
 
-function duration(ms: number): string {
+/** Dauer lesbar machen, z.B. "1 Tag 3 Std. 5 Min." */
+export function duration(ms: number): string {
   const min = Math.floor(ms / 60_000);
   const days = Math.floor(min / 1440);
   const hours = Math.floor((min % 1440) / 60);

@@ -28,7 +28,6 @@ const VARIABLES = [
 
 const TEMPLATES = [
   { name: 'discord', aliases: ['dc'], response: 'Komm auf meinen Discord: https://discord.gg/DEIN-LINK 💜', note: 'Link anpassen!' },
-  { name: 'lurk', response: '{user} ist jetzt im Lurk-Modus. Danke fürs Dableiben! 💜' },
   { name: 'uptime', response: 'Der Stream läuft seit {uptime}.' },
   { name: 'followage', response: '{user} folgt seit {followage}.', cooldownUser: 30 },
   { name: 'game', response: 'Gerade läuft: {game}' },
@@ -89,7 +88,7 @@ function renderSettings() {
         }
       }, 'Mods ignorieren Cooldowns'),
       'Mods und du ignorieren Cooldowns'),
-    h('span', { class: 'note' }, 'Antworten schreibt die Suite mit deinem Twitch-Account in den Chat.'));
+    h('span', { class: 'note' }, 'Antworten schreibt dein Bot-Account (falls verknüpft, siehe Übersicht), sonst dein eigener Account.'));
 }
 
 // ============================================================ Liste

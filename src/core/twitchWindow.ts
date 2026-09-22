@@ -77,3 +77,42 @@ export function openTwitchWindow(url: string): void {
   });
   void win.loadURL(url);
 }
+
+// ------------------------------------------------------------------ Bot-Login
+
+let loginWin: BrowserWindow | null = null;
+
+/**
+ * Fenster für den Bot-Login. Es hat einen eigenen, frischen Speicher (nichts wird geteilt,
+ * nichts bleibt gespeichert) – so kann man sich dort mit dem Bot-Account anmelden, ohne
+ * sich im normalen Browser oder im Dashboard-Fenster von seinem Hauptaccount abzumelden.
+ */
+export function openTwitchLoginWindow(url: string): void {
+  if (!isTwitchUrl(url)) throw new Error('Nur Twitch-Seiten können hier geöffnet werden.');
+  closeTwitchLoginWindow();
+  const partition = `bot-login-${Date.now()}`; // ohne "persist:" → nur im Arbeitsspeicher
+  loginWin = new BrowserWindow({
+    width: 520,
+    height: 760,
+    title: 'Mit dem Bot-Account anmelden',
+    backgroundColor: '#0e0e10',
+    autoHideMenuBar: true,
+    webPreferences: { partition, contextIsolation: true, sandbox: true, nodeIntegration: false },
+  });
+  const contents = loginWin.webContents;
+  contents.setUserAgent(chromeUserAgent(contents.getUserAgent()));
+  contents.setWindowOpenHandler(({ url: target }) => {
+    if (isTwitchUrl(target)) void contents.loadURL(target);
+    else if (/^https?:\/\//.test(target)) void shell.openExternal(target);
+    return { action: 'deny' };
+  });
+  loginWin.on('closed', () => {
+    loginWin = null;
+  });
+  void loginWin.loadURL(url);
+}
+
+export function closeTwitchLoginWindow(): void {
+  if (loginWin && !loginWin.isDestroyed()) loginWin.close();
+  loginWin = null;
+}

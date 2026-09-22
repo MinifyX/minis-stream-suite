@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Lurk</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="/addons/polls/polls.css">
+  <link rel="stylesheet" href="lurk.css">
+</head>
+<body>
+  <div class="page">
+    <header class="title-row">
+      <h1>👀 Lurk</h1>
+      <span class="spacer"></span>
+      <label class="head-toggle" id="enabled-toggle"></label>
+      <button class="btn" id="open-settings">⚙ Einstellungen</button>
+    </header>
+    <p class="note">Zuschauer schreiben <code>!lurk</code>, wenn sie nur nebenbei zuschauen. Sobald sie wieder etwas in den Chat schreiben, begrüßt die Suite sie automatisch zurück und merkt sich, wie lange sie weg waren.</p>
+    <div id="conflict"></div>
+
+    <div class="layout">
+      <main>
+        <section class="card">
+          <div class="card-head">
+            <h2>🟢 Lurkt gerade</h2>
+            <span class="spacer"></span>
+            <button class="btn small" id="end-all">Alle beenden</button>
+          </div>
+          <div id="active"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>🏆 Lurk-Statistik</h2>
+            <span class="spacer"></span>
+            <input type="search" id="search" placeholder="Suchen…">
+            <select id="sort">
+              <option value="totalMs">nach Gesamtzeit</option>
+              <option value="count">nach Anzahl</option>
+              <option value="longestMs">nach längstem Lurk</option>
+              <option value="lastLurkAt">nach zuletzt</option>
+            </select>
+          </div>
+          <div id="stats"></div>
+        </section>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>🧪 Testen</h2>
+          <p class="note">Simuliert Chat-Nachrichten eines Test-Zuschauers. Nichts wird gesendet oder gespeichert.</p>
+          <div class="f-row">
+            <div class="field"><label>Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
+            <div class="field"><label>Lurk „schon seit“ (Min.)</label><input type="number" id="test-minutes" value="45" min="0" max="1440"></div>
+          </div>
+          <div class="copy-row">
+            <input type="text" id="test-message" placeholder="!lurk">
+            <button class="btn" id="test-run">Senden</button>
+          </div>
+          <div class="btn-row" id="test-quick"></div>
+          <div id="test-log" class="test-log"></div>
+        </section>
+        <section class="card">
+          <h2>💬 Im Chat</h2>
+          <div id="chat-help" class="help"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div id="modal-host"></div>
+
+  <script src="/app/ui.js"></script>
+  <script src="lurk.js"></script>
+</body>
+</html>

@@ -27,6 +27,9 @@ function subscriptionsFor(userId: string) {
     { type: 'channel.chat.message_delete', version: '1', condition: { ...broadcaster, user_id: userId } },
     { type: 'channel.chat.clear', version: '1', condition: { ...broadcaster, user_id: userId } },
     { type: 'channel.chat.clear_user_messages', version: '1', condition: { ...broadcaster, user_id: userId } },
+    { type: 'channel.poll.begin', version: '1', condition: broadcaster },
+    { type: 'channel.poll.progress', version: '1', condition: broadcaster },
+    { type: 'channel.poll.end', version: '1', condition: broadcaster },
   ];
 }
 

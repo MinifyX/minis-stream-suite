@@ -2,7 +2,7 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.3):** Core plus zwei Addons.
+**Aktueller Stand (v0.4):** Installierbare Windows-App mit Core, Bot-Account und sieben Addons.
 
 **Kanalpunkte-Addon:**
 
@@ -20,7 +20,7 @@ Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalp
 - Eigene `!commands` mit Aliasen, Variablen (`{user}`, `{touser}`, `{count}`, `{random:1-6}`, `{pick:a|b}`, `{game}`, `{uptime}`, `{followage}` …), Rechten (Alle/Subs/VIPs/Mods/du) und Cooldowns (für alle und pro Zuschauer).
 - Optional ein Keybind pro Command, auf diesem PC oder per 🛰 Satellite.
 - Vorlagen, Trockenlauf-Test (sendet nichts) und Verlauf der letzten Aufrufe.
-- Antworten gehen mit deinem Twitch-Account in den Chat.
+- Antworten schreibt der 🤖 Bot-Account, falls verknüpft, sonst dein eigener Account.
 
 **Timer-Nachrichten-Addon:**
 
@@ -28,7 +28,24 @@ Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalp
 - Mehrere Nachrichten pro Timer, der Reihe nach oder zufällig. Nur wenn live (Stream-Start/-Ende kommt live per EventSub), optional nur bei bestimmten Spielen.
 - Mindestabstand zwischen Timern, Vorschau mit Variablen, „Jetzt senden“, Vorlagen und Live-Status pro Timer.
 
-Commands und Timer senden über eine gemeinsame Warteschlange im Core (`core/chat.ts`), damit zusammen nie Twitchs Limit gerissen wird.
+**📊 Umfragen-Addon:**
+
+- **Chat-Umfrage:** Zuschauer stimmen mit `!vote 2`, `!vote Pizza` oder einfach `2` ab. Bis zu 10 Antworten, beliebig lang, Stimme änderbar, einstellbar wer abstimmen darf. Geht in jedem Kanal.
+- **Twitch-Umfrage:** die echte Umfrage oben im Twitch-Chat (Affiliate/Partner), optional mit Kanalpunkten für Zusatzstimmen. Auch Umfragen, die direkt bei Twitch gestartet werden, erscheinen im Overlay.
+- **OBS-Overlay** (`/addons/polls/overlay.html`) mit Live-Balken, Restzeit und Gewinner. Farben, Größe und Anzeigedauer einstellbar.
+- Nachrichten zu Start, Halbzeit und Ergebnis (mit Variablen), Mods starten per `!poll 90 Frage | A | B` und beenden mit `!endpoll`.
+- Verlauf der letzten 30 Umfragen mit „↻ Nochmal“.
+
+**👀 Lurk-Addon:**
+
+- Lurken geht **nur** mit `!lurk` (optional mit Grund: `!lurk bin kochen`).
+- Schreibt der Zuschauer danach wieder etwas, erkennt die Suite das automatisch: „Willkommen zurück, … Du hast 1 Std. 5 Min. gelurkt.“
+- Statistik pro Zuschauer (Anzahl, Gesamtzeit, längster Lurk): `!lurkstats`, `!lurkstats @name`, `!toplurker`. In der App als Tabelle.
+- Beim Streamende werden alle Lurks still beendet. Test-Bereich zum Ausprobieren, ohne etwas zu senden.
+
+**🤖 Bot-Account:** Ein zweiter Twitch-Account (z.B. „MinisBot“) schreibt die Nachrichten der Suite (Commands, Timer, Umfragen, Lurk). Verknüpfen in der Übersicht: Es öffnet sich ein eigenes Anmeldefenster, dein Hauptaccount bleibt im Browser eingeloggt. Den Bot per Klick zum Mod machen (dann darf er schneller schreiben und Links posten). Klappt es mit dem Bot mal nicht, schreibt notfalls dein eigener Account. Was du im Chat-Fenster tippst, schreibst weiterhin du selbst.
+
+Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/chat.ts`), damit zusammen nie Twitchs Limit gerissen wird.
 
 **Chat-Overlay & Chat-Fenster:**
 
@@ -47,14 +64,25 @@ Commands und Timer senden über eine gemeinsame Warteschlange im Core (`core/cha
 - **Editor** wie bei Twitch: Layout, Hintergrund, Schrift, Farben, Animationen, Bild/Video, Sound, Vorlesen (Windows-Stimmen) und Effekte (Konfetti, Feuerwerk, …), mit Live-Vorschau.
 - **Belohnungs-Filter**: Belohnungen, die nie einen Alert auslösen. So verrät kein Alert mehr deinen HudFX-Jumpscare.
 
-## Starten
+## Installieren
+
+`Minis-Stream-Suite-Setup-<version>.exe` ausführen. Die Suite landet im Startmenü und auf dem Desktop. Einstellungen und Logins bleiben bei Updates und beim Deinstallieren erhalten (`%APPDATA%\Mini's Stream Suite\`).
+
+- **Schließen** (X) lässt die Suite im Infobereich unten rechts weiterlaufen, damit Overlays, Commands und Bot aktiv bleiben. Beenden: Rechtsklick auf das Symbol → Beenden. Abschaltbar in der Übersicht unter 🖥 App.
+- **Mit Windows starten:** in der Übersicht unter 🖥 App einschalten. Die Suite startet dann unsichtbar im Infobereich.
+- Die .exe ist nicht signiert. Windows SmartScreen warnt deshalb beim ersten Start: „Weitere Informationen“ → „Trotzdem ausführen“.
+
+## Entwickeln
 
 Voraussetzung: [Node.js](https://nodejs.org) (LTS).
 
 ```bash
 npm install
-npm start
+npm start          # App aus dem Quellcode starten
+npm run dist       # Installer bauen → release/Minis-Stream-Suite-Setup-<version>.exe
 ```
+
+Zum Testen neben der echten Suite (eigener Datenordner und Port, echte Logins bleiben unberührt): Umgebungsvariablen `SUITE_DATA_DIR` und `SUITE_PORT` setzen.
 
 ## Einrichtung (einmalig)
 
@@ -82,6 +110,9 @@ src/
     server.ts             Lokaler Webserver: Oberfläche, Overlays, API, WebSocket
     addons.ts             Addon-System (Addon-Interface + Verwaltung)
     coreRoutes.ts         API für die Oberfläche
+    chat.ts               Chat-Warteschlange (Bot oder eigener Account), {Variablen}, Rollen
+    bot.ts                Bot-Account: Login im eigenen Fenster, Mod-Status, Einstellungen
+    desktop.ts            Hauptfenster, Infobereich (Tray), Autostart
   addons/
     index.ts              Liste aller Addons
     alerts/index.ts       Alerts-Addon: API, Uploads, Test-Alerts
@@ -89,6 +120,9 @@ src/
     alerts/tts.ts         Sprachausgabe über Windows-Stimmen
     channelpoints/        Kanalpunkte-Addon (Gruppen, Belohnungen, Übernehmen)
     channelpoints/service.ts  Schnittstelle für andere Addons (Gruppen → Alerts)
+    private/             Eigene Addons, die nicht ins Repo sollen (in .gitignore, optional)
+    polls/index.ts        Umfragen: Chat- und Twitch-Umfragen, Mod-Commands, Verlauf
+    lurk/index.ts         Lurk: !lurk, „Willkommen zurück“, Statistik
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
   addons/alerts/
@@ -98,6 +132,9 @@ public/
     effects.js            Konfetti, Feuerwerk, Herzen, Sterne
     overlay.html          Browser-Quelle für OBS
   addons/channelpoints/   Oberfläche des Kanalpunkte-Addons
+  addons/polls/           Oberfläche + overlay.html (Browser-Quelle für OBS)
+  addons/lurk/            Oberfläche des Lurk-Addons
+build/icon.png            App-Icon (Installer, Fenster, Infobereich)
 ```
 
 **Ablauf eines Events:** Twitch → `eventsub.ts` → `EventBus` → Addons (z.B. Alerts entscheidet: Alert ja oder nein) → WebSocket → Overlay in OBS.
@@ -108,6 +145,8 @@ public/
 2. In `src/addons/index.ts` zu `builtInAddons` hinzufügen.
 3. Optional: Einstellungsseite und Overlay unter `public/addons/<name>/`.
 
+Addons, die nur für dich sind und nicht ins Repo sollen, gehören nach `src/addons/private/` (steht in `.gitignore`). Dort eine `index.ts` anlegen, die `privateAddons: Addon[]` exportiert; die Suite lädt sie automatisch. Die Oberfläche kann dann per `publicDir` neben dem Code liegen.
+
 Im `activate(ctx)` stehen dem Addon zur Verfügung:
 
 - `ctx.events` für Twitch-Events
@@ -116,6 +155,7 @@ Im `activate(ctx)` stehen dem Addon zur Verfügung:
 - `ctx.api` für eigene API-Routen
 - `ctx.overlay.broadcast()` um Daten an Overlays zu schicken
 - `ctx.provide()` / `ctx.use()` für Schnittstellen zwischen Addons (z.B. Kanalpunkte-Gruppen → Alerts)
+- „Alert erscheint jetzt im Overlay“: `ctx.provide(ALERT_SHOWN_SERVICE, { alertShown(event) {…} })` (aus `addons/alerts`), z.B. um Licht oder Sounds genau zum Alert zu starten
 
 Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 
@@ -128,6 +168,9 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 - [ ] Kanalpunkte: Warteschlange (Einlösungen erledigen oder erstatten), Gruppen automatisch beim Stream-Start/-Ende schalten
 - [x] Chat-Commands
 - [x] Timer-Nachrichten
-- [ ] Eigener Bot-Account für Chat-Antworten
-- [ ] Installer (.exe) und Autostart
+- [x] Eigener Bot-Account für Chat-Antworten
+- [x] Umfragen (Chat + Twitch) mit OBS-Overlay
+- [x] Lurk mit „Willkommen zurück“ und Statistik
+- [x] Installer (.exe), Infobereich und Autostart
+- [ ] Automatische Updates (GitHub Releases)
 - [ ] Addon-Store mit Addons von außerhalb
