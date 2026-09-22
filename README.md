@@ -1,5 +1,7 @@
 # Mini's Stream Suite
 
+🇬🇧 [English version](README.en.md)
+
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
 **Aktueller Stand (v0.4):** Installierbare Windows-App mit Core, Bot-Account und sieben Addons.
@@ -70,7 +72,10 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 
 - **Schließen** (X) lässt die Suite im Infobereich unten rechts weiterlaufen, damit Overlays, Commands und Bot aktiv bleiben. Beenden: Rechtsklick auf das Symbol → Beenden. Abschaltbar in der Übersicht unter 🖥 App.
 - **Mit Windows starten:** in der Übersicht unter 🖥 App einschalten. Die Suite startet dann unsichtbar im Infobereich.
-- Die .exe ist nicht signiert. Windows SmartScreen warnt deshalb beim ersten Start: „Weitere Informationen“ → „Trotzdem ausführen“.
+- **Updates** kommen automatisch: Die Suite lädt neue Versionen von GitHub im Hintergrund und installiert sie beim Beenden (oder sofort per Klick in der Übersicht).
+- Solange die .exe nicht signiert ist, warnt Windows SmartScreen beim ersten Start: „Weitere Informationen“ → „Trotzdem ausführen“.
+
+Download: [Releases](https://github.com/MinifyX/minis-stream-suite/releases)
 
 ## Entwickeln
 
@@ -86,15 +91,10 @@ Zum Testen neben der echten Suite (eigener Datenordner und Port, echte Logins bl
 
 ## Einrichtung (einmalig)
 
-1. **Twitch-App anlegen:** [dev.twitch.tv/console/apps/create](https://dev.twitch.tv/console/apps/create)
-   - Name: z.B. `MinisStreamSuite` (das Wort „Twitch“ ist nicht erlaubt)
-   - OAuth-Redirect-URL: `http://localhost`
-   - Kategorie: *Application Integration*
-   - Client-Typ: **Öffentlich**
-2. Die **Client-ID** in der App unter *Übersicht* eintragen.
-3. **Mit Twitch verbinden** klicken und im Browser bestätigen.
-4. **In OBS:** Browser-Quelle mit `http://127.0.0.1:7474/addons/alerts/overlay.html` hinzufügen. Breite und Höhe wie im Editor unter „Vorschau“ (Standard 800×600).
-5. Die nativen Twitch-Alerts ausschalten, damit Alerts nicht doppelt erscheinen.
+1. **Mit Twitch verbinden** klicken und im Browser bestätigen. (Eine eigene Twitch-App brauchst du nicht, die Suite bringt eine mit. Wer mag, trägt unter „Erweitert“ eine eigene Client-ID ein.)
+2. Optional: **🤖 Bot-Account** verknüpfen und zum Mod machen.
+3. **In OBS:** Browser-Quelle mit `http://127.0.0.1:7474/addons/alerts/overlay.html` hinzufügen. Breite und Höhe wie im Editor unter „Vorschau“ (Standard 800×600).
+4. Die nativen Twitch-Alerts ausschalten, damit Alerts nicht doppelt erscheinen.
 
 ## Aufbau
 
@@ -174,3 +174,11 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 - [x] Installer (.exe), Infobereich und Autostart
 - [ ] Automatische Updates (GitHub Releases)
 - [ ] Addon-Store mit Addons von außerhalb
+
+## Mitmachen & Lizenz
+
+Fehler gefunden oder eine Idee? Gern als [Issue](https://github.com/MinifyX/minis-stream-suite/issues) melden. Wie man mitentwickelt, steht in [CONTRIBUTING.md](CONTRIBUTING.md), wie ein Release entsteht in [docs/RELEASING.md](docs/RELEASING.md).
+
+Die Suite ist freie Software unter der **GNU General Public License v3.0 oder neuer** ([LICENSE](LICENSE)). Du darfst sie benutzen, verändern und weitergeben. Veränderte Versionen, die du weitergibst, müssen ebenfalls unter der GPL und mit Quellcode erscheinen.
+
+Die Suite ist kein offizielles Produkt von Twitch.

@@ -8,7 +8,7 @@
   window.__minisChatLoaded = true;
 
   const CONFIG = globalThis.MSS_CONFIG ?? {
-    channel: 'minifyx',
+    channel: '',
     markdown: { enabled: true, minRole: 'everyone' },
     colors: { enabled: true, minRole: 'subscriber' },
     hiddenRewardIds: [],

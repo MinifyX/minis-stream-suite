@@ -1,0 +1,46 @@
+# Baut den Windows-Installer und legt ihn als Entwurf unter „Releases“ ab.
+#
+# So geht ein Release (Details: docs/RELEASING.md):
+#   1. Version in package.json erhöhen, committen
+#   2. git tag v<version>  →  git push origin v<version>
+#   3. Auf GitHub unter Releases den Entwurf prüfen und „Publish“ klicken.
+#      Erst dann bekommen installierte Suiten das Update angeboten.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Tag passt zur Version in package.json?
+        shell: bash
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME passt nicht zu package.json ($VERSION)"
+            exit 1
+          fi
+
+      - run: npm run typecheck
+
+      - name: Installer bauen und als Release-Entwurf hochladen
+        run: npx tsc && npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Signieren (kostenlos für Open Source über die SignPath Foundation):
+      # Sobald der Antrag bewilligt ist, kommt hier der Schritt
+      # "signpath/github-action-submit-signing-request" hin. Siehe docs/RELEASING.md.

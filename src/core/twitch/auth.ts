@@ -3,6 +3,7 @@ import { safeStorage } from 'electron';
 import type { ConfigStore } from '../config';
 import type { CoreConfig } from '../coreConfig';
 import type { Logger } from '../log';
+import { BUNDLED_CLIENT_ID } from './clientId';
 
 /**
  * Rechte, die die Suite bei Twitch anfragt.
@@ -105,14 +106,20 @@ export class TwitchAuth extends EventEmitter {
     this.setState({ state: 'error', message });
   }
 
+  /** Eigene Client-ID aus den Einstellungen, sonst die mitgelieferte */
   get clientId(): string {
-    return this.config.get('clientId');
+    return this.config.get('clientId') || BUNDLED_CLIENT_ID;
+  }
+
+  /** Wurde eine eigene Client-ID eingetragen? */
+  get customClientId(): boolean {
+    return !!this.config.get('clientId');
   }
 
   setClientId(clientId: string): void {
     this.logout();
     this.config.set('clientId', clientId);
-    this.setState(clientId ? { state: 'logged-out' } : { state: 'no-client-id' });
+    this.setState(this.clientId ? { state: 'logged-out' } : { state: 'no-client-id' });
   }
 
   /** Beim Start: gespeicherten Login laden und prüfen. */

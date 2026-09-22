@@ -68,35 +68,37 @@ function eventsubBadge(status) {
   return h('span', { class: 'status-line' }, h('span', { class: `dot ${cls}` }), text);
 }
 
+/** Eigene Client-ID eintragen (optional – die Suite bringt eine mit). current = eigene ID oder '' */
 function clientIdSetup(current) {
-  const input = h('input', { type: 'text', placeholder: 'z.B. gp762nuuoqcoxypju8c569th9wz7q5', value: current || '' });
+  const input = h('input', { type: 'text', placeholder: 'leer = mitgelieferte Client-ID verwenden', value: current || '' });
   const save = async () => {
-    if (await call('core/client-id', { clientId: input.value })) toast('Client-ID gespeichert', 'ok');
+    if (await call('core/client-id', { clientId: input.value })) toast(input.value.trim() ? 'Eigene Client-ID gespeichert' : 'Mitgelieferte Client-ID wird verwendet', 'ok');
   };
   return [
-    h('p', { class: 'muted' }, 'Einmalig nötig: Die Suite braucht eine eigene „App“ bei Twitch. Das dauert zwei Minuten:'),
+    h('p', { class: 'muted' }, 'Nur für Fortgeschrittene: Die Suite bringt eine eigene Twitch-App mit, du musst hier nichts tun. Wenn du lieber deine eigene Twitch-App nutzen willst:'),
     h('ol', { class: 'steps' },
       h('li', {}, 'Öffne die ', h('a', { href: 'https://dev.twitch.tv/console/apps/create', target: '_blank' }, 'Twitch Developer Console'), ' und logge dich ein.'),
-      h('li', {}, 'Name: frei wählbar, z.B. ', h('code', {}, 'MinisStreamSuite'), ' (das Wort „Twitch“ ist nicht erlaubt).'),
+      h('li', {}, 'Name: frei wählbar (das Wort „Twitch“ ist nicht erlaubt).'),
       h('li', {}, 'OAuth-Redirect-URL: ', h('code', {}, 'http://localhost')),
       h('li', {}, 'Kategorie: ', h('b', {}, 'Application Integration'), ', Client-Typ: ', h('b', {}, 'Öffentlich')),
       h('li', {}, 'Erstellen, dann bei der App auf „Verwalten“ und die ', h('b', {}, 'Client-ID'), ' kopieren.')),
-    h('div', { class: 'field' }, h('label', {}, 'Client-ID'), input),
+    h('div', { class: 'field' }, h('label', {}, 'Eigene Client-ID'), input),
+    h('p', { class: 'muted' }, 'Nach dem Ändern musst du dich (und den Bot) neu verbinden.'),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn primary', onclick: save }, 'Speichern'),
-      current ? h('button', { class: 'btn', onclick: () => renderTwitchCard(true) }, 'Zurück') : null),
+      h('button', { class: 'btn', onclick: () => renderTwitchCard(true) }, 'Zurück')),
   ];
 }
 
 function renderTwitchCard(force = false) {
-  const { auth, eventsub, clientId } = state.status;
+  const { auth, eventsub, clientId, customClientId } = state.status;
   const key = JSON.stringify(auth) + eventsub;
   if (!force && key === state.twitchKey) return;
   state.twitchKey = key;
 
   const card = $('#twitch-card');
   const title = h('h2', {}, 'Twitch-Verbindung');
-  const changeId = h('button', { class: 'btn', onclick: () => card.replaceChildren(title, ...clientIdSetup(clientId)) }, 'Client-ID ändern');
+  const changeId = h('button', { class: 'btn', onclick: () => card.replaceChildren(title, ...clientIdSetup(customClientId ? clientId : '')) }, customClientId ? 'Eigene Client-ID ändern' : 'Erweitert');
 
   switch (auth.state) {
     case 'no-client-id':
@@ -235,7 +237,7 @@ function renderBotCard(force = false) {
 
 async function loadDesktop(body) {
   try {
-    state.desktop = await api('core/desktop', body);
+    [state.desktop, state.update] = await Promise.all([api('core/desktop', body), api('core/update')]);
   } catch (err) {
     toast(err.message, 'err');
   }
@@ -255,9 +257,36 @@ function renderDesktopCard() {
       toggle(d.closeToTray, (on) => loadDesktop({ closeToTray: on }), 'Beim Schließen weiterlaufen'),
       h('span', {}, 'X schließt nur das Fenster, die Suite läuft im Infobereich weiter')),
     h('p', { class: 'muted small' }, 'So bleiben Overlays, Commands und Bot aktiv, auch wenn das Fenster zu ist. Beenden: Rechtsklick auf das Symbol unten rechts.'),
+    updateLine(),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn', onclick: () => api('core/desktop/open-data', {}).catch((err) => toast(err.message, 'err')) }, '📁 Datenordner öffnen'),
       h('span', { class: 'muted small', style: { alignSelf: 'center' } }, `v${state.status?.version ?? ''}${d.packaged ? '' : ' · Entwicklermodus'}`))].filter(Boolean));
+}
+
+/** Zeile mit dem Update-Stand (GitHub Releases) */
+function updateLine() {
+  const u = state.update;
+  if (!u || u.state === 'disabled') return null;
+  const run = (path) => async () => {
+    try {
+      state.update = await api(path, {});
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+    renderDesktopCard();
+  };
+  const text = {
+    idle: '✅ Du hast die neueste Version.',
+    checking: '🔎 Suche nach Updates…',
+    downloading: `⬇ Version ${u.version} wird geladen (${u.percent ?? 0} %)…`,
+    ready: `🎉 Version ${u.version} ist bereit. Wird beim Beenden installiert.`,
+    error: `⚠ ${u.message}`,
+  }[u.state];
+  return h('div', { class: 'opt-line' },
+    h('span', { class: 'small', style: { flex: 1 } }, text),
+    u.state === 'ready'
+      ? h('button', { class: 'btn small primary', onclick: run('core/update/install') }, 'Jetzt neu starten')
+      : h('button', { class: 'btn small', disabled: u.state === 'checking' || u.state === 'downloading', onclick: run('core/update/check') }, 'Nach Updates suchen'));
 }
 
 async function refreshStatus() {
@@ -345,4 +374,9 @@ window.addEventListener('hashchange', route);
   refreshLogs();
   setInterval(refreshStatus, 2000);
   setInterval(refreshLogs, 2000);
+  setInterval(async () => {
+    const before = JSON.stringify(state.update);
+    state.update = await api('core/update').catch(() => state.update);
+    if (JSON.stringify(state.update) !== before) renderDesktopCard();
+  }, 5000);
 })();

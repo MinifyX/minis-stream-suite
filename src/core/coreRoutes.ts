@@ -27,6 +27,7 @@ export function registerCoreRoutes({ server, auth, botAuth, eventsub, addons, up
   get('/status', () => ({
     version: app.getVersion(),
     clientId: auth.clientId,
+    customClientId: auth.customClientId,
     auth: auth.state,
     bot: botAuth.user,
     eventsub: eventsub.status,
@@ -35,7 +36,8 @@ export function registerCoreRoutes({ server, auth, botAuth, eventsub, addons, up
 
   post('/client-id', ({ body }) => {
     const clientId = String(body?.clientId ?? '').trim();
-    if (!/^[a-z0-9]{20,40}$/i.test(clientId)) {
+    // Leer = zurück zur mitgelieferten Client-ID
+    if (clientId && !/^[a-z0-9]{20,40}$/i.test(clientId)) {
       throw new HttpError(400, 'Das sieht nicht wie eine gültige Client-ID aus.');
     }
     // Tokens gehören zur Client-ID → auch der Bot muss sich neu anmelden

@@ -15,7 +15,13 @@ const root = path.resolve(here, '..');
 const srcDir = path.join(here, 'src');
 const distDir = path.join(here, 'dist');
 const VERSION = '1.0.0';
-const CHANNEL = (process.env.MSS_CHANNEL || 'minifyx').toLowerCase();
+// Für welchen Kanal? npm run build:extension -- --channel deinkanal  (oder Umgebungsvariable MSS_CHANNEL)
+const channelArg = process.argv.find((a, i) => process.argv[i - 1] === '--channel') ?? process.argv.find((a) => a.startsWith('--channel='))?.slice(10);
+const CHANNEL = String(channelArg || process.env.MSS_CHANNEL || '').replace(/^@/, '').toLowerCase();
+if (!/^[a-z0-9_]{3,25}$/.test(CHANNEL)) {
+  console.error('Bitte den Twitch-Kanal angeben: npm run build:extension -- --channel deinkanal');
+  process.exit(1);
+}
 
 // ------------------------------------------------------------------ Einstellungen aus der Suite
 

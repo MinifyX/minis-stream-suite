@@ -15,6 +15,7 @@ import { TwitchApi } from './core/twitch/api';
 import { BOT_SCOPES, TwitchAuth } from './core/twitch/auth';
 import { registerBot } from './core/bot';
 import { startDesktop } from './core/desktop';
+import { startUpdater } from './core/updater';
 import { EventSubClient } from './core/twitch/eventsub';
 
 /** Port des lokalen Servers (Overlays in OBS: http://127.0.0.1:7474/…) */
@@ -59,6 +60,7 @@ async function bootstrap(): Promise<void> {
   await auth.init();
   await botAuth.init();
   startDesktop({ config, server });
+  startUpdater(server);
 }
 
 // Für Entwickler: zweite Instanz mit eigenem Datenordner/Port starten, ohne die echte Suite anzufassen
