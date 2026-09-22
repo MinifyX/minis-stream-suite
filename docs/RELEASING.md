@@ -58,4 +58,4 @@ cd -
 git worktree remove --force ../release-tmp
 ```
 
-Danach auf GitHub den Entwurf prüfen und veröffentlichen.
+Danach auf GitHub den Entwurf prüfen und veröffentlichen. **Achtung:** electron-builder legt dabei manchmal zwei Entwürfe an und verteilt die Dateien darauf. Der veröffentlichte Release braucht alle drei Dateien: `.exe`, `.exe.blockmap` und `latest.yml` (sonst mit `gh release upload v0.5.0 <datei>` nachladen). Überzählige Entwürfe danach löschen.
