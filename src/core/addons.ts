@@ -28,6 +28,8 @@ export interface AddonManifest {
    * (z.B. bei privaten Addons in src/addons/private/). Wird unter /addons/<id>/ ausgeliefert.
    */
   publicDir?: string;
+  /** Kommt aus dem Plugin-Ordner (nicht in der Suite eingebaut) */
+  plugin?: boolean;
 }
 
 export interface Addon extends AddonManifest {
@@ -104,8 +106,8 @@ interface Deps {
 }
 
 function manifestOf(addon: Addon): AddonManifest {
-  const { id, name, description, version, author, icon, settingsPage } = addon;
-  return { id, name, description, version, author, icon, settingsPage };
+  const { id, name, description, version, author, icon, settingsPage, plugin } = addon;
+  return { id, name, description, version, author, icon, settingsPage, plugin: !!plugin };
 }
 
 export class AddonManager {

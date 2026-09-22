@@ -17,9 +17,11 @@ Der Workflow bricht ab, wenn Tag und Version in `package.json` nicht zusammenpas
 
 > Automatische Updates funktionieren nur, wenn das Repo **öffentlich** ist (sonst kann die App die Releases nicht sehen).
 
-## Private Addons
+## Plugins
 
-Der GitHub-Build enthält nur, was im Repo liegt. Private Addons (`src/addons/private/`) sind darin nicht enthalten. Wer sie braucht, baut sich den Installer lokal mit `npm run dist`. Achtung: Die lokal gebaute Version sucht ebenfalls auf GitHub nach Updates. Ein Update von dort enthält die privaten Addons nicht. Also nach jedem Update wieder lokal bauen, oder die Versionsnummer der eigenen Builds höher halten.
+Der Installer enthält nur, was im Repo liegt. Eigene Plugins (entwickelt in `src/addons/private/`) liegen im Plugin-Ordner der Suite und funktionieren mit der offiziellen Version weiter, auch nach Updates. Neue Plugin-Version installieren: `npm run plugin:install -- <name>`, Suite neu starten.
+
+Wenn sich `src/pluginApi.ts` inkompatibel ändert: `PLUGIN_API_VERSION` erhöhen und in den Release-Notizen erwähnen.
 
 ## Signieren (kostenlos über die SignPath Foundation)
 
@@ -44,7 +46,7 @@ Das kostet nichts, dauert aber je nach Warteschlange ein paar Wochen.
 
 ## Notfall: Release lokal bauen (ohne GitHub Actions)
 
-Falls GitHub Actions nicht startet (bei privaten Repos z.B. wegen fehlendem Guthaben), geht es auch vom eigenen PC. Wichtig: aus einer **sauberen Kopie** bauen, sonst landen private Addons im öffentlichen Installer.
+Falls GitHub Actions nicht startet (bei privaten Repos z.B. wegen fehlendem Guthaben), geht es auch vom eigenen PC. Wichtig: aus einer **sauberen Kopie** bauen, dann ist garantiert nichts aus der Werkstatt `src/addons/private/` dabei.
 
 ```bash
 git worktree add ../release-tmp v0.5.0      # saubere Kopie des Tags, ohne src/addons/private

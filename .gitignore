@@ -6,5 +6,5 @@ out/
 browser-extension/dist/
 release/
 
-# Private Addons (eigenes, privates Git-Repo – siehe src/addons/index.ts)
+# Werkstatt für eigene Plugins (eigenes Git-Repo möglich) – installieren mit npm run plugin:install
 src/addons/private/

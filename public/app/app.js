@@ -323,7 +323,7 @@ async function refreshLogs() {
 
 async function loadAddons() {
   try {
-    state.addons = await api('core/addons');
+    [state.addons, state.plugins] = await Promise.all([api('core/addons'), api('core/plugins')]);
   } catch (err) {
     toast(err.message, 'err');
   }
@@ -336,7 +336,7 @@ function renderStore() {
     h('div', { class: 'card addon-card' },
       h('div', { class: 'top' },
         h('div', { class: 'addon-icon' }, addon.icon),
-        h('div', {}, h('strong', {}, addon.name), h('small', {}, `v${addon.version} · von ${addon.author}`))),
+        h('div', {}, h('strong', {}, addon.name), h('small', {}, `v${addon.version} · von ${addon.author}`, addon.plugin ? ' · 🧩 Plugin' : ''))),
       h('p', { class: 'muted' }, addon.description),
       h('div', { class: 'bottom' },
         addon.active ? h('span', { class: 'badge ok' }, 'Aktiv') : h('span', { class: 'badge' }, 'Aus'),
@@ -355,6 +355,21 @@ function renderStore() {
       h('div', { class: 'bottom' }, h('span', { class: 'badge accent' }, 'Bald verfügbar'))));
 
   $('#store-grid').replaceChildren(...installed, ...upcoming);
+  renderPluginBar();
+}
+
+// ---------------------------------------------------------------- Plugins
+
+/** Hinweis auf den Plugin-Ordner + Plugins, die nicht geladen werden konnten */
+function renderPluginBar() {
+  const p = state.plugins;
+  if (!p) return;
+  const broken = p.plugins.filter((x) => x.error);
+  $('#plugin-bar').replaceChildren(...[
+    h('span', { class: 'muted small' }, `🧩 Plugins (Addons von außerhalb) kommen in den Plugin-Ordner und bleiben bei Updates erhalten. Danach die Suite neu starten.`),
+    h('button', { class: 'btn small', onclick: () => api('core/plugins/open-folder', {}).catch((err) => toast(err.message, 'err')) }, '📁 Plugin-Ordner öffnen'),
+    ...broken.map((x) => h('div', { class: 'badge err' }, `Plugin „${x.folder}“: ${x.error}`)),
+  ]);
 }
 
 // ---------------------------------------------------------------- Start

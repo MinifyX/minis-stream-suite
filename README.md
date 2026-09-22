@@ -120,7 +120,7 @@ src/
     alerts/tts.ts         Sprachausgabe über Windows-Stimmen
     channelpoints/        Kanalpunkte-Addon (Gruppen, Belohnungen, Übernehmen)
     channelpoints/service.ts  Schnittstelle für andere Addons (Gruppen → Alerts)
-    private/             Eigene Addons, die nicht ins Repo sollen (in .gitignore, optional)
+    private/             Werkstatt für eigene Plugins (in .gitignore, optional)
     polls/index.ts        Umfragen: Chat- und Twitch-Umfragen, Mod-Commands, Verlauf
     lurk/index.ts         Lurk: !lurk, „Willkommen zurück“, Statistik
 public/
@@ -145,7 +145,24 @@ build/icon.png            App-Icon (Installer, Fenster, Infobereich)
 2. In `src/addons/index.ts` zu `builtInAddons` hinzufügen.
 3. Optional: Einstellungsseite und Overlay unter `public/addons/<name>/`.
 
-Addons, die nur für dich sind und nicht ins Repo sollen, gehören nach `src/addons/private/` (steht in `.gitignore`). Dort eine `index.ts` anlegen, die `privateAddons: Addon[]` exportiert; die Suite lädt sie automatisch. Die Oberfläche kann dann per `publicDir` neben dem Code liegen.
+### Plugins (Addons von außerhalb)
+
+Plugins funktionieren mit der **offiziellen, installierten Version** und überstehen Updates. Sie liegen in `%APPDATA%\Mini's Stream Suite\plugins\<name>\` (Addon-Store → „📁 Plugin-Ordner öffnen“):
+
+```
+plugins/<name>/index.js   exportiert ein Addon-Objekt (CommonJS)
+plugins/<name>/ui/        optional: Oberfläche/Overlays, erreichbar unter /addons/<addon-id>/
+```
+
+Vom Core holen sich Plugins alles über `@stream-suite/api` (`src/pluginApi.ts`): `HttpError`, Typen wie `Addon`, `ALERT_SHOWN_SERVICE` usw. Die Suite leitet diesen Namen zur Laufzeit um. Plugins laufen mit denselben Rechten wie die Suite, also nur Plugins aus vertrauenswürdiger Quelle installieren.
+
+**Eigenes Plugin entwickeln:** in `src/addons/private/<name>/` (steht in `.gitignore`, kann ein eigenes Git-Repo sein) eine `index.ts` anlegen, die Oberfläche in `ui/`. Importe nur aus `@stream-suite/api` und Node. Dann:
+
+```bash
+npm run plugin:install -- <name>   # kompiliert und kopiert nach …\plugins\<name>\
+```
+
+Danach die Suite neu starten.
 
 Im `activate(ctx)` stehen dem Addon zur Verfügung:
 
@@ -173,7 +190,8 @@ Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 - [x] Lurk mit „Willkommen zurück“ und Statistik
 - [x] Installer (.exe), Infobereich und Autostart
 - [ ] Automatische Updates (GitHub Releases)
-- [ ] Addon-Store mit Addons von außerhalb
+- [x] Plugins: Addons von außerhalb im Plugin-Ordner, laufen mit der offiziellen Version
+- [ ] Addon-Store zum Herunterladen von Plugins
 
 ## Mitmachen & Lizenz
 

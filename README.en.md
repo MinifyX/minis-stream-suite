@@ -39,7 +39,7 @@ npm run dist       # build the installer → release/
 
 Set `SUITE_DATA_DIR` and `SUITE_PORT` to run a test instance next to your real one without touching its settings or logins.
 
-The code is TypeScript (Electron main process) plus plain HTML/CSS/JS for the UI and overlays, with German comments. Each feature is an add-on in `src/addons/<id>/` with its UI in `public/addons/<id>/`; see "Ein neues Addon bauen" in the German README for the add-on API. Personal add-ons that should not be published can live in `src/addons/private/` (git-ignored).
+The code is TypeScript (Electron main process) plus plain HTML/CSS/JS for the UI and overlays, with German comments. Each feature is an add-on in `src/addons/<id>/` with its UI in `public/addons/<id>/`; see "Ein neues Addon bauen" in the German README for the add-on API. **Plugins:** add-ons can also live outside the app in `%APPDATA%\Mini's Stream Suite\plugins\<name>\` (`index.js` exporting an add-on, optional `ui/` folder). They work with the official installed version and survive updates; they import core helpers from `@stream-suite/api`. Develop them in the git-ignored `src/addons/private/<name>/` and install with `npm run plugin:install -- <name>`. Plugins run with full app permissions, so only install trusted ones.
 
 ## License
 

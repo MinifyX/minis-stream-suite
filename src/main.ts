@@ -16,6 +16,7 @@ import { BOT_SCOPES, TwitchAuth } from './core/twitch/auth';
 import { registerBot } from './core/bot';
 import { startDesktop } from './core/desktop';
 import { startUpdater } from './core/updater';
+import { loadPlugins, registerPluginRoutes } from './core/plugins';
 import { EventSubClient } from './core/twitch/eventsub';
 
 /** Port des lokalen Servers (Overlays in OBS: http://127.0.0.1:7474/…) */
@@ -34,9 +35,12 @@ async function bootstrap(): Promise<void> {
   const botAuth = new TwitchAuth(config, createLogger('Bot'), { tokenKey: 'botTokens', scopes: BOT_SCOPES });
   const botApi = new TwitchApi(botAuth);
   const chat = new ChatService(auth, api, botAuth, botApi, config);
-  const addons = new AddonManager(builtInAddons, { bus, api, auth, server, config, chat });
+  // Eingebaute Addons + Plugins aus %APPDATA%\Mini's Stream Suite\plugins
+  const allAddons = [...builtInAddons, ...loadPlugins(builtInAddons.map((a) => a.id))];
+  const addons = new AddonManager(allAddons, { bus, api, auth, server, config, chat });
 
   registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus });
+  registerPluginRoutes(server);
   registerBot({ server, config, auth, api, botAuth, chat, log: createLogger('Bot') });
 
   auth.on('login', () => eventsub.start());

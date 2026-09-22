@@ -1,7 +1,7 @@
 {
   "name": "minis-stream-suite",
   "productName": "Mini's Stream Suite",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Stream-Toolkit für Twitch mit Addons für Alerts, Kanalpunkte, Commands, Umfragen und mehr.",
   "main": "dist/main.js",
   "private": true,
@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "build:extension": "node browser-extension/build.mjs",
     "dist": "tsc && electron-builder --win",
-    "pack": "tsc && electron-builder --win --dir"
+    "pack": "tsc && electron-builder --win --dir",
+    "plugin:install": "tsc && node scripts/install-plugin.mjs"
   },
   "build": {
     "appId": "io.github.minifyx.streamsuite",
@@ -29,7 +30,7 @@
       "!dist/**/*.map",
       "public/**/*",
       "package.json",
-      "src/addons/private/**/ui/**/*"
+      "!dist/addons/private/**"
     ],
     "win": {
       "target": "nsis",

@@ -57,3 +57,4 @@ main { flex: 1; overflow: auto; }
 #bot-card .status-line { flex-wrap: wrap; }
 .muted.small, .small { font-size: 12px; }
 img.logo { background: none; object-fit: contain; }
+.plugin-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
