@@ -14,6 +14,7 @@ function subscriptionsFor(userId: string) {
   const broadcaster = { broadcaster_user_id: userId };
   return [
     { type: 'channel.channel_points_custom_reward_redemption.add', version: '1', condition: broadcaster },
+    { type: 'channel.channel_points_custom_reward_redemption.update', version: '1', condition: broadcaster },
     { type: 'channel.follow', version: '2', condition: { ...broadcaster, moderator_user_id: userId } },
     { type: 'channel.subscribe', version: '1', condition: broadcaster },
     { type: 'channel.subscription.gift', version: '1', condition: broadcaster },
@@ -30,6 +31,15 @@ function subscriptionsFor(userId: string) {
     { type: 'channel.poll.begin', version: '1', condition: broadcaster },
     { type: 'channel.poll.progress', version: '1', condition: broadcaster },
     { type: 'channel.poll.end', version: '1', condition: broadcaster },
+    { type: 'channel.hype_train.begin', version: '2', condition: broadcaster },
+    { type: 'channel.hype_train.progress', version: '2', condition: broadcaster },
+    { type: 'channel.hype_train.end', version: '2', condition: broadcaster },
+    { type: 'channel.prediction.begin', version: '1', condition: broadcaster },
+    { type: 'channel.prediction.progress', version: '1', condition: broadcaster },
+    { type: 'channel.prediction.lock', version: '1', condition: broadcaster },
+    { type: 'channel.prediction.end', version: '1', condition: broadcaster },
+    { type: 'channel.ad_break.begin', version: '1', condition: broadcaster },
+    { type: 'channel.shoutout.create', version: '1', condition: { ...broadcaster, moderator_user_id: userId } },
   ];
 }
 

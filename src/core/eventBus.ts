@@ -7,6 +7,11 @@ function describe(event: StreamEvent): string {
   if (event.type === 'channelupdate') return `${event.test ? '[Test] ' : ''}Kanal geändert: „${event.categoryName}“ – ${event.title}`;
   if (event.type === 'streamonline') return `${event.test ? '[Test] ' : ''}Stream ist live 🔴`;
   if (event.type === 'streamoffline') return `${event.test ? '[Test] ' : ''}Stream beendet`;
+  if (event.type === 'redemptionupdate') return `${event.test ? '[Test] ' : ''}Einlösung ${event.status === 'canceled' ? 'zurückerstattet' : 'erledigt'}`;
+  if (event.type === 'hypetrain') return `${event.test ? '[Test] ' : ''}Hype Train ${event.phase === 'begin' ? 'gestartet' : event.phase === 'end' ? `beendet (Level ${event.level})` : `Level ${event.level}`}`;
+  if (event.type === 'prediction') return `${event.test ? '[Test] ' : ''}Vorhersage ${{ begin: 'gestartet', progress: 'läuft', lock: 'gesperrt', end: 'beendet' }[event.phase]}: „${event.title}“`;
+  if (event.type === 'adbreak') return `${event.test ? '[Test] ' : ''}Werbepause: ${event.durationSeconds} Sek.`;
+  if (event.type === 'shoutout') return `${event.test ? '[Test] ' : ''}Shoutout an ${event.to.name}`;
   if (event.type === 'poll') return `${event.test ? '[Test] ' : ''}Twitch-Umfrage ${event.phase === 'begin' ? 'gestartet' : 'beendet'}: „${event.title}“`;
   const who = 'user' in event && event.user ? event.user.name : 'Anonym';
   const extra = event.type === 'redemption' ? ` („${event.reward.title}“)` : '';
@@ -32,9 +37,9 @@ export class EventBus {
   }
 
   emit(event: StreamEvent): void {
-    // Chat-Nachrichten und Löschungen nicht ins Log schreiben (zu viele)
     // Chat-Nachrichten, Löschungen und Zwischenstände von Umfragen nicht ins Log schreiben (zu viele)
-    const quiet = ['chat', 'chatdelete', 'chatclear'].includes(event.type) || (event.type === 'poll' && event.phase === 'progress');
+    const quiet = ['chat', 'chatdelete', 'chatclear'].includes(event.type)
+      || ((event.type === 'poll' || event.type === 'prediction') && event.phase === 'progress');
     if (!quiet) this.log.info(describe(event));
     for (const key of [event.type, '*'] as const) {
       for (const handler of this.handlers.get(key) ?? []) {

@@ -9,7 +9,18 @@ A Windows app for Twitch streamers with an add-on system for alerts, channel poi
 ## Features
 
 - **Alerts** with an editor similar to Twitch's: variants with conditions (e.g. "1000+ bits"), layout, fonts, animations, images/videos, sounds, text-to-speech (Windows voices) and effects (confetti, fireworks, …). A **reward filter** keeps specific channel point rewards (e.g. jumpscares from other tools) from ever triggering an alert.
-- **Channel points:** sort rewards into groups, pause/resume/hide whole groups with one click, mute groups for alerts, create and edit rewards, press keys on redemption (locally or on a second PC via **Satellite**), enable groups only for certain games.
+- **Channel points:** sort rewards into groups, pause/resume/hide whole groups with one click, mute groups for alerts, create and edit rewards, press keys on redemption (locally or on a second PC via **Satellite**), enable groups or single rewards only for certain games.
+- **Redemption queue:** work through redemptions in order, mark them done or refund them (for rewards created by the suite), also as a small always-on-top window.
+- **Alert history** with "▶ replay", plus replay, pause and skip right from the chat window. **Hype Train** alerts for start, level-up and end.
+- **Predictions:** start, lock, resolve or cancel Twitch predictions, with an OBS overlay, chat messages and mod commands.
+- **Shoutouts:** `!so @name` posts a message and triggers the real Twitch shoutout (queued when Twitch's cooldown blocks it), optional auto-shoutout on raids and a clip overlay.
+- **Ad breaks:** warnings before the next ad in chat and overlay, messages when it starts and ends, snooze or start ads manually.
+- **Spam protection:** links (allow-list, `!permit`), caps, banned words, repeats and emote/symbol spam → delete or timeout, with escalation and a log. Starts in dry-run mode.
+- **Goals & recent events:** follower/sub/bits/custom goals as OBS overlays and a "latest events" bar.
+- **Stream info:** change title, category, tags and language from the suite, with presets and `!title` / `!game` mod commands.
+- **OBS control** via OBS WebSocket (OBS 28+): switch scenes, show/hide sources and filters on rewards, chat commands or events.
+- **Backup:** export all settings (optionally with images and sounds) to one file and import them again; automatic daily backup. Twitch logins are never included.
+- **English or German UI** (switch in the overview).
 - **Chat commands** with aliases, variables (`{user}`, `{touser}`, `{count}`, `{random:1-6}`, `{game}`, `{uptime}`, `{followage}` …), permissions, cooldowns and optional key presses.
 - **Timed messages** that only fire when the stream is live and chat is active.
 - **Polls:** chat polls (`!vote 2` or just `2`, up to 10 options) or native Twitch polls (affiliate/partner, optional channel points), a live OBS overlay, mod commands `!poll 90 Question | A | B` / `!endpoll`, and a history.

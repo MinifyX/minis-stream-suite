@@ -268,10 +268,10 @@ window.ChatRender = (() => {
     line.append(el('span', 'cr-ev-icon', item.icon), ' ');
     const [before, after] = item.text.split('{user}');
     line.append(before ?? '');
-    if (after !== undefined) line.append(el('span', 'cr-ev-user', item.user), after);
+    if (after !== undefined) line.append(el('span', 'cr-ev-user no-i18n', item.user), after);
     if (item.test) line.append(el('span', 'cr-ev-test', ' [Test]'));
     root.append(line);
-    if (item.detail) root.append(el('div', 'cr-ev-detail', item.detail));
+    if (item.detail) root.append(el('div', 'cr-ev-detail no-i18n', item.detail));
     return root;
   }
 
@@ -323,6 +323,7 @@ window.ChatRender = (() => {
     .cr-overlay .cr-event { box-shadow: inset 4px 0 0 var(--cr-ev, #9146ff); }
     .cr-ev-follow { --cr-ev: #b580ff; } .cr-ev-sub, .cr-ev-resub { --cr-ev: #ffd700; } .cr-ev-giftsub { --cr-ev: #ff6bd6; }
     .cr-ev-cheer { --cr-ev: #35d0ff; } .cr-ev-raid { --cr-ev: #ff9f43; } .cr-ev-redemption { --cr-ev: #4dff88; } .cr-ev-stream { --cr-ev: #ff4d4d; }
+    .cr-ev-hypetrain { --cr-ev: #ff6b3d; } .cr-ev-prediction { --cr-ev: #387aff; } .cr-ev-shoutout { --cr-ev: #f5b041; } .cr-ev-ads { --cr-ev: #9a9aab; }
     .cr-anim-slide { animation: cr-slide .35s cubic-bezier(.2, 1.2, .4, 1) both; }
     .cr-overlay.cr-right .cr-anim-slide { animation-name: cr-slide-r; }
     .cr-anim-fade { animation: cr-fade .4s ease-out both; }

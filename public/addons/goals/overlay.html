@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Ziel Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/goals/overlay.html?goal=<ID>
+    Die fertige URL für jedes Ziel steht auf der Einstellungsseite (🎯 Ziele & Events).
+    Hintergrund ist durchsichtig; Aussehen stellst du in der Suite ein, es ändert sich hier live.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    body { position: relative; }
+    #goal { position: absolute; top: 14px; left: 14px; }
+    #goal[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="goal" hidden></div>
+  <script src="render.js"></script>
+  <script>
+    const goalId = new URLSearchParams(location.search).get('goal');
+    const box = document.getElementById('goal');
+    const view = GoalRender.mountGoal(box, { confettiHost: document.body });
+
+    function handle(msg) {
+      if (msg.kind !== 'state' && msg.kind !== 'goals') return;
+      const goal = (msg.goals || []).find((g) => g.id === goalId);
+      // Ziel gelöscht oder URL ohne ?goal= → nichts anzeigen
+      box.hidden = !goal;
+      if (!goal) return;
+      const reached = (msg.celebrate || []).find((c) => c.id === goalId);
+      view.update(goal, reached ? reached.target : null);
+    }
+
+    function connect() {
+      fetch('/api/addons/goals/overlay-state').then((r) => r.json()).then(handle).catch(() => {});
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=goals`);
+      ws.onmessage = (m) => handle(JSON.parse(m.data));
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+    connect();
+  </script>
+</body>
+</html>

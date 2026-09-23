@@ -11,6 +11,8 @@ export interface CoreConfig {
   botFallback: boolean;
   /** IDs der aktivierten Addons. */
   enabledAddons: string[];
+  /** Eingebaute Addons, die die Suite schon kennt. Neue Addons werden beim ersten Start einmal automatisch eingeschaltet. */
+  knownAddons: string[];
   /** Satellite (zweiter PC, z.B. Gaming-PC) darf sich über das Heimnetz verbinden */
   satelliteEnabled: boolean;
   /** Geheimer Schlüssel, den der Satellite mitschicken muss */
@@ -26,7 +28,12 @@ export const defaultCoreConfig: CoreConfig = {
   botTokens: null,
   botEnabled: true,
   botFallback: true,
-  enabledAddons: ['alerts', 'channelpoints', 'commands', 'timers', 'chat', 'polls', 'lurk'],
+  enabledAddons: [
+    'alerts', 'channelpoints', 'queue', 'commands', 'timers', 'chat', 'polls', 'lurk',
+    'predictions', 'goals', 'shoutout', 'ads', 'modguard', 'streaminfo',
+  ],
+  // Die Addons bis v0.4.1: wer sie ausgeschaltet hat, bei dem bleiben sie aus
+  knownAddons: ['alerts', 'channelpoints', 'commands', 'timers', 'chat', 'polls', 'lurk'],
   satelliteEnabled: false,
   satelliteToken: '',
   satellitePort: 7475,

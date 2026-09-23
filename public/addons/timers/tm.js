@@ -93,7 +93,7 @@ function renderTimers() {
         }
       }, `${t.name} an/aus`),
       h('div', { class: 't-main' },
-        h('div', { class: 't-name' }, t.name),
+        h('div', { class: 't-name no-i18n' }, t.name),
         h('div', { class: 't-msg', title: t.messages.join('\n') }, t.messages[0], t.messages.length > 1 ? `  (+${t.messages.length - 1} weitere)` : ''),
         h('div', { class: 't-meta' },
           h('span', { class: 'badge' }, `⏱ alle ${t.intervalMinutes} Min.`),
@@ -290,10 +290,10 @@ function openTemplates() {
     h('div', { class: 'tpl-list' }, ...TEMPLATES.map((t) =>
       h('div', { class: 'tpl' },
         h('div', { class: 't-main' },
-          h('div', {}, h('span', { class: 't-name' }, t.name),
+          h('div', {}, h('span', { class: 't-name no-i18n' }, t.name),
             h('span', { class: 'badge', style: { marginLeft: '8px' } }, `alle ${t.intervalMinutes} Min.`),
             t.note ? h('span', { class: 'badge accent', style: { marginLeft: '6px' } }, t.note) : null),
-          h('div', { class: 't-msg' }, t.messages[0])),
+          h('div', { class: 't-msg no-i18n' }, t.messages[0])),
         existing.has(t.name.toLowerCase())
           ? h('span', { class: 'badge ok' }, '✓ vorhanden')
           : h('button', {

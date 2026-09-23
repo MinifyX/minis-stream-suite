@@ -15,6 +15,10 @@ const TEST_EVENTS = [
   ['cheer', '💎 Cheer'],
   ['raid', '🚀 Raid'],
   ['redemption', '✨ Kanalpunkte'],
+  ['hypetrain', '🚂 Hype Train'],
+  ['prediction', '🔮 Vorhersage'],
+  ['shoutout', '📣 Shoutout'],
+  ['adbreak', '📺 Werbung'],
 ];
 
 /** API-Aufruf mit Fehlermeldung als Toast. Gibt null zurück, wenn es schiefging. */
@@ -124,7 +128,7 @@ function renderTwitchCard(force = false) {
       card.replaceChildren(title,
         h('div', { class: 'user-row' },
           u.avatar ? h('img', { class: 'avatar', src: u.avatar, alt: '' }) : null,
-          h('div', {}, h('strong', {}, u.displayName), h('div', { class: 'muted' }, `@${u.login}`))),
+          h('div', {}, h('strong', { class: 'no-i18n' }, u.displayName), h('div', { class: 'muted' }, `@${u.login}`))),
         eventsubBadge(eventsub),
         h('div', { class: 'btn-row' }, h('button', { class: 'btn', onclick: () => call('core/logout', {}) }, 'Abmelden')));
       break;
@@ -209,7 +213,7 @@ function renderBotCard(force = false) {
       card.replaceChildren(title,
         h('div', { class: 'user-row' },
           u.avatar ? h('img', { class: 'avatar', src: u.avatar, alt: '' }) : null,
-          h('div', {}, h('strong', {}, u.displayName), h('div', { class: 'muted' }, `@${u.login}`))),
+          h('div', {}, h('strong', { class: 'no-i18n' }, u.displayName), h('div', { class: 'muted' }, `@${u.login}`))),
         modLine,
         h('div', { class: 'opt-line' },
           toggle(bot.enabled, (on) => botCall('/settings', { enabled: on }), 'Bot schreibt die Nachrichten'),
@@ -257,6 +261,16 @@ function renderDesktopCard() {
       toggle(d.closeToTray, (on) => loadDesktop({ closeToTray: on }), 'Beim Schließen weiterlaufen'),
       h('span', {}, 'X schließt nur das Fenster, die Suite läuft im Infobereich weiter')),
     h('p', { class: 'muted small' }, 'So bleiben Overlays, Commands und Bot aktiv, auch wenn das Fenster zu ist. Beenden: Rechtsklick auf das Symbol unten rechts.'),
+    h('div', { class: 'opt-line no-i18n' },
+      h('span', {}, '🌐 Sprache / Language'),
+      ...[['de', 'Deutsch'], ['en', 'English']].map(([code, label]) => h('button', {
+        class: `btn small${window.I18N.lang === code ? ' primary' : ''}`,
+        onclick: () => {
+          if (window.I18N.lang === code) return;
+          window.I18N.setLang(code);
+          location.reload();
+        },
+      }, label))),
     updateLine(),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn', onclick: () => api('core/desktop/open-data', {}).catch((err) => toast(err.message, 'err')) }, '📁 Datenordner öffnen'),
@@ -287,6 +301,44 @@ function updateLine() {
     u.state === 'ready'
       ? h('button', { class: 'btn small primary', onclick: run('core/update/install') }, 'Jetzt neu starten')
       : h('button', { class: 'btn small', disabled: u.state === 'checking' || u.state === 'downloading', onclick: run('core/update/check') }, 'Nach Updates suchen'));
+}
+
+// ---------------------------------------------------------------- Sicherung (Export/Import)
+
+async function loadBackup() {
+  state.backup = await api('core/backup').catch(() => null);
+  renderBackupCard();
+}
+
+function renderBackupCard() {
+  const b = state.backup;
+  state.backupWithFiles ??= true;
+  const run = async (path, body) => {
+    try {
+      const result = await api(path, body);
+      if (result.saved) toast(`Gesichert: ${result.addons.length} Addons, ${result.files} Dateien`, 'ok');
+      if (result.imported) {
+        toast('Sicherung eingespielt. Die Suite startet neu …', 'ok');
+        return;
+      }
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+    loadBackup();
+  };
+  $('#backup-card').replaceChildren(
+    h('h2', {}, '💾 Sicherung'),
+    h('p', { class: 'muted' }, 'Alle Einstellungen in eine Datei packen, z.B. für einen neuen PC, oder eine Sicherung wieder einspielen. Deine Twitch-Anmeldung ist nicht dabei.'),
+    h('div', { class: 'opt-line' },
+      toggle(state.backupWithFiles, (on) => { state.backupWithFiles = on; }, 'Dateien mitsichern'),
+      h('span', {}, 'Hochgeladene Bilder und Sounds mitsichern')),
+    h('div', { class: 'btn-row' },
+      h('button', { class: 'btn primary', onclick: () => run('core/backup/export', { withFiles: state.backupWithFiles }) }, '⬇ Sicherung speichern'),
+      h('button', { class: 'btn', onclick: () => run('core/backup/import', {}) }, '⬆ Sicherung einspielen')),
+    h('div', { class: 'opt-line' },
+      h('span', { class: 'muted small', style: { flex: 1 } },
+        b?.count ? `Automatisch: einmal am Tag (nur Einstellungen). ${b.count} Sicherung(en) im Ordner.` : 'Automatisch: einmal am Tag (nur Einstellungen).'),
+      h('button', { class: 'btn small', onclick: () => api('core/backup/open-folder', {}).catch((err) => toast(err.message, 'err')) }, '📁 Ordner')));
 }
 
 async function refreshStatus() {
@@ -385,6 +437,7 @@ window.addEventListener('hashchange', route);
   await refreshStatus();
   await loadAddons();
   await loadDesktop();
+  loadBackup();
   route();
   refreshLogs();
   setInterval(refreshStatus, 2000);

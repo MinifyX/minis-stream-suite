@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Vorhersagen</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="predictions.css">
+</head>
+<body>
+  <div class="page">
+    <header class="title-row">
+      <h1>🔮 Vorhersagen</h1>
+      <span class="spacer"></span>
+      <button class="btn" id="open-settings">⚙ Einstellungen</button>
+    </header>
+
+    <div class="layout">
+      <main>
+        <section class="card" id="current"></section>
+        <section class="card">
+          <h2>🕘 Letzte Vorhersagen</h2>
+          <div id="history"></div>
+        </section>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>🎥 OBS-Overlay</h2>
+          <p class="note">Als Browser-Quelle in OBS einfügen, z.B. 600 × 500. Der Hintergrund ist durchsichtig. Das Overlay erscheint nur, während eine Vorhersage läuft, und zeigt danach kurz den Gewinner.</p>
+          <div class="copy-row">
+            <input type="text" id="overlay-url" readonly>
+            <button class="btn small" id="copy-url">Kopieren</button>
+          </div>
+          <button class="btn" id="overlay-test">▶ Overlay testen</button>
+        </section>
+        <section class="card">
+          <h2>💬 Im Chat</h2>
+          <div id="chat-help" class="help"></div>
+        </section>
+        <section class="card">
+          <h2>ℹ So funktioniert's</h2>
+          <div class="help">
+            <div>Zuschauer setzen ihre <b>Kanalpunkte</b> auf eine Antwort. Wenn die Tipp-Zeit um ist (oder du früher sperrst), geht nichts mehr.</div>
+            <div>Dann wählst du den <b>Gewinner</b>: Wer richtig lag, teilt sich alle gesetzten Punkte. <b>Abbrechen</b> gibt allen ihre Punkte zurück.</div>
+            <div class="note">Vorhersagen gibt es nur für Affiliates und Partner. Es kann immer nur eine gleichzeitig laufen.</div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div id="modal-host"></div>
+
+  <script src="/app/ui.js"></script>
+  <script src="predictions.js"></script>
+</body>
+</html>

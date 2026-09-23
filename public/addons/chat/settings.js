@@ -4,6 +4,7 @@ const BASE = 'addons/chat';
 const EVENT_LABELS = {
   follow: '💜 Follows', sub: '⭐ Neue Abos', resub: '⭐ Abo-Verlängerungen', giftsub: '🎁 Verschenkte Abos',
   cheer: '💎 Bits', raid: '🚀 Raids', redemption: '✨ Kanalpunkte-Einlösungen', stream: '🔴 Stream-Start/-Ende',
+  hypetrain: '🚂 Hype Train', prediction: '🔮 Vorhersagen', shoutout: '📣 Shoutouts', ads: '📺 Werbepausen',
 };
 const ROLES = [['everyone', 'Alle'], ['subscriber', 'Subs'], ['vip', 'VIPs'], ['moderator', 'Mods'], ['broadcaster', 'Nur du']];
 const PREVIEW_BGS = [['checker', 'Transparent'], ['game', 'Spiel-Szene'], ['black', 'Schwarz'], ['white', 'Weiß'], ['green', 'Greenscreen']];
@@ -116,13 +117,13 @@ function sampleItems() {
 function renderPreview() {
   if (!settings) return;
   const box = $('#preview');
-  box.className = 'cr-overlay';
+  box.className = 'cr-overlay no-i18n';
   ChatRender.applyOverlayStyle(box, settings.overlay);
   const items = sampleItems().filter((i) => ChatRender.overlayVisible(i, settings.overlay));
   const nodes = items.slice(-settings.overlay.maxMessages).map((i) => ChatRender.overlayItem(i, settings, false));
   if (settings.overlay.direction === 'top') nodes.reverse();
   box.replaceChildren(...nodes);
-  $('#preview-stage').className = `preview-stage bg-${previewBg}`;
+  $('#preview-stage').className = `preview-stage no-i18n bg-${previewBg}`;
 }
 
 function renderSwatches() {

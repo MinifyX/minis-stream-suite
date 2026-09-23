@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { StreamEvent } from '../../core/twitch/events';
+import type { EventOfType, StreamEvent } from '../../core/twitch/events';
 
 /**
  * Datenmodell der Alerts:
@@ -7,7 +7,7 @@ import type { StreamEvent } from '../../core/twitch/events';
  * Bei einem Event gewinnt die erste passende aktive Variante (oder eine zufällige, wenn "randomize" an ist).
  */
 
-export const CATEGORY_IDS = ['follow', 'sub', 'giftsub', 'cheer', 'raid', 'redemption'] as const;
+export const CATEGORY_IDS = ['follow', 'sub', 'giftsub', 'cheer', 'raid', 'hypetrain', 'redemption'] as const;
 export type CategoryId = (typeof CATEGORY_IDS)[number];
 
 /** Bild/Video/Sound: eingebaut (Bibliothek) oder hochgeladene Datei */
@@ -67,6 +67,12 @@ export interface VariantConditions {
   minViewers: number;
   rewardMode: 'all' | 'some';
   rewardIds: string[];
+  /** Hype Train: bei welchem Moment (Start, Level-Aufstieg, Ende) */
+  trainPhase: 'any' | HypeTrainPhase;
+  /** Hype Train: ab welchem Level (gilt für Level-Aufstieg und Ende) */
+  minLevel: number;
+  /** Hype Train: nur beim Golden Kappa Train */
+  goldenOnly: boolean;
 }
 
 export interface Variant {
@@ -150,6 +156,9 @@ export const DEFAULT_CONDITIONS: VariantConditions = {
   minViewers: 1,
   rewardMode: 'all',
   rewardIds: [],
+  trainPhase: 'any',
+  minLevel: 1,
+  goldenOnly: false,
 };
 
 const builtinImage = (id: string, name: string): MediaRef => ({ source: 'builtin', id, name, kind: 'image' });
@@ -237,6 +246,43 @@ export const DEFAULT_CATEGORIES: Record<CategoryId, Category> = {
       }),
     ],
   },
+  hypetrain: {
+    randomize: false,
+    variants: [
+      makeVariant(
+        'hypetrain-start',
+        'Hype Train Start',
+        {
+          message: 'Der {type} fährt los! Alle einsteigen!',
+          image: builtinImage('rocket', 'Rakete'),
+          sound: builtinSound('whoosh', 'Whoosh'),
+        },
+        { trainPhase: 'start' },
+      ),
+      makeVariant(
+        'hypetrain-levelup',
+        'Level-Aufstieg',
+        {
+          message: 'Hype Train Level {level}!',
+          image: builtinImage('star', 'Stern'),
+          sound: builtinSound('levelup', 'Level-Up'),
+          celebration: { ...confetti },
+        },
+        { trainPhase: 'levelup', minLevel: 2 },
+      ),
+      makeVariant(
+        'hypetrain-end',
+        'Hype Train Ende',
+        {
+          message: 'Hype Train vorbei: Level {level} geschafft! Danke an alle!',
+          image: builtinImage('trophy', 'Pokal'),
+          sound: builtinSound('tada', 'Tada'),
+          celebration: { enabled: true, effect: 'fireworks', intensity: 'heavy', area: 'full' },
+        },
+        { trainPhase: 'end' },
+      ),
+    ],
+  },
   redemption: {
     randomize: false,
     variants: [
@@ -318,22 +364,24 @@ export function sanitizeCategories(input: unknown): Record<CategoryId, Category>
 
 // ------------------------------------------------------------------ Event → Kategorie, Variante, Werte
 
+/** Die Momente eines Hype Trains, zu denen ein Alert kommen kann */
+export type HypeTrainPhase = 'start' | 'levelup' | 'end';
+
+/**
+ * Welcher Moment ist dieses Hype-Train-Event?
+ * Achtung: Jedes "progress"-Event gilt hier als Level-Aufstieg. Das Addon lässt deshalb nur
+ * die Fortschritts-Events durch, bei denen das Level wirklich gestiegen ist (siehe index.ts).
+ */
+export function trainPhaseOf(event: EventOfType<'hypetrain'>): HypeTrainPhase {
+  if (event.phase === 'begin') return 'start';
+  if (event.phase === 'end') return 'end';
+  return 'levelup';
+}
+
+/** Welche Alert-Art zu einem Event gehört – null bei Events ohne Alert (Chat, Umfragen …) */
 export function categoryOf(event: StreamEvent): CategoryId | null {
-  switch (event.type) {
-    case 'sub':
-    case 'resub':
-      return 'sub';
-    case 'chat':
-    case 'channelupdate':
-    case 'streamonline':
-    case 'streamoffline':
-    case 'chatdelete':
-    case 'chatclear':
-    case 'poll':
-      return null;
-    default:
-      return event.type;
-  }
+  if (event.type === 'resub') return 'sub';
+  return (CATEGORY_IDS as readonly string[]).includes(event.type) ? (event.type as CategoryId) : null;
 }
 
 export function matches(variant: Variant, event: StreamEvent): boolean {
@@ -355,6 +403,13 @@ export function matches(variant: Variant, event: StreamEvent): boolean {
       return event.bits >= c.minBits;
     case 'raid':
       return event.viewers >= c.minViewers;
+    case 'hypetrain': {
+      const phase = trainPhaseOf(event);
+      if (c.trainPhase !== 'any' && c.trainPhase !== phase) return false;
+      if (c.goldenOnly && event.trainType !== 'golden_kappa') return false;
+      // Beim Start ist das Level immer 1 – da zählt "ab Level" nicht
+      return phase === 'start' || event.level >= c.minLevel;
+    }
     case 'redemption':
       return c.rewardMode === 'all' || c.rewardIds.includes(event.reward.id);
     default:
@@ -384,6 +439,11 @@ function tierName(tier: string): string {
   return { '1000': '1', '2000': '2', '3000': '3' }[tier] ?? tier;
 }
 
+/** Lesbarer Name der Hype-Train-Art für {type} */
+function trainTypeName(type: string): string {
+  return { regular: 'Hype Train', golden_kappa: 'Golden Kappa Train', treasure: 'Treasure Train' }[type] ?? 'Hype Train';
+}
+
 /** Platzhalter-Werte ({user}, {bits}, …) und die Nachricht des Zuschauers */
 export function describeEvent(event: StreamEvent): { values: Record<string, string | number>; userMessage: string } {
   const user = 'user' in event && event.user ? event.user.name : 'Anonym';
@@ -400,11 +460,20 @@ export function describeEvent(event: StreamEvent): { values: Record<string, stri
       return { values: { user, bits: event.bits }, userMessage: event.message };
     case 'raid':
       return { values: { user, viewers: event.viewers }, userMessage: '' };
+    case 'hypetrain': {
+      // {top} = wer am meisten beigetragen hat
+      const best = [...event.topContributions].sort((a, b) => b.total - a.total)[0];
+      const top = best?.user.name || 'Anonym';
+      return {
+        values: { user: top, top, level: event.level, total: event.total, type: trainTypeName(event.trainType) },
+        userMessage: '',
+      };
+    }
     default:
       return { values: { user }, userMessage: '' };
   }
 }
 
 export function fillPlain(template: string, values: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match));
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => (Object.hasOwn(values, key) ? String(values[key]) : match));
 }

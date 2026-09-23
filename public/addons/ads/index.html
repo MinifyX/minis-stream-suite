@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Werbepausen</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="ads.css">
+</head>
+<body>
+  <div class="page">
+    <header class="title-row">
+      <h1>📺 Werbepausen</h1>
+      <span class="spacer"></span>
+      <button class="btn" id="refresh" title="Zeitplan jetzt bei Twitch abfragen">↻ Aktualisieren</button>
+    </header>
+
+    <div class="layout">
+      <main>
+        <!-- Live-Status: wird jede Sekunde aktualisiert -->
+        <section class="card" id="status">
+          <div class="status-head">
+            <span id="live-badge" class="badge">⏳ Wird geladen…</span>
+            <span id="type-badge" class="badge" hidden></span>
+          </div>
+          <p id="status-note" class="note" hidden></p>
+          <p id="status-error" class="err-note" hidden></p>
+
+          <div class="next" id="next-box">
+            <div class="next-label" id="next-label">Nächste Werbung in</div>
+            <div class="next-time" id="next-time">–:––</div>
+            <div class="next-at note" id="next-at"></div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><span>Dauer</span><b id="st-duration">–</b></div>
+            <div class="stat"><span>Werbefrei für neue Zuschauer</span><b id="st-preroll">–</b></div>
+            <div class="stat"><span>Verschiebungen übrig</span><b id="st-snoozes">–</b><small id="st-snooze-refresh" class="note"></small></div>
+            <div class="stat"><span>Letzte Werbung</span><b id="st-last">–</b></div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="snooze" title="Die nächste geplante Werbung um 5 Minuten nach hinten schieben">⏰ Verschieben (+5 Min.)</button>
+            <span class="spacer"></span>
+            <select id="commercial-length" title="Länge der Werbung"></select>
+            <button class="btn primary" id="commercial">📺 Jetzt Werbung starten</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>⏰ Vorwarnungen</h2>
+            <span class="spacer"></span>
+            <button class="btn small" id="add-warning">＋ Vorwarnung</button>
+          </div>
+          <p class="note">So lange vor der geplanten Werbung wird gewarnt, z.B. 5 Minuten und nochmal 60 Sekunden vorher. Nur während du live bist.</p>
+          <div id="warnings" class="w-list"></div>
+          <div class="btn-row end"><button class="btn primary" id="save-warnings">Speichern</button></div>
+        </section>
+
+        <section class="card">
+          <h2>💬 Während und nach der Werbung</h2>
+          <div id="announcements"></div>
+          <p class="note">Die Nachrichten schreibt dein Bot-Account (falls verknüpft), sonst dein eigener Account. Das gilt auch für Werbung, die du direkt bei Twitch startest.</p>
+          <div class="btn-row end"><button class="btn primary" id="save-announcements">Speichern</button></div>
+        </section>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>🎥 OBS-Overlay</h2>
+          <p class="note">Als Browser-Quelle in OBS einfügen, am besten in voller Szenengröße (z.B. 1920 × 1080). Der Hintergrund ist durchsichtig, das Banner erscheint nur vor und während der Werbung.</p>
+          <div class="copy-row">
+            <input type="text" id="overlay-url" readonly>
+            <button class="btn small" id="copy-url">Kopieren</button>
+          </div>
+          <button class="btn" id="overlay-test" title="Vorwarnung, Werbung und „zurück“ im Overlay durchspielen – ohne Chat-Nachrichten">▶ Overlay testen</button>
+        </section>
+        <section class="card">
+          <h2>🎨 Aussehen</h2>
+          <div id="overlay-settings"></div>
+          <div class="btn-row end">
+            <button class="btn" id="save-overlay-test">▶ Speichern & testen</button>
+            <button class="btn primary" id="save-overlay">Speichern</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/app/ui.js"></script>
+  <script src="ads.js"></script>
+</body>
+</html>

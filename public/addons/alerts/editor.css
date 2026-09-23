@@ -191,3 +191,13 @@ select {
 .group-chips { margin: 8px 0; }
 .chip.active { background: var(--accent); color: #fff; }
 .ed-rewards .sub-head { margin-top: 14px; }
+
+/* Verlauf */
+.history-item { width: calc(100% - 20px); margin: 12px 10px 0; }
+.history-item.selected { background: var(--accent); border-color: var(--accent); }
+.history-item.selected small { color: rgba(255, 255, 255, .8); }
+.hist-list { display: flex; flex-direction: column; }
+.hist-icon { background: var(--card-2); font-size: 20px; }
+.hist-what { color: var(--muted); }
+.hist-opt { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.ed-rewards .toolbar { align-items: center; }

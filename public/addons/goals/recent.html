@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Letzte Events Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/goals/recent.html
+    Zeigt den letzten Follow, das letzte Abo, Cheer, Raid, Geschenk-Abo und (optional) den Top-Cheerer des Streams.
+    Hintergrund ist durchsichtig; Aussehen stellst du in der Suite ein (🎯 Ziele & Events → Letzte Events).
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    #recent { position: absolute; top: 10px; left: 10px; max-width: calc(100% - 20px); }
+  </style>
+</head>
+<body>
+  <div id="recent"></div>
+  <script src="render.js"></script>
+  <script>
+    const view = GoalRender.mountRecent(document.getElementById('recent'));
+
+    function handle(msg) {
+      if (msg.kind === 'state') view.update(msg.recent, msg.recentStyle, []);
+      else if (msg.kind === 'recent') view.update(msg.recent, msg.style, msg.changed || []);
+    }
+
+    function connect() {
+      fetch('/api/addons/goals/overlay-state').then((r) => r.json()).then(handle).catch(() => {});
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=goals`);
+      ws.onmessage = (m) => handle(JSON.parse(m.data));
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+    connect();
+  </script>
+</body>
+</html>

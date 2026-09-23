@@ -3,6 +3,7 @@ import type { Addon } from '../../core/addons';
 import { parseTarget, runKeys, targetProblem, type KeyTarget } from '../../core/keyActions';
 import { validateSteps, type KeyStep } from '../../core/keyboard';
 import { HttpError } from '../../core/server';
+import { wantedStates as computeWantedStates, type Game, type GameRule } from './gameRules';
 import { CHANNELPOINTS_SERVICE, type ChannelPointsService, type GroupInfo } from './service';
 
 /** Belohnung, wie Twitch sie liefert (nur die Felder, die wir brauchen) */
@@ -51,17 +52,6 @@ interface Group extends GroupInfo {
   gameRule?: GameRule | null;
 }
 
-interface Game {
-  id: string;
-  name: string;
-}
-
-interface GameRule {
-  games: Game[];
-  /** Was bei anderen Spielen passiert: ausblenden (Zuschauer sehen sie nicht) oder pausieren (sichtbar, aber gesperrt) */
-  mode: 'hide' | 'pause';
-}
-
 /** Belohnung, die gerade "übernommen" wird: Einstellungen gemerkt, Original wird von Hand gelöscht */
 interface PendingImport {
   oldId: string;
@@ -78,6 +68,8 @@ interface Settings {
   keybindsEnabled: boolean;
   /** Reward-ID → Tastenfolge */
   keybinds: Record<string, Keybind>;
+  /** Reward-ID → eigene Spiel-Regel (hat Vorrang vor den Regeln ihrer Gruppen) */
+  rewardRules: Record<string, GameRule>;
 }
 
 interface Keybind {
@@ -92,7 +84,7 @@ interface Keybind {
 }
 
 
-const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [], keybindsEnabled: true, keybinds: {} };
+const DEFAULTS: Settings = { groups: [], imports: [], foreignRewards: [], keybindsEnabled: true, keybinds: {}, rewardRules: {} };
 const MAX_REWARDS = 50;
 
 function toData(r: HelixReward): RewardData {
@@ -243,27 +235,18 @@ export const channelPointsAddon: Addon = {
       return currentGame;
     };
 
-    /**
-     * Schaltet alle Belohnungen mit Spiel-Regel passend zum aktuellen Spiel.
-     * Liegt eine Belohnung in mehreren Gruppen mit Regel, ist sie aktiv, sobald eine davon passt.
-     */
-    const applyGameRules = async (reason: string) => {
-      const ruled = settings.get('groups').filter((g) => g.gameRule?.games.length);
-      if (!ruled.length || !currentGame) return { changed: 0, skipped: [] as string[], failed: [] as string[] };
+    const parseGames = (input: unknown): Game[] =>
+      (Array.isArray(input) ? input : [])
+        .filter((g: Partial<Game>) => typeof g?.id === 'string' && g.id && typeof g.name === 'string')
+        .map((g: Game) => ({ id: g.id, name: g.name.slice(0, 100) }));
 
-      const wanted = new Map<string, { active: boolean; mode: GameRule['mode'] }>();
-      for (const group of ruled) {
-        const rule = group.gameRule!;
-        const matches = rule.games.some((g) => g.id === currentGame!.id);
-        for (const id of group.rewardIds) {
-          const prev = wanted.get(id);
-          wanted.set(id, {
-            active: (prev?.active ?? false) || matches,
-            // "Ausblenden" gewinnt, wenn sich Gruppen widersprechen
-            mode: prev?.mode === 'hide' || rule.mode === 'hide' ? 'hide' : 'pause',
-          });
-        }
-      }
+    /** Was jede Belohnung mit Spiel-Regel gerade sein soll (Logik in gameRules.ts) */
+    const wantedStates = (game: Game) => computeWantedStates(settings.get('groups'), settings.get('rewardRules'), game);
+
+    /** Schaltet alle Belohnungen mit Spiel-Regel (eigene oder über eine Gruppe) passend zum aktuellen Spiel. */
+    const applyGameRules = async (reason: string) => {
+      const wanted = currentGame ? wantedStates(currentGame) : new Map();
+      if (!wanted.size || !currentGame) return { changed: 0, skipped: [] as string[], failed: [] as string[] };
 
       const [all, manageable] = await Promise.all([fetchRewards(), fetchRewards(true)]);
       const manageableIds = new Set(manageable.map((r) => r.id));
@@ -358,6 +341,28 @@ export const channelPointsAddon: Addon = {
       return applyGameRules('Regel geändert');
     });
 
+    /** { rewardId, rule: { games, mode } | null } – eigene Spiel-Regel einer Belohnung setzen und gleich anwenden */
+    ctx.api.post('/rewards/game-rule', async ({ body }) => {
+      const rewardId = String(body?.rewardId ?? '');
+      if (!rewardId) throw new HttpError(400, 'rewardId fehlt');
+      const games = parseGames(body?.rule?.games);
+      const rules = { ...settings.get('rewardRules') };
+      if (games.length) rules[rewardId] = { games, mode: body.rule.mode === 'pause' ? 'pause' : 'hide' };
+      else delete rules[rewardId];
+      settings.set('rewardRules', rules);
+      if (!currentGame) await loadCurrentGame().catch(() => null);
+      const result = await applyGameRules('Regel geändert');
+      // Regel entfernt und keine Gruppe regelt sie mehr → wieder normal sichtbar machen
+      if (!games.length && currentGame && !wantedStates(currentGame).has(rewardId)) {
+        const reward = (await fetchRewards(true)).find((r) => r.id === rewardId);
+        if (reward && (!reward.is_enabled || reward.is_paused)) {
+          await patchReward(rewardId, { is_enabled: true, is_paused: false });
+          result.changed++;
+        }
+      }
+      return result;
+    });
+
     // ------------------------------------------------------------ Keybinds
 
     // Belohnung eingelöst → Tastenfolge ausführen (klappt für ALLE Belohnungen, auch fremde)
@@ -375,11 +380,6 @@ export const channelPointsAddon: Addon = {
       await runKeys(bind.target ?? 'local', bind.steps, event.reward.title).catch((err) =>
         ctx.log.warn(`Keybind „${event.reward.title}“ fehlgeschlagen:`, err));
     });
-
-    const parseGames = (input: unknown): Game[] =>
-      (Array.isArray(input) ? input : [])
-        .filter((g: Partial<Game>) => typeof g?.id === 'string' && g.id && typeof g.name === 'string')
-        .map((g: Game) => ({ id: g.id, name: g.name.slice(0, 100) }));
 
     ctx.api.get('/keybinds', () => ({ enabled: settings.get('keybindsEnabled'), binds: settings.get('keybinds') }));
 
@@ -464,6 +464,7 @@ export const channelPointsAddon: Addon = {
       return {
         max: MAX_REWARDS,
         groups: cleaned,
+        rewardRules: settings.get('rewardRules'),
         imports: settings.get('imports').map((i) => ({ ...i, originalExists: existingIds.has(i.oldId) })),
         rewards: all
           .map((r) => ({
@@ -617,6 +618,9 @@ export const channelPointsAddon: Addon = {
       const binds = { ...settings.get('keybinds') };
       delete binds[String(body?.id)];
       settings.set('keybinds', binds);
+      const rules = { ...settings.get('rewardRules') };
+      delete rules[String(body?.id)];
+      settings.set('rewardRules', rules);
       ctx.log.info('Belohnung gelöscht');
     });
 
@@ -652,6 +656,12 @@ export const channelPointsAddon: Addon = {
         binds[reward.id] = binds[pending.oldId];
         delete binds[pending.oldId];
         settings.set('keybinds', binds);
+      }
+      const rules = { ...settings.get('rewardRules') };
+      if (rules[pending.oldId]) {
+        rules[reward.id] = rules[pending.oldId];
+        delete rules[pending.oldId];
+        settings.set('rewardRules', rules);
       }
       settings.set('imports', settings.get('imports').filter((i) => i.oldId !== pending.oldId));
       ctx.log.info(`Belohnung übernommen: ${reward.title}`);

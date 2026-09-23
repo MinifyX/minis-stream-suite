@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Ziele & Events</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="goals.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <h1>🎯 Ziele & Events</h1>
+      <span class="spacer"></span>
+      <span class="save-state" id="save-state"></span>
+    </header>
+
+    <p class="login-note" id="login-note" hidden>
+      ⚠️ Nicht mit Twitch verbunden: Follower- und Abo-Zahlen können nicht geladen werden und Events kommen erst nach dem Verbinden an.
+      Eigene Zähler funktionieren trotzdem.
+    </p>
+
+    <nav class="tabs" id="tabs">
+      <button data-tab="goals" class="active">🎯 Ziele</button>
+      <button data-tab="recent">🕘 Letzte Events</button>
+    </nav>
+
+    <!-- ============================================================ Ziele -->
+    <section class="tab" id="tab-goals">
+      <div class="card list-card">
+        <div class="list-head">
+          <h2>Deine Ziele</h2>
+          <span class="spacer"></span>
+          <span class="note" id="refresh-info"></span>
+          <button class="btn small" id="refresh">↻ Von Twitch aktualisieren</button>
+          <button class="btn small primary" id="add-goal">+ Neues Ziel</button>
+        </div>
+        <div class="type-picker" id="type-picker" hidden></div>
+        <div id="goal-list" class="goal-list"></div>
+      </div>
+
+      <div class="split" id="goal-split">
+        <div class="form" id="goal-form"></div>
+        <aside class="preview-col">
+          <div class="card preview-card">
+            <div class="preview-head">
+              <strong>Vorschau</strong>
+              <span class="spacer"></span>
+              <span class="bg-swatches" id="goal-swatches"></span>
+            </div>
+            <div class="preview-stage" id="goal-stage"><div class="zoom" id="goal-zoom"></div></div>
+            <div class="url-row">
+              <input type="text" id="goal-url" readonly>
+              <button class="btn small" id="goal-copy">Kopieren</button>
+            </div>
+            <p class="note">In OBS: Quelle hinzufügen → <b>Browser</b> → URL einfügen. Jedes Ziel hat seine eigene URL.
+              Größe z.B. <span id="goal-size-hint">650 × 150</span>.</p>
+            <div class="btn-row">
+              <button class="btn small" id="goal-test-step">🧪 Schritt testen</button>
+              <button class="btn small" id="goal-test-celebrate">🎉 Feier testen</button>
+            </div>
+            <p class="note">Tests (auch die Test-Buttons der Alerts) bewegen die Overlays kurz mit, zählen aber nicht:
+              nach 8 Sekunden steht wieder der echte Stand da.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============================================================ Letzte Events -->
+    <section class="tab" id="tab-recent" hidden>
+      <div class="split">
+        <div class="form" id="recent-form"></div>
+        <aside class="preview-col">
+          <div class="card preview-card">
+            <div class="preview-head">
+              <strong>Vorschau</strong>
+              <span class="badge" id="recent-sample" hidden>Beispieldaten</span>
+              <span class="spacer"></span>
+              <span class="bg-swatches" id="recent-swatches"></span>
+            </div>
+            <div class="preview-stage" id="recent-stage"><div class="zoom" id="recent-zoom"></div></div>
+            <div class="url-row">
+              <input type="text" id="recent-url" readonly>
+              <button class="btn small" id="recent-copy">Kopieren</button>
+            </div>
+            <p class="note">In OBS: Quelle hinzufügen → <b>Browser</b> → URL einfügen, z.B. 1200 × 120 (Leiste) oder 400 × 450 (Liste).</p>
+            <div class="btn-row">
+              <button class="btn small" id="recent-test">🧪 Test-Events zeigen</button>
+            </div>
+            <p class="note">Test-Events erscheinen 8 Sekunden lang im Overlay und werden nicht gespeichert.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+  <script src="/app/ui.js"></script>
+  <script src="render.js"></script>
+  <script src="goals.js"></script>
+</body>
+</html>

@@ -124,7 +124,7 @@ function renderCommands() {
         h('div', {},
           h('span', { class: 'cmd-name' }, `${prefix}${c.name}`),
           c.aliases.length ? h('span', { class: 'cmd-alias' }, c.aliases.map((a) => prefix + a).join(' ')) : null),
-        c.response ? h('div', { class: 'cmd-response', title: c.response }, c.response) : h('div', { class: 'cmd-response' }, '(keine Antwort)'),
+        c.response ? h('div', { class: 'cmd-response no-i18n', title: c.response }, c.response) : h('div', { class: 'cmd-response' }, '(keine Antwort)'),
         h('div', { class: 'cmd-meta' },
           c.permission !== 'everyone' ? h('span', { class: 'badge warn' }, `🔒 ${permissionLabel(c.permission)}`) : h('span', { class: 'badge' }, '👥 Alle'),
           c.cooldownGlobal ? h('span', { class: 'badge', title: 'Cooldown für alle' }, `⏱ ${c.cooldownGlobal} s`) : null,
@@ -164,7 +164,7 @@ function renderHistory() {
     h('div', { class: 'h-row', title: e.detail },
       h('span', { class: 'h-time' }, new Date(e.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })),
       h('span', {}, RESULT_ICONS[e.result] ?? '•'),
-      h('span', { class: 'h-text' }, h('b', {}, e.user), ` ${state.settings.prefix}${e.command} `, h('span', { class: 'muted' }, e.detail)))));
+      h('span', { class: 'h-text' }, h('b', { class: 'no-i18n' }, e.user), ` ${state.settings.prefix}${e.command} `, h('span', { class: 'muted' }, e.detail)))));
 }
 
 // ============================================================ Testen
@@ -330,7 +330,7 @@ function openTemplates() {
           h('div', {}, h('span', { class: 'cmd-name' }, prefix + t.name),
             t.permission ? h('span', { class: 'badge warn', style: { marginLeft: '8px' } }, `🔒 ${permissionLabel(t.permission)}`) : null,
             t.note ? h('span', { class: 'badge accent', style: { marginLeft: '8px' } }, t.note) : null),
-          h('div', { class: 'cmd-response' }, t.response)),
+          h('div', { class: 'cmd-response no-i18n' }, t.response)),
         taken
           ? h('span', { class: 'badge ok' }, '✓ vorhanden')
           : h('button', {

@@ -9,6 +9,10 @@
 <body>
   <div class="ed">
     <aside class="ed-left">
+      <button class="variant-item history-item" id="history-btn">
+        <span class="v-num">🕘</span>
+        <span class="v-text"><strong>Verlauf</strong><small>Letzte Events, Alerts nochmal abspielen</small></span>
+      </button>
       <div class="ed-left-head">VARIANTEN</div>
       <div id="categories"></div>
     </aside>
@@ -22,10 +26,11 @@
       </div>
 
       <div class="ed-stage-wrap" id="stage-wrap">
-        <div class="ed-stage bg-checker" id="stage"></div>
+        <div class="ed-stage bg-checker no-i18n" id="stage"></div>
       </div>
 
       <div class="ed-rewards" id="rewards-view" hidden></div>
+      <div class="ed-rewards" id="history-view" hidden></div>
 
       <div class="ed-preview-opts" id="preview-opts">
         <strong>Vorschau</strong>

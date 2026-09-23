@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Vorhersagen Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/predictions/overlay.html
+    z.B. 600 x 500. Hintergrund ist durchsichtig, das Overlay erscheint nur während einer Vorhersage.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; }
+    #pred {
+      --blue: #387aff; --pink: #f5009b; --text: #fff; --bg: rgba(24, 24, 27, .85); --size: 22px;
+      position: absolute; top: 16px; left: 16px; width: 520px; box-sizing: border-box;
+      padding: 1em 1.1em; border-radius: .7em; background: var(--bg); color: var(--text);
+      font-size: var(--size); box-shadow: 0 .4em 1.4em rgba(0, 0, 0, .35);
+      opacity: 0; transform: translateY(-12px) scale(.98); transition: opacity .35s, transform .35s;
+    }
+    #pred.show { opacity: 1; transform: none; }
+    .head { display: flex; align-items: center; gap: .5em; font-size: .6em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+    .head .time { margin-left: auto; font-family: Consolas, monospace; font-size: 1.25em; letter-spacing: 0; opacity: 1; }
+    .head .state { margin-left: auto; letter-spacing: .04em; }
+    .title { font-weight: 800; font-size: 1.05em; line-height: 1.25; margin: .3em 0 .6em; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+    .timebar { height: .22em; border-radius: .11em; background: rgba(255, 255, 255, .15); overflow: hidden; margin-bottom: .7em; }
+    .timebar div { height: 100%; background: var(--text); opacity: .7; transition: width 1s linear; }
+    .outcomes { display: flex; flex-direction: column; gap: .4em; }
+    .outcome { --c: var(--blue); position: relative; border-radius: .45em; background: rgba(255, 255, 255, .08); overflow: hidden; transition: opacity .4s; }
+    .outcome.pink { --c: var(--pink); }
+    .fill { position: absolute; inset: 0 auto 0 0; background: var(--c); opacity: .45; transition: width .5s cubic-bezier(.2, .8, .2, 1), opacity .4s; }
+    .outcome.lead .fill { opacity: .7; }
+    .outcome.win { box-shadow: 0 0 0 .12em var(--text) inset; }
+    .outcome.win .fill { opacity: .95; }
+    .outcome.lose { opacity: .45; }
+    .row { position: relative; display: flex; align-items: center; gap: .5em; padding: .38em .6em; font-size: .78em; }
+    .num { font-weight: 800; min-width: 1.4em; height: 1.4em; border-radius: .35em; background: var(--c); display: grid; place-items: center; font-size: .85em; box-shadow: 0 0 0 .08em rgba(0, 0, 0, .25); }
+    .label { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stats { font-size: .8em; opacity: .8; font-family: Consolas, monospace; white-space: nowrap; }
+    .pct { font-weight: 800; min-width: 3em; text-align: right; font-family: Consolas, monospace; }
+    .foot { margin-top: .6em; font-size: .6em; opacity: .8; display: flex; gap: .6em; flex-wrap: wrap; }
+    .winner { margin-top: .6em; font-size: .75em; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <div id="pred"></div>
+  <script>
+    const box = document.getElementById('pred');
+    let data = null;
+    let offset = 0;
+    let hideTimer = null;
+    let demoTimer = null;
+
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const pct = (v, t) => (t ? Math.round((v / t) * 100) : 0);
+    const num = (n) => Number(n || 0).toLocaleString('de-DE');
+    const fmt = (ms) => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+    const hexToRgba = (hex, alpha) => {
+      const n = parseInt(hex.slice(1), 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+    };
+    const sum = (list, key) => list.reduce((s, o) => s + (o[key] || 0), 0);
+
+    function applyStyle(o) {
+      box.style.setProperty('--blue', o.blue);
+      box.style.setProperty('--pink', o.pink);
+      box.style.setProperty('--text', o.textColor);
+      box.style.setProperty('--bg', hexToRgba(o.background, o.backgroundOpacity / 100));
+      box.style.setProperty('--size', `${o.fontSize}px`);
+      box.style.width = `${o.width}px`;
+    }
+
+    function render() {
+      if (!data) return;
+      const o = data.overlay;
+      applyStyle(o);
+      const pred = data.prediction;
+      const result = !pred ? data.result : null;
+      const shown = pred || result;
+      if (!shown) {
+        box.classList.remove('show');
+        return;
+      }
+      const totalPoints = sum(shown.outcomes, 'channelPoints');
+      const totalUsers = sum(shown.outcomes, 'users');
+      const maxPoints = Math.max(0, ...shown.outcomes.map((x) => x.channelPoints));
+      const locked = pred && pred.status === 'locked';
+      const canceled = result && result.status === 'canceled';
+      const winner = result ? result.winner : -1;
+      const left = pred ? pred.locksAt - (Date.now() + offset) : 0;
+      const span = pred ? Math.max(1, pred.locksAt - pred.startedAt) : 1;
+
+      const headText = result ? (canceled ? '↩ Abgebrochen' : '🏆 Ergebnis') : '🔮 Vorhersage';
+      const headRight = locked ? '<span class="state">🔒 Gesperrt</span>' : o.showTimer && pred ? '<span class="time"></span>' : '';
+
+      // Gerüst nur neu bauen, wenn sich Vorhersage oder Status ändern – sonst nur Zahlen und Balken
+      // anpassen, damit die Balken flüssig wachsen
+      const key = JSON.stringify([shown.id, !!result, locked, winner, shown.outcomes.map((x) => [x.title, x.color]), o.showStats, o.showTimer]);
+      if (box.dataset.key !== key) {
+        box.dataset.key = key;
+        box.innerHTML = `
+          <div class="head">${headText}${headRight}</div>
+          <div class="title">${esc(shown.title)}</div>
+          ${o.showTimer && pred && !locked ? '<div class="timebar"><div></div></div>' : ''}
+          <div class="outcomes">
+            ${shown.outcomes.map((x, i) => `
+              <div class="outcome${String(x.color).toLowerCase() === 'pink' ? ' pink' : ''}">
+                <div class="fill" style="width:0%"></div>
+                <div class="row">
+                  <span class="num">${i + 1}</span>
+                  <span class="label">${winner === i ? '🏆 ' : ''}${esc(x.title)}</span>
+                  ${o.showStats ? '<span class="stats"></span>' : ''}
+                  <span class="pct"></span>
+                </div>
+              </div>`).join('')}
+          </div>
+          ${pred && !locked ? '<div class="foot">Tippt mit euren Kanalpunkten oben im Twitch-Chat<span class="total"></span></div>' : ''}
+          ${locked ? '<div class="foot">Nichts geht mehr – gleich steht der Gewinner fest<span class="total"></span></div>' : ''}
+          ${canceled ? '<div class="winner">Alle bekommen ihre Kanalpunkte zurück</div>' : ''}
+          ${result && !canceled ? '<div class="winner win-line"></div>' : ''}
+        `;
+      }
+
+      const time = box.querySelector('.time');
+      if (time) time.textContent = fmt(left);
+      const bar = box.querySelector('.timebar div');
+      if (bar) bar.style.width = `${Math.max(0, Math.min(100, (left / span) * 100))}%`;
+      const totalEl = box.querySelector('.total');
+      if (totalEl) totalEl.textContent = o.showStats ? ` · ${num(totalUsers)} Tipper · ${num(totalPoints)} Punkte` : '';
+      const winEl = box.querySelector('.win-line');
+      if (winEl && winner >= 0) {
+        const w = shown.outcomes[winner];
+        winEl.textContent = w.users
+          ? `${num(w.users)} ${w.users === 1 ? 'Person teilt' : 'Leute teilen'} sich ${num(totalPoints)} Kanalpunkte`
+          : 'Niemand lag richtig';
+      }
+      box.querySelectorAll('.outcome').forEach((el, i) => {
+        const x = shown.outcomes[i];
+        el.classList.toggle('win', winner === i);
+        el.classList.toggle('lose', winner >= 0 && winner !== i);
+        el.classList.toggle('lead', !result && x.channelPoints === maxPoints && maxPoints > 0);
+        requestAnimationFrame(() => { el.querySelector('.fill').style.width = `${pct(x.channelPoints, totalPoints)}%`; });
+        const s = el.querySelector('.stats');
+        if (s) s.textContent = `👥 ${num(x.users)} · ${num(x.channelPoints)}`;
+        el.querySelector('.pct').textContent = `${pct(x.channelPoints, totalPoints)}%`;
+      });
+      requestAnimationFrame(() => box.classList.add('show'));
+    }
+
+    /** Test-Button: Tipps simulieren, dann sperren, dann Gewinner zeigen, dann ausblenden */
+    function runDemo() {
+      let step = 0;
+      demoTimer = setInterval(() => {
+        if (!data?.demo) return clearInterval(demoTimer);
+        step++;
+        const pred = data.prediction;
+        if (step <= 14) {
+          const x = pred.outcomes[Math.floor(Math.random() * pred.outcomes.length)];
+          x.users++;
+          x.channelPoints += 50 * (1 + Math.floor(Math.random() * 20));
+        } else if (step === 15) {
+          pred.status = 'locked';
+        } else if (step === 19) {
+          const winner = Math.floor(Math.random() * pred.outcomes.length);
+          data = { ...data, prediction: null, result: { ...pred, status: 'resolved', winner } };
+        } else if (step === 27) {
+          clearInterval(demoTimer);
+          data = { ...data, prediction: null, result: null };
+        }
+        render();
+      }, 700);
+    }
+
+    function handle(msg) {
+      if (msg.kind !== 'state') return;
+      offset = msg.now - Date.now();
+      data = msg;
+      clearTimeout(hideTimer);
+      clearInterval(demoTimer);
+      if (msg.result && !msg.prediction) {
+        const remain = msg.overlay.showResultSeconds * 1000 - (msg.now - msg.result.endedAt);
+        hideTimer = setTimeout(() => { data = { ...data, result: null }; render(); }, Math.max(0, remain));
+      }
+      if (msg.demo) runDemo();
+      render();
+    }
+
+    function connect() {
+      fetch('/api/addons/predictions/overlay-state').then((r) => r.json()).then(handle).catch(() => {});
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=predictions`);
+      ws.onmessage = (m) => handle(JSON.parse(m.data));
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+
+    // Restzeit jede Sekunde aktualisieren
+    setInterval(() => { if (data?.prediction && !data.demo) render(); }, 1000);
+    connect();
+  </script>
+</body>
+</html>

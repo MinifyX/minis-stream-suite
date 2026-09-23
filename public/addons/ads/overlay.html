@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Werbepausen Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/ads/overlay.html
+    Am besten in voller Szenengröße (z.B. 1920 x 1080), die Position stellst du in der Suite ein.
+    Hintergrund ist durchsichtig, das Banner erscheint nur vor und während einer Werbepause.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; }
+
+    #stage { position: absolute; inset: 24px; display: flex; pointer-events: none; }
+    /* Position des Banners */
+    #stage[data-pos^="top"] { align-items: flex-start; }
+    #stage[data-pos^="bottom"] { align-items: flex-end; }
+    #stage[data-pos="center"] { align-items: center; }
+    #stage[data-pos$="left"] { justify-content: flex-start; }
+    #stage[data-pos$="right"] { justify-content: flex-end; }
+    #stage[data-pos="top"], #stage[data-pos="bottom"], #stage[data-pos="center"] { justify-content: center; }
+
+    #banner {
+      --accent: #9147ff; --text: #fff; --bg: rgba(24, 24, 27, .88); --size: 26px; --from: translateY(-40px);
+      width: 520px; max-width: 100%; box-sizing: border-box;
+      display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .2em .7em;
+      padding: .7em .9em .8em; border-radius: .7em; background: var(--bg); color: var(--text);
+      font-size: var(--size); box-shadow: 0 .4em 1.4em rgba(0, 0, 0, .35);
+      border-left: .22em solid var(--accent);
+      opacity: 0; transform: var(--from) scale(.96);
+      transition: opacity .45s ease, transform .55s cubic-bezier(.2, 1.4, .4, 1);
+    }
+    #stage[data-pos^="bottom"] #banner { --from: translateY(40px); }
+    #stage[data-pos="center"] #banner { --from: translateY(0) scale(.8); }
+    #banner.show { opacity: 1; transform: none; }
+
+    .icon {
+      grid-row: span 2; width: 1.9em; height: 1.9em; border-radius: 50%; display: grid; place-items: center;
+      background: var(--accent); font-size: 1em; animation: bob 2.4s ease-in-out infinite;
+    }
+    .title { font-weight: 800; font-size: .85em; line-height: 1.2; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+    .sub { font-size: .55em; opacity: .75; font-weight: 600; letter-spacing: .04em; }
+    .time {
+      grid-row: span 2; font-family: Consolas, monospace; font-weight: 800; font-size: 1.25em;
+      font-variant-numeric: tabular-nums; min-width: 3.2ch; text-align: right;
+    }
+    .bar { grid-column: 1 / -1; height: .18em; border-radius: .09em; background: rgba(255, 255, 255, .15); overflow: hidden; margin-top: .35em; }
+    .bar div { height: 100%; width: 100%; background: var(--accent); transition: width 1s linear; }
+
+    /* Letzte 10 Sekunden der Vorwarnung: Countdown pulsiert */
+    #banner.hurry .time { animation: pulse 1s ease-in-out infinite; color: var(--accent); }
+    /* „Wir sind zurück“: kein Countdown, dafür ein kleiner Hüpfer */
+    #banner.back { grid-template-columns: auto 1fr; }
+    #banner.back .time, #banner.back .bar { display: none; }
+    #banner.back .icon { animation: wave 1.2s ease-in-out 2; }
+
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-.08em); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+    @keyframes wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+  </style>
+</head>
+<body>
+  <div id="stage" data-pos="top">
+    <div id="banner">
+      <div class="icon"></div>
+      <div class="title"></div>
+      <div class="time"></div>
+      <div class="sub"></div>
+      <div class="bar"><div></div></div>
+    </div>
+  </div>
+  <script>
+    const stage = document.getElementById('stage');
+    const banner = document.getElementById('banner');
+    const $ = (sel) => banner.querySelector(sel);
+
+    /** Aktuell angezeigter Zustand: { phase, endsAt, startedAt, hideAt, durationSeconds, overlay } */
+    let data = null;
+    let offset = 0;
+    let demoTimers = [];
+
+    const fmt = (ms) => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+    const hexToRgba = (hex, alpha) => {
+      const n = parseInt(hex.slice(1), 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+    };
+    const now = () => Date.now() + offset;
+
+    function applyStyle(o) {
+      stage.dataset.pos = o.position;
+      banner.style.setProperty('--accent', o.accent);
+      banner.style.setProperty('--text', o.textColor);
+      banner.style.setProperty('--bg', hexToRgba(o.background, o.backgroundOpacity / 100));
+      banner.style.setProperty('--size', `${o.fontSize}px`);
+      banner.style.width = `${o.width}px`;
+    }
+
+    const TEXTS = {
+      warning: (o, d) => ({ icon: '⏰', title: o.warningTitle, sub: d.durationSeconds ? `Dauer: ${d.durationSeconds} Sekunden` : '' }),
+      running: (o, d) => ({ icon: '📺', title: o.runningTitle, sub: d.durationSeconds ? `${d.durationSeconds} Sekunden · gleich geht's weiter` : "Gleich geht's weiter" }),
+      back: (o) => ({ icon: '👋', title: o.backTitle, sub: '' }),
+    };
+
+    function render() {
+      if (!data) return;
+      const o = data.overlay;
+      applyStyle(o);
+      const visible = data.phase !== 'idle' && !(data.hideAt && now() >= data.hideAt);
+      if (!visible) {
+        banner.classList.remove('show');
+        return;
+      }
+      const text = TEXTS[data.phase](o, data);
+      // Texte nur tauschen, wenn sich die Phase ändert (sonst flackert das Icon)
+      const key = [data.phase, text.title, text.sub].join('|');
+      if (banner.dataset.key !== key) {
+        banner.dataset.key = key;
+        $('.icon').textContent = text.icon;
+        $('.title').textContent = text.title;
+        $('.sub').textContent = text.sub;
+      }
+      banner.classList.toggle('back', data.phase === 'back');
+      const left = data.endsAt - now();
+      const total = Math.max(1, data.endsAt - data.startedAt);
+      $('.time').textContent = fmt(left);
+      $('.bar div').style.width = `${Math.max(0, Math.min(100, (left / total) * 100))}%`;
+      banner.classList.toggle('hurry', data.phase === 'warning' && left <= 10_000 && left > 0);
+      requestAnimationFrame(() => banner.classList.add('show'));
+    }
+
+    function stopDemo() {
+      demoTimers.forEach(clearTimeout);
+      demoTimers = [];
+    }
+
+    /** Test-Ablauf nur hier im Overlay: Vorwarnung → Werbung → zurück */
+    function runDemo(msg) {
+      stopDemo();
+      const t0 = Date.now();
+      offset = 0;
+      const warnEnd = t0 + msg.warningSeconds * 1000;
+      const adEnd = warnEnd + msg.runningSeconds * 1000;
+      const backEnd = adEnd + msg.overlay.backSeconds * 1000;
+      data = { phase: 'warning', startedAt: t0, endsAt: warnEnd, hideAt: 0, durationSeconds: msg.runningSeconds, overlay: msg.overlay, demo: true };
+      render();
+      demoTimers.push(setTimeout(() => {
+        data = { ...data, phase: 'running', startedAt: warnEnd, endsAt: adEnd };
+        render();
+      }, warnEnd - t0));
+      demoTimers.push(setTimeout(() => {
+        data = msg.showBack
+          ? { ...data, phase: 'back', startedAt: adEnd, endsAt: backEnd, hideAt: backEnd }
+          : { ...data, phase: 'idle' };
+        render();
+      }, adEnd - t0));
+      demoTimers.push(setTimeout(() => {
+        data = { ...data, phase: 'idle', demo: false };
+        render();
+      }, backEnd - t0 + 100));
+    }
+
+    function handle(msg) {
+      if (msg.kind === 'demo') return runDemo(msg);
+      if (msg.kind !== 'state') return;
+      // Läuft gerade ein Test und es passiert nichts Echtes → Test weiterlaufen lassen, nur Aussehen übernehmen
+      if (data?.demo && msg.phase === 'idle') {
+        data = { ...data, overlay: msg.overlay };
+        render();
+        return;
+      }
+      stopDemo();
+      offset = msg.now - Date.now();
+      data = msg;
+      render();
+    }
+
+    function connect() {
+      fetch('/api/addons/ads/overlay-state').then((r) => r.json()).then(handle).catch(() => {});
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=ads`);
+      ws.onmessage = (m) => handle(JSON.parse(m.data));
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+
+    // Countdown jede Sekunde weiterzählen
+    setInterval(render, 250);
+    connect();
+  </script>
+</body>
+</html>

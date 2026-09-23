@@ -4,7 +4,24 @@ import { makeTestEvent, type ChatFragment, type StreamEvent } from '../../core/t
 
 // ------------------------------------------------------------------ Datenmodell
 
-const EVENT_KINDS = ['follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'redemption', 'stream'] as const;
+/** Schnittstelle des Alerts-Addons (siehe alerts/index.ts) */
+interface AlertsService {
+  rewardAllowed(id: string): boolean;
+  replay(event: StreamEvent): Promise<{ shown: boolean; variant?: string }>;
+  setPaused(paused: boolean): AlertsStatus;
+  skip(): void;
+  status(): AlertsStatus;
+}
+interface AlertsStatus {
+  paused: boolean;
+  /** So viele Alerts warten, bis die Pause vorbei ist */
+  held: number;
+}
+
+/** Events, zu denen es Alerts gibt – die bekommen im Chat-Fenster ein ▶ */
+const REPLAYABLE: StreamEvent['type'][] = ['follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'redemption', 'hypetrain'];
+
+const EVENT_KINDS = ['follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'redemption', 'stream', 'hypetrain', 'prediction', 'shoutout', 'ads'] as const;
 type EventKind = (typeof EVENT_KINDS)[number];
 const ROLES = ['everyone', 'subscriber', 'vip', 'moderator', 'broadcaster'] as const;
 type Role = (typeof ROLES)[number];
@@ -82,7 +99,7 @@ const DEFAULTS: Settings = {
     showBadges: true,
     hideCommands: true,
     hiddenUsers: ['nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot'],
-    events: { ...allEvents(true), stream: false },
+    events: { ...allEvents(true), stream: false, ads: false },
   },
   window: {
     fontSize: 14,
@@ -127,6 +144,8 @@ type ChatItem =
     detail: string;
     hiddenReward: boolean;
     test: boolean;
+    /** Kann im Chat-Fenster als Alert nochmal abgespielt werden */
+    replay?: boolean;
   };
 
 // ------------------------------------------------------------------ Einstellungen prüfen
@@ -259,7 +278,9 @@ export const chatAddon: Addon = {
     let assets: Assets | null = null;
     let assetsLoading: Promise<Assets> | null = null;
 
-    const alertsService = () => ctx.use<{ rewardAllowed(id: string): boolean }>('alerts');
+    const alertsService = () => ctx.use<AlertsService>('alerts');
+    /** Events zu den Einträgen im Chat, damit das Chat-Fenster sie als Alert nochmal abspielen kann */
+    const eventsById = new Map<string, StreamEvent>();
     const rewardHidden = (rewardId: string | null) =>
       !!rewardId && settings.respectAlertFilter && alertsService()?.rewardAllowed(rewardId) === false;
 
@@ -276,6 +297,9 @@ export const chatAddon: Addon = {
       if (badges.includes('subscriber') || badges.includes('founder')) return ROLE_LEVEL.subscriber;
       return ROLE_LEVEL.everyone;
     };
+
+    /** Letztes Level des laufenden Hype Trains – nur ein Level-Aufstieg kommt in den Chat, nicht jeder Zwischenstand */
+    let hypeLevel = 0;
 
     const eventItem = (event: StreamEvent): ChatItem | null => {
       const base = { kind: 'event' as const, id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, time: Date.now(), test: !!event.test, hiddenReward: false };
@@ -305,6 +329,34 @@ export const chatAddon: Addon = {
             detail: event.input,
             hiddenReward: rewardHidden(event.reward.id),
           };
+        case 'hypetrain': {
+          const golden = event.trainType === 'golden_kappa' ? ' (Golden Kappa!)' : '';
+          if (event.phase === 'begin') {
+            hypeLevel = event.level;
+            return { ...base, event: 'hypetrain', icon: '🚂', user: '', text: `Der Hype Train fährt los${golden}!`, detail: '' };
+          }
+          if (event.phase === 'end') {
+            hypeLevel = 0;
+            return { ...base, event: 'hypetrain', icon: '🚂', user: '', text: `Hype Train beendet: Level ${event.level} erreicht!`, detail: '' };
+          }
+          if (event.level <= hypeLevel) return null;
+          hypeLevel = event.level;
+          return { ...base, event: 'hypetrain', icon: '🚂', user: '', text: `Hype Train erreicht Level ${event.level}!`, detail: '' };
+        }
+        case 'prediction': {
+          if (event.phase === 'progress') return null;
+          const winner = event.outcomes.find((o) => o.id === event.winningOutcomeId);
+          const text = {
+            begin: `Vorhersage gestartet: „${event.title}“`,
+            lock: `Vorhersage gesperrt: „${event.title}“`,
+            end: event.status === 'resolved' && winner ? `Vorhersage aufgelöst: „${winner.title}“ gewinnt!` : `Vorhersage abgebrochen: „${event.title}“`,
+          }[event.phase];
+          return { ...base, event: 'prediction', icon: '🔮', user: '', text, detail: '' };
+        }
+        case 'shoutout':
+          return { ...base, event: 'shoutout', icon: '📣', user: event.to.name, text: 'Shoutout an {user}!', detail: '' };
+        case 'adbreak':
+          return { ...base, event: 'ads', icon: '📺', user: '', text: `Werbung läuft (${event.durationSeconds} Sek.)`, detail: '' };
         case 'streamonline':
           return { ...base, event: 'stream', icon: '🔴', user: '', text: 'Der Stream ist live!', detail: '' };
         case 'streamoffline':
@@ -312,6 +364,18 @@ export const chatAddon: Addon = {
         default:
           return null;
       }
+    };
+
+    /** Event-Eintrag in den Chat, bei Alert-Events mit ▶ zum nochmal Abspielen */
+    const pushEvent = (event: StreamEvent) => {
+      const item = eventItem(event);
+      if (!item || item.kind !== 'event') return;
+      if (REPLAYABLE.includes(event.type)) {
+        item.replay = true;
+        eventsById.set(item.id, event);
+        if (eventsById.size > 200) eventsById.delete(eventsById.keys().next().value!);
+      }
+      push(item);
     };
 
     ctx.events.onAny((event) => {
@@ -344,10 +408,8 @@ export const chatAddon: Addon = {
             if (item.kind === 'message' && (!event.userId || item.user.id === event.userId)) (item as ChatItem & { deleted?: boolean }).deleted = true;
           }
           return;
-        default: {
-          const item = eventItem(event);
-          if (item) push(item);
-        }
+        default:
+          pushEvent(event);
       }
     });
 
@@ -405,6 +467,25 @@ export const chatAddon: Addon = {
     });
 
     ctx.api.get('/history', () => history);
+
+    // -------------------------------------------------------- Alerts aus dem Chat-Fenster steuern
+
+    const alerts = () => {
+      const service = alertsService();
+      if (!service) throw new HttpError(409, 'Das Alerts-Addon ist aus.');
+      return service;
+    };
+
+    /** { id } → Alert zu einem Event aus dem Chat nochmal abspielen */
+    ctx.api.post('/replay', async ({ body }) => {
+      const event = eventsById.get(String(body?.id));
+      if (!event) throw new HttpError(404, 'Das Event ist zu alt, um es nochmal abzuspielen.');
+      return alerts().replay(event);
+    });
+
+    ctx.api.get('/alerts', () => alertsService()?.status() ?? null);
+    ctx.api.post('/alerts/pause', ({ body }) => alerts().setPaused(body?.paused === true));
+    ctx.api.post('/alerts/skip', () => alerts().skip());
 
     /** Nachricht aus dem Chat-Fenster senden */
     ctx.api.post('/send', async ({ body }) => {

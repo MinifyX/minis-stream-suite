@@ -60,7 +60,7 @@ function renderActive() {
   $('#active').replaceChildren(h('div', { class: 'lurkers' }, ...list.map((l) =>
     h('div', { class: 'lurker' },
       h('div', { class: 'who' },
-        h('div', { class: 'name' }, l.name),
+        h('div', { class: 'name no-i18n' }, l.name),
         l.message ? h('div', { class: 'msg', title: l.message }, `„${l.message}“`) : h('div', { class: 'msg' }, `seit ${fmtDate(l.since)}`)),
       h('span', { class: 'since', title: `seit ${fmtDate(l.since)}` }, fmt(now - l.since)),
       h('button', { class: 'icon-btn', title: 'Beenden (zählt in die Statistik, ohne Chat-Nachricht)', onclick: () => call('/end', { id: l.id }) }, '⏹'),
@@ -88,7 +88,7 @@ function renderStats() {
       h('tbody', {}, ...list.slice(0, 200).map((s, i) =>
         h('tr', {},
           h('td', { class: 'rank' }, `${i + 1}.`),
-          h('td', {}, h('b', {}, s.name)),
+          h('td', {}, h('b', { class: 'no-i18n' }, s.name)),
           h('td', { class: 'num' }, `${s.count}×`),
           h('td', { class: 'num' }, fmt(s.totalMs)),
           h('td', { class: 'num' }, fmt(s.longestMs)),
@@ -150,8 +150,8 @@ async function runTest(message) {
     const log = $('#test-log');
     log.prepend(
       h('div', {},
-        h('div', { class: 'in' }, h('b', {}, user), `: ${text}`),
-        ...(r.replies.length ? r.replies.map((t) => h('div', { class: 'out' }, t)) : [h('div', { class: 'none' }, r.lurking ? '(lurkt weiter, keine Antwort)' : '(keine Antwort)')])));
+        h('div', { class: 'in no-i18n' }, h('b', {}, user), `: ${text}`),
+        ...(r.replies.length ? r.replies.map((t) => h('div', { class: 'out no-i18n' }, t)) : [h('div', { class: 'none' }, r.lurking ? '(lurkt weiter, keine Antwort)' : '(keine Antwort)')])));
     $('#test-message').value = '';
   } catch (err) {
     toast(err.message, 'err');

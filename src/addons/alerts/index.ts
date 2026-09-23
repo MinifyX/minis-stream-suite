@@ -7,11 +7,13 @@ import { HttpError } from '../../core/server';
 import { makeTestEvent, type EventOfType, type RewardRef, type StreamEvent } from '../../core/twitch/events';
 import {
   CATEGORY_IDS,
+  categoryOf,
   DEFAULT_CONDITIONS,
   DEFAULT_DESIGN,
   DEFAULT_SETTINGS,
   describeEvent,
   fillPlain,
+  matches,
   pickVariant,
   rewardAllowed,
   sanitizeCategories,
@@ -35,6 +37,20 @@ export interface AlertShownListener {
 
 /** So viele gesendete Alerts merken, bis das Overlay meldet, dass sie starten */
 const MAX_PENDING_SHOWN = 50;
+/** So viele Einträge behält der Alert-Verlauf */
+const MAX_HISTORY = 200;
+
+/** Ein Event im Alert-Verlauf – mit dem ganzen Event, damit man den Alert nochmal abspielen kann */
+interface HistoryEntry {
+  id: string;
+  at: number;
+  category: CategoryId;
+  event: StreamEvent;
+  /** Name der Variante, die kam – null = kein Alert */
+  variant: string | null;
+  /** Warum kein Alert kam: Belohnung stumm (Filter) oder keine passende aktive Variante */
+  reason?: 'muted' | 'no-variant';
+}
 
 interface HelixReward {
   id: string;
@@ -91,6 +107,19 @@ function testEventFor(category: CategoryId, variant: Variant | null, reward?: Pa
       const e = makeTestEvent('raid') as EventOfType<'raid'>;
       return { ...e, viewers: Math.max(42, c.minViewers) };
     }
+    case 'hypetrain': {
+      const e = makeTestEvent('hypetrain') as EventOfType<'hypetrain'>;
+      const phase = c.trainPhase === 'any' ? 'levelup' : c.trainPhase;
+      const level = phase === 'start' ? 1 : Math.max(phase === 'end' ? 3 : 2, c.minLevel);
+      return {
+        ...e,
+        phase: phase === 'start' ? 'begin' : phase === 'end' ? 'end' : 'progress',
+        level,
+        total: e.total * level,
+        expiresAt: phase === 'end' ? null : e.expiresAt,
+        trainType: c.goldenOnly ? 'golden_kappa' : e.trainType,
+      };
+    }
     case 'redemption':
       return makeTestEvent('redemption', reward);
     default:
@@ -104,7 +133,7 @@ export const alertsAddon: Addon = {
   icon: '🔔',
   version: '0.2.0',
   author: 'Mini',
-  description: 'Alert-Editor mit Varianten für Follows, Abos, Bits, Raids und Kanalpunkte, pro Belohnung ein- oder ausschaltbar.',
+  description: 'Alert-Editor mit Varianten für Follows, Abos, Bits, Raids, Hype Trains und Kanalpunkte, pro Belohnung ein- oder ausschaltbar.',
   settingsPage: 'editor.html',
 
   activate(ctx) {
@@ -119,6 +148,17 @@ export const alertsAddon: Addon = {
 
     /** Gesendete, aber noch nicht gestartete Alerts (für Addons, die genau zum Alert etwas starten) */
     const pendingShown = new Map<string, StreamEvent>();
+
+    /** Pausiert: neue Alerts warten hier (der Reihe nach), bis es weitergeht. Nach einem Neustart läuft alles wieder. */
+    let paused = false;
+    const held: unknown[] = [];
+    const pauseStatus = () => ({ paused, held: held.length });
+    const setPaused = (on: boolean) => {
+      paused = on;
+      if (!on) for (const message of held.splice(0)) ctx.overlay.broadcast(message);
+      ctx.log.info(on ? 'Alerts pausiert' : 'Alerts laufen wieder');
+      return pauseStatus();
+    };
 
     /** Alert bauen (inkl. Sprachausgabe) und ans Overlay schicken */
     const send = async (category: CategoryId, variant: Variant, event: StreamEvent) => {
@@ -137,7 +177,7 @@ export const alertsAddon: Addon = {
       const id = randomUUID();
       pendingShown.set(id, event);
       if (pendingShown.size > MAX_PENDING_SHOWN) pendingShown.delete(pendingShown.keys().next().value!);
-      ctx.overlay.broadcast({
+      const message = {
         kind: 'alert',
         alert: {
           id,
@@ -148,7 +188,26 @@ export const alertsAddon: Addon = {
           userMessage: design.showUserMessage ? userMessage : '',
           ttsUrl,
         },
-      });
+      };
+      if (paused) held.push(message);
+      else ctx.overlay.broadcast(message);
+    };
+
+    /**
+     * Alert zu einem Event nochmal abspielen, mit den aktuellen Varianten.
+     * force: auch wenn die Belohnung stumm ist – dann die erste passende Variante.
+     */
+    const replay = async (event: StreamEvent, force = false) => {
+      const s = settings.all();
+      let picked = pickVariant(s, event, groupsOf);
+      const category = categoryOf(event);
+      if (!picked && force && category) {
+        const variant = s.categories[category].variants.find((v) => v.enabled && matches(v, event));
+        if (variant) picked = { category, variant };
+      }
+      if (!picked) return { shown: false };
+      await send(picked.category, picked.variant, event);
+      return { shown: true, variant: picked.variant.name };
     };
 
     /** Gruppen aus dem Kanalpunkte-Addon (leer, wenn es aus ist) */
@@ -156,12 +215,57 @@ export const alertsAddon: Addon = {
     const groupsOf = (rewardId: string) => channelPoints()?.groupsOf(rewardId).map((g) => g.id) ?? [];
 
     // Andere Addons (z.B. Chat-Overlay) fragen: Soll diese Belohnung sichtbar sein?
+    // … und fürs Chat-Fenster: Alerts nochmal abspielen, pausieren, überspringen
     ctx.provide('alerts', {
       rewardAllowed: (rewardId: string) => rewardAllowed(settings.all(), rewardId, groupsOf(rewardId)),
+      replay: (event: StreamEvent) => replay(event),
+      setPaused,
+      skip: () => ctx.overlay.broadcast({ kind: 'skip' }),
+      status: pauseStatus,
     });
 
+    const history = new ConfigStore<{ entries: HistoryEntry[] }>('addons/alerts-history', { entries: [] });
+
+    /** Events mit Alert-Kategorie in den Verlauf schreiben (Test-Events auch, die zeigt die Oberfläche markiert) */
+    const remember = (event: StreamEvent, variant: Variant | null) => {
+      const category = categoryOf(event);
+      // Verschenkte Abos kommen zusätzlich einzeln pro Empfänger – die zählen nicht extra
+      if (!category || (event.type === 'sub' && event.isGift)) return;
+      const s = settings.all();
+      const muted = event.type === 'redemption' && !rewardAllowed(s, event.reward.id, groupsOf(event.reward.id));
+      const entry: HistoryEntry = { id: randomUUID(), at: Date.now(), category, event, variant: variant?.name ?? null };
+      if (!variant) entry.reason = muted ? 'muted' : 'no-variant';
+      history.set('entries', [entry, ...history.get('entries')].slice(0, MAX_HISTORY));
+    };
+
+    /**
+     * Hype Train: Twitch schickt beim Fahren ständig Fortschritt. Ein Alert kommt nur beim Start,
+     * wenn das Level steigt, und am Ende. Dafür merken wir uns das Level des laufenden Zugs
+     * (es fährt immer nur einer pro Kanal).
+     */
+    let trainLevel: number | null = null;
+    const isHypeMoment = (event: EventOfType<'hypetrain'>): boolean => {
+      // Test-Events (Test-Button) zählen immer und stören den echten Zug nicht
+      if (event.test) return true;
+      if (event.phase === 'begin') {
+        trainLevel = event.level;
+        return true;
+      }
+      if (event.phase === 'end') {
+        trainLevel = null;
+        return true;
+      }
+      // Unbekanntes Level (z.B. Suite mitten im Zug gestartet): nur merken, kein Alert
+      const levelUp = trainLevel !== null && event.level > trainLevel;
+      trainLevel = event.level;
+      return levelUp;
+    };
+
     ctx.events.onAny(async (event) => {
+      // Normaler Hype-Train-Fortschritt ohne neues Level: kein Alert, kein Verlauf
+      if (event.type === 'hypetrain' && !isHypeMoment(event)) return;
       const picked = pickVariant(settings.all(), event, groupsOf);
+      remember(event, picked?.variant ?? null);
       if (picked) await send(picked.category, picked.variant, event);
     });
 
@@ -274,7 +378,26 @@ export const alertsAddon: Addon = {
       settings.set('categories', categories);
     });
 
+    // ------------------------------------------------------------ Verlauf
+
+    ctx.api.get('/history', () => history.get('entries'));
+
+    /**
+     * { id } → Alert nochmal abspielen, mit den aktuellen Varianten (falls man sie inzwischen geändert hat).
+     * { id, force: true } → auch wenn die Belohnung stumm ist: dann die erste passende Variante.
+     */
+    ctx.api.post('/history/replay', async ({ body }) => {
+      const entry = history.get('entries').find((e) => e.id === body?.id);
+      if (!entry) throw new HttpError(404, 'Eintrag nicht gefunden');
+      return replay(entry.event, body.force === true);
+    });
+
+    ctx.api.post('/history/clear', () => history.set('entries', []));
+
     ctx.api.post('/skip', () => ctx.overlay.broadcast({ kind: 'skip' }));
+
+    ctx.api.get('/pause', pauseStatus);
+    ctx.api.post('/pause', ({ body }) => setPaused(body?.paused === true));
 
     /** Das Overlay meldet: dieser Alert startet jetzt. Nur einmal pro Alert, auch bei mehreren offenen Overlays. */
     ctx.api.post('/shown', ({ body }) => {

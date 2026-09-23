@@ -1,4 +1,4 @@
-# Prüft bei jedem Push und Pull Request, ob der Code fehlerfrei kompiliert.
+# Prüft bei jedem Push und Pull Request, ob der Code fehlerfrei kompiliert und die Tests durchlaufen.
 name: CI
 
 on:
@@ -17,3 +17,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm test

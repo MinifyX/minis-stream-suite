@@ -21,6 +21,20 @@ export const SCOPES = [
   'channel:manage:polls',
   // Bot-Account: prüfen, ob der Bot Mod ist, und ihn per Klick zum Mod machen
   'channel:manage:moderators',
+  // Hype Train mitverfolgen (Alerts, Overlay)
+  'channel:read:hype_train',
+  // Vorhersagen starten, sperren, auflösen und live mitlesen
+  'channel:manage:predictions',
+  // Shoutouts per !so geben
+  'moderator:manage:shoutouts',
+  // Werbepausen: nächste Werbung abfragen, verschieben, und mitbekommen, wenn sie startet
+  'channel:read:ads',
+  'channel:manage:ads',
+  // Spam-Schutz: Nachrichten löschen und Timeouts geben
+  'moderator:manage:chat_messages',
+  'moderator:manage:banned_users',
+  // Stream-Titel und Kategorie ändern
+  'channel:manage:broadcast',
 ];
 
 /** Der Bot-Account braucht nur ein Recht: Nachrichten in den Chat schreiben */

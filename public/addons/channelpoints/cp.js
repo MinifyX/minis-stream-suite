@@ -73,7 +73,7 @@ function renderNav() {
     h('button', { class: `g-item${state.selected === id ? ' active' : ''}`, onclick: () => { state.selected = id; render(); } },
       color ? h('span', { class: 'dot-color', style: { background: color } }) : null,
       h('span', {}, icon),
-      h('span', { class: 'g-name' }, name),
+      h('span', { class: color ? 'g-name no-i18n' : 'g-name' }, name),
       h('span', { class: 'count' }, count));
 
   nav.replaceChildren(...[
@@ -94,7 +94,7 @@ function renderHead() {
   }
   const { rewards, max } = state.data;
   const manageable = rewards.filter((r) => r.manageable).length;
-  const hasRules = state.data.groups.some((g) => g.gameRule?.games.length);
+  const hasRules = state.data.groups.some((g) => g.gameRule?.games.length) || Object.keys(state.data.rewardRules ?? {}).length > 0;
   const stats = h('div', { class: 'stat-row' },
     state.game?.current
       ? h('span', { class: 'badge accent', title: 'Aktuelle Kategorie deines Kanals' }, `🎮 ${state.game.current.name || 'Keine Kategorie'}`)
@@ -127,7 +127,7 @@ function renderHead() {
   head.replaceChildren(
     h('div', { class: 'cp-title' },
       h('span', { class: 'dot-color', style: { background: group.color, width: '14px', height: '14px' } }),
-      h('h1', {}, `${group.icon} ${group.name}`),
+      h('h1', { class: 'no-i18n' }, `${group.icon} ${group.name}`),
       h('span', { class: 'spacer' }),
       h('button', { class: 'btn small', onclick: () => openMembers(group) }, '＋ Belohnungen zuordnen'),
       h('button', { class: 'btn small', onclick: () => openGroupEditor(group) }, '✎ Bearbeiten'),
@@ -218,6 +218,63 @@ function openGamePicker(group) {
     if (games.some((g) => g.id === game.id)) return;
     await saveGameRule(group, [...games, { id: game.id, name: game.name }], mode);
   });
+}
+
+/** Eigene Spiel-Regel für eine einzelne Belohnung */
+function openRewardGameRule(reward) {
+  const existing = state.data.rewardRules?.[reward.id];
+  const rule = structuredClone(existing ?? { games: [], mode: 'hide' });
+  const bindGames = state.keybinds?.binds[reward.id]?.games ?? [];
+  const groupRules = groupsOf(reward.id).filter((g) => g.gameRule?.games.length);
+  const gamesBox = h('div', { class: 'kb-games' });
+
+  function renderGames() {
+    const missingFromBind = bindGames.filter((g) => !rule.games.some((x) => x.id === g.id));
+    gamesBox.replaceChildren(
+      ...rule.games.map((g) => h('span', { class: 'game-chip' }, g.name,
+        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => { rule.games = rule.games.filter((x) => x.id !== g.id); renderGames(); } }, '✕'))),
+      h('button', {
+        class: 'btn small',
+        onclick: () => gamePicker(`Spiel für „${reward.title}“`, 'Die Belohnung ist nur bei den gewählten Spielen aktiv. Bei jedem Kategoriewechsel schaltet die Suite sie automatisch um.', (game) => {
+          if (!rule.games.some((g) => g.id === game.id)) rule.games.push(game);
+          renderGames();
+        }),
+      }, '＋ Spiel'),
+      missingFromBind.length
+        ? h('button', { class: 'btn small', title: 'Die Spiele aus dem Keybind dieser Belohnung übernehmen', onclick: () => { rule.games.push(...missingFromBind); renderGames(); } }, '⌨ Spiele vom Keybind übernehmen')
+        : null,
+      rule.games.length ? null : h('span', { class: 'note' }, 'Kein Spiel gewählt: immer aktiv.'));
+  }
+
+  const save = async (games) => {
+    const result = await call('rewards/game-rule', { rewardId: reward.id, rule: games.length ? { games, mode: rule.mode } : null });
+    if (!result) return;
+    close();
+    reportApply(result);
+    await load();
+  };
+
+  renderGames();
+  const close = modal(`🎮 ${reward.title}`, [
+    h('div', { class: 'sub' }, 'NUR AKTIV BEI SPIEL'),
+    gamesBox,
+    h('div', { class: 'sub' }, 'BEI ANDEREN SPIELEN'),
+    h('select', { class: 'mode-select', onchange: (e) => { rule.mode = e.target.value; } },
+      h('option', { value: 'hide', selected: rule.mode === 'hide' }, 'Ausblenden (Zuschauer sehen sie nicht)'),
+      h('option', { value: 'pause', selected: rule.mode === 'pause' }, 'Pausieren (sichtbar, aber gesperrt)')),
+    h('div', { class: 'note' }, 'Wechselst du die Kategorie zu einem der Spiele, wird die Belohnung automatisch wieder aktiv.'),
+    groupRules.length
+      ? h('div', { class: 'note' }, `Die eigene Regel hat Vorrang vor der Regel der Gruppe ${groupRules.map((g) => `„${g.name}“`).join(', ')}.`)
+      : null,
+    reward.manageable
+      ? null
+      : h('div', { class: 'warn-note' }, '⚠ Diese Belohnung ist 🔒 und kann nicht automatisch geschaltet werden. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet (⇪ Übernehmen).'),
+  ], [
+    existing ? h('button', { class: 'btn', onclick: () => save([]) }, '🗑 Regel entfernen') : null,
+    h('span', { class: 'spacer' }),
+    h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
+    h('button', { class: 'btn primary', onclick: () => save(rule.games) }, 'Speichern'),
+  ].filter(Boolean));
 }
 
 /** Dialog zum Suchen eines Spiels (Twitch-Kategorie). onPick bekommt { id, name }. */
@@ -396,6 +453,7 @@ function renderRewards() {
 
 function rewardRow(r) {
   const bind = state.keybinds?.binds[r.id];
+  const ownRule = state.data.rewardRules?.[r.id];
   const status = [];
   if (bind) {
     status.push(h('span', {
@@ -432,8 +490,8 @@ function rewardRow(r) {
   return h('div', { class: `reward${!r.enabled || r.paused ? ' off' : ''}` },
     h('div', { class: 'r-img', style: { background: r.color } }, r.image ? h('img', { src: r.image, alt: '' }) : null),
     h('div', { class: 'r-info' },
-      h('div', { class: 'r-title', title: r.title }, r.title),
-      r.prompt ? h('div', { class: 'r-prompt', title: r.prompt }, r.prompt) : null,
+      h('div', { class: 'r-title no-i18n', title: r.title }, r.title),
+      r.prompt ? h('div', { class: 'r-prompt no-i18n', title: r.prompt }, r.prompt) : null,
       h('div', { class: 'r-meta' },
         h('span', { class: 'muted' }, `${r.cost.toLocaleString('de-DE')} Punkte`),
         r.redeemedThisStream ? h('span', { class: 'muted' }, `· ${r.redeemedThisStream}× in diesem Stream`) : null,
@@ -445,10 +503,24 @@ function rewardRow(r) {
           ? h('span', { class: 'badge warn', title: 'Wird nicht übernommen. Bearbeiten nur im Twitch-Dashboard oder in der anderen App.' },
             r.foreign === 'self' ? '🛡 andere App' : `🛡 andere App (Gruppe ${r.foreign})`)
           : null,
-        ...groupsOf(r.id).map((g) => h('span', { class: 'group-chip', style: { background: `${g.color}55` } }, `${g.icon} ${g.name}`)),
+        ...groupsOf(r.id).map((g) => h('span', { class: 'group-chip no-i18n', style: { background: `${g.color}55` } }, `${g.icon} ${g.name}`)),
+        ownRule
+          ? h('span', { class: 'badge accent', title: `Eigene Spiel-Regel: sonst ${ownRule.mode === 'hide' ? 'ausgeblendet' : 'pausiert'}` }, `🎮 nur bei ${ownRule.games.map((x) => x.name).join(', ')}`)
+          : null,
         ...groupsOf(r.id).filter((g) => g.gameRule?.games.length).map((g) =>
-          h('span', { class: 'badge accent', title: `Über Gruppe ${g.name}` }, `🎮 nur bei ${g.gameRule.games.map((x) => x.name).join(', ')}`)))),
+          h('span', {
+            class: `badge${ownRule ? '' : ' accent'}`,
+            title: ownRule ? `Regel der Gruppe ${g.name} – gilt nicht, weil die Belohnung eine eigene Regel hat` : `Über Gruppe ${g.name}`,
+            style: ownRule ? { textDecoration: 'line-through' } : undefined,
+          }, `🎮 nur bei ${g.gameRule.games.map((x) => x.name).join(', ')}`)))),
     h('div', { class: 'r-actions' },
+      h('button', {
+        class: `icon-btn${ownRule ? ' on-accent' : ''}`,
+        title: ownRule
+          ? `Nur bei: ${ownRule.games.map((g) => g.name).join(', ')}`
+          : 'Nur bei bestimmten Spielen anzeigen (sonst ausblenden oder pausieren)',
+        onclick: () => openRewardGameRule(r),
+      }, '🎮'),
       h('button', {
         class: `icon-btn${bind?.enabled ? ' on-accent' : ''}`,
         title: bind ? `Keybind: ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}` : 'Keybind hinzufügen: Tastendruck beim Einlösen',
@@ -753,7 +825,7 @@ function checkList(items, checkedIds) {
   const list = h('div', { class: 'check-list' }, ...items.map((item) =>
     h('label', {},
       h('input', { type: 'checkbox', checked: checked.has(item.id), onchange: (e) => (e.target.checked ? checked.add(item.id) : checked.delete(item.id)) }),
-      h('span', {}, item.label),
+      h('span', { class: 'no-i18n' }, item.label),
       item.extra ? h('span', { class: 'cost' }, item.extra) : null)));
   return { list, checked };
 }

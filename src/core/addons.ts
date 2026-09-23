@@ -4,7 +4,7 @@ import path from 'node:path';
 import { closeAppWindow, isAlwaysOnTop, isWindowOpen, openAppWindow, setAlwaysOnTop, type OpenOptions } from './appWindows';
 import { renderTemplate, type ChatService, type SendOptions, type TemplateContext } from './chat';
 import { ConfigStore } from './config';
-import type { CoreConfig } from './coreConfig';
+import { defaultCoreConfig, type CoreConfig } from './coreConfig';
 import type { EventBus } from './eventBus';
 import { createLogger, type Logger } from './log';
 import { HttpError, type ApiHandler, type LocalServer } from './server';
@@ -130,11 +130,27 @@ export class AddonManager {
   }
 
   async startEnabled(): Promise<void> {
+    this.enableNewAddons();
     for (const id of this.deps.config.get('enabledAddons')) {
       const addon = this.addons.find((a) => a.id === id);
       if (!addon) continue;
       await this.activate(addon).catch((err) => this.log.error(`${addon.name} konnte nicht starten:`, err));
     }
+  }
+
+  /**
+   * Nach einem Update: eingebaute Addons, die neu dazugekommen sind, einmal einschalten
+   * (wenn sie standardmäßig an sind). Später selbst ausgeschaltete bleiben aus.
+   */
+  private enableNewAddons(): void {
+    const { config } = this.deps;
+    const known = config.get('knownAddons');
+    const fresh = this.addons.filter((a) => !a.plugin && !known.includes(a.id));
+    if (!fresh.length) return;
+    const enabled = config.get('enabledAddons');
+    const turnOn = fresh.filter((a) => defaultCoreConfig.enabledAddons.includes(a.id) && !enabled.includes(a.id));
+    config.update({ enabledAddons: [...enabled, ...turnOn.map((a) => a.id)], knownAddons: [...known, ...fresh.map((a) => a.id)] });
+    if (turnOn.length) this.log.info(`Neue Addons eingeschaltet: ${turnOn.map((a) => a.name).join(', ')}`);
   }
 
   async setEnabled(id: string, enabled: boolean): Promise<void> {

@@ -4,6 +4,7 @@ const MAX_ITEMS = 500;
 const EVENT_LABELS = {
   follow: '💜 Follows', sub: '⭐ Subs', resub: '⭐ Resubs', giftsub: '🎁 Gift-Subs',
   cheer: '💎 Bits', raid: '🚀 Raids', redemption: '✨ Einlösungen', stream: '🔴 Stream',
+  hypetrain: '🚂 Hype Train', prediction: '🔮 Vorhersagen', shoutout: '📣 Shoutouts', ads: '📺 Werbung',
 };
 
 const list = $('#list');
@@ -39,6 +40,10 @@ function build(item) {
     if (item.hiddenReward) {
       node.classList.add('cr-muted');
       node.querySelector('.cr-ev-line').append(h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm und wird im Overlay nicht gezeigt' }, '🔕 nicht im Overlay'));
+    }
+    if (item.replay) {
+      node.append(h('div', { class: 'cw-actions' },
+        h('button', { title: 'Alert dazu nochmal im Overlay abspielen', onclick: () => replay(item) }, '▶')));
     }
     return node;
   }
@@ -182,6 +187,34 @@ function renderFilterMenu() {
     }, '🙈 !Commands ausblenden'));
 }
 
+// ============================================================ Alerts steuern (nochmal abspielen, pausieren)
+
+async function replay(item) {
+  try {
+    const result = await api(`${BASE}/replay`, { id: item.id });
+    toast(result.shown ? `▶ Alert „${result.variant}“ kommt` : 'Kein Alert: keine aktive Variante passt (oder die Belohnung ist stumm)', result.shown ? 'ok' : 'err');
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+}
+
+/** Pause-Knopf: zeigt, ob Alerts pausiert sind und wie viele warten */
+function renderAlerts(status) {
+  const pause = $('#alerts-pause');
+  pause.hidden = !status;
+  $('#alerts-skip').hidden = !status;
+  if (!status) return;
+  pause.classList.toggle('on', status.paused);
+  pause.textContent = status.paused ? `▶${status.held ? ` ${status.held}` : ''}` : '⏸';
+  pause.title = status.paused
+    ? `Alerts sind pausiert${status.held ? ` (${status.held} warten)` : ''}. Klicken zum Fortsetzen.`
+    : 'Alerts pausieren: neue Alerts warten, bis du fortsetzt';
+}
+
+async function refreshAlerts() {
+  renderAlerts(await api(`${BASE}/alerts`).catch(() => null));
+}
+
 async function refreshPin() {
   try {
     const state = await api(`${BASE}/window/state`);
@@ -269,9 +302,22 @@ const changeFont = async (delta) => {
   renderAll();
   await saveSettings();
 };
+$('#alerts-pause').onclick = async () => {
+  try {
+    const status = await api(`${BASE}/alerts/pause`, { paused: !$('#alerts-pause').classList.contains('on') });
+    renderAlerts(status);
+    toast(status.paused ? '⏸ Alerts pausiert' : '▶ Alerts laufen wieder', 'ok');
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+};
+$('#alerts-skip').onclick = () => api(`${BASE}/alerts/skip`, {}).catch((err) => toast(err.message, 'err'));
 $('#font-down').onclick = () => changeFont(-1);
 $('#font-up').onclick = () => changeFont(1);
 
 load().catch((err) => toast(err.message, 'err'));
 connect();
+refreshAlerts();
+// Pause kann auch woanders umgeschaltet werden (z.B. im Alert-Editor)
+setInterval(refreshAlerts, 3000);
 refreshPin();

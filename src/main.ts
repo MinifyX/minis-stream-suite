@@ -13,6 +13,7 @@ import { createLogger } from './core/log';
 import { LocalServer } from './core/server';
 import { TwitchApi } from './core/twitch/api';
 import { BOT_SCOPES, TwitchAuth } from './core/twitch/auth';
+import { registerBackup } from './core/backup';
 import { registerBot } from './core/bot';
 import { startDesktop } from './core/desktop';
 import { startUpdater } from './core/updater';
@@ -42,6 +43,7 @@ async function bootstrap(): Promise<void> {
   registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus });
   registerPluginRoutes(server);
   registerBot({ server, config, auth, api, botAuth, chat, log: createLogger('Bot') });
+  registerBackup({ server, config, addons, log: createLogger('Sicherung') });
 
   auth.on('login', () => eventsub.start());
   auth.on('logout', () => eventsub.stop());

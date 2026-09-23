@@ -9,6 +9,7 @@ const CATEGORIES = {
   giftsub: { icon: '🎁', name: 'Verschenkte Abos', vars: ['user', 'tier', 'count'], sample: { user: 'maxart', tier: '1', count: 5 }, userMessage: '' },
   cheer: { icon: '💎', name: 'Bits', vars: ['user', 'bits'], sample: { user: 'maxart', bits: 500 }, userMessage: 'Cheer500 GG!' },
   raid: { icon: '🚀', name: 'Raids', vars: ['user', 'viewers'], sample: { user: 'maxart', viewers: 42 }, userMessage: '' },
+  hypetrain: { icon: '🚂', name: 'Hype Train', vars: ['level', 'total', 'top', 'type'], sample: { user: 'maxart', level: 3, total: 4200, top: 'maxart', type: 'Hype Train' }, userMessage: '' },
   redemption: { icon: '✨', name: 'Kanalpunkte', vars: ['user', 'reward', 'cost'], sample: { user: 'maxart', reward: 'Hydrate!', cost: 500 }, userMessage: 'Text vom Zuschauer' },
 };
 const HAS_USER_MESSAGE = ['sub', 'cheer', 'redemption'];
@@ -35,6 +36,7 @@ const ALIGN_LINES = {
   justify: '<line x1="3" y1="4" x2="19" y2="4"/><line x1="3" y1="9" x2="19" y2="9"/><line x1="3" y1="14" x2="19" y2="14"/>',
 };
 const ALIGNS = [['left', 'Links'], ['center', 'Mitte'], ['right', 'Rechts'], ['justify', 'Blocksatz']].map(([v, l]) => [v, l, icon(ALIGN_LINES[v], '0 0 22 18')]);
+const TRAIN_PHASES = [['any', 'Immer (Start, Level-Aufstieg, Ende)'], ['start', 'Start'], ['levelup', 'Level-Aufstieg'], ['end', 'Ende']];
 const PREVIEW_BGS = [['checker', 'Transparent'], ['black', 'Schwarz'], ['white', 'Weiß'], ['green', 'Greenscreen']];
 
 // ============================================================ Zustand
@@ -44,7 +46,10 @@ const state = {
   defaults: null,
   cat: 'follow',
   variantId: null,
-  view: 'variant', // 'variant' | 'rewards'
+  view: 'variant', // 'variant' | 'rewards' | 'history'
+  history: null,
+  historyError: '',
+  historyHideMuted: false,
   openCats: new Set(['follow']),
   openSections: new Set(['general', 'layout', 'text', 'media']),
   rewards: null,
@@ -196,6 +201,12 @@ function summary(catId, v) {
       return c.minBits > 1 ? `Ab ${c.minBits} Bits` : 'Alle Cheers';
     case 'raid':
       return c.minViewers > 1 ? `Ab ${c.minViewers} Zuschauern` : 'Alle Raids';
+    case 'hypetrain': {
+      const parts = [{ any: 'Start, Level-Aufstieg & Ende', start: 'Start', levelup: 'Level-Aufstieg', end: 'Ende' }[c.trainPhase]];
+      if (c.trainPhase !== 'start' && c.minLevel > 1) parts.push(`ab Level ${c.minLevel}`);
+      if (c.goldenOnly) parts.push('nur Golden Kappa');
+      return parts.join(' · ');
+    }
     case 'redemption': {
       if (c.rewardMode === 'all') return 'Alle Belohnungen (außer gefilterte)';
       if (!c.rewardIds.length) return '⚠ Keine Belohnung ausgewählt';
@@ -207,6 +218,7 @@ function summary(catId, v) {
 }
 
 function renderSidebar() {
+  $('#history-btn').classList.toggle('selected', state.view === 'history');
   $('#categories').replaceChildren(...Object.entries(CATEGORIES).map(([catId, meta]) => {
     const cat = state.s.categories[catId];
     const open = state.openCats.has(catId);
@@ -252,7 +264,7 @@ function variantItem(catId, v, index) {
   },
   h('span', { class: 'v-handle', title: 'Ziehen zum Sortieren' }, '⠿'),
   h('span', { class: 'v-num' }, index + 1),
-  h('span', { class: 'v-text' }, h('strong', {}, v.name || 'Ohne Namen'), h('small', {}, summary(catId, v))),
+  h('span', { class: 'v-text' }, h('strong', { class: v.name ? 'no-i18n' : null }, v.name || 'Ohne Namen'), h('small', {}, summary(catId, v))),
   toggle(v.enabled, (on) => { v.enabled = on; markDirty({ sidebar: true, previewUpdate: false }); }, `${v.name} aktiv`));
 
   el.addEventListener('dragstart', (e) => {
@@ -340,6 +352,14 @@ function section(id, emoji, title, body) {
 function renderProps() {
   const box = $('#props');
   const scroll = box.scrollTop;
+  if (state.view === 'history') {
+    box.replaceChildren(h('div', { class: 'props-empty' },
+      h('p', {}, h('b', {}, 'Verlauf')),
+      h('p', {}, 'Hier landen alle Follows, Abos, Bits, Raids, Hype Trains (Start, Level-Aufstieg, Ende) und Einlösungen, auch die ohne Alert (z.B. stumme HudFX-Belohnungen).'),
+      h('p', {}, '„▶ Nochmal“ schickt den Alert erneut ans Overlay, mit deinen aktuellen Varianten. Praktisch, wenn ein Alert nicht durchkam oder OBS gerade zu war.'),
+      h('p', {}, 'Die letzten 200 Events werden gespeichert.')));
+    return;
+  }
   if (state.view === 'rewards') {
     box.replaceChildren(h('div', { class: 'props-empty' },
       h('p', {}, h('b', {}, 'Belohnungs-Filter')),
@@ -399,6 +419,15 @@ function conditionFields(v) {
       return [field('Ab wie vielen Bits', numInput(c.minBits, (val) => { c.minBits = val; changed(); }, { min: 1, max: 1000000 }))];
     case 'raid':
       return [field('Ab wie vielen Zuschauern', numInput(c.minViewers, (val) => { c.minViewers = val; changed(); }, { min: 1, max: 1000000 }))];
+    case 'hypetrain':
+      return [
+        field('Wann', selectInput(TRAIN_PHASES, c.trainPhase, (val) => { c.trainPhase = val; markDirty({ sidebar: true, props: true }); })),
+        c.trainPhase !== 'start'
+          ? field(c.trainPhase === 'end' ? 'Ab welchem erreichten Level' : 'Ab welchem Level', numInput(c.minLevel, (val) => { c.minLevel = val; changed(); }, { min: 1, max: 100 }))
+          : null,
+        c.trainPhase === 'any' && c.minLevel > 1 ? h('div', { class: 'note' }, 'Beim Start ist das Level immer 1, der Start-Alert kommt trotzdem.') : null,
+        checkRow('Nur beim Golden Kappa Train', c.goldenOnly, (on) => { c.goldenOnly = on; changed(); }),
+      ];
     case 'redemption':
       return rewardConditionFields(c);
   }
@@ -703,6 +732,10 @@ function sampleAlert() {
   if (state.cat === 'cheer') values.bits = Math.max(values.bits, c.minBits);
   if (state.cat === 'raid') values.viewers = Math.max(values.viewers, c.minViewers);
   if (state.cat === 'giftsub') values.count = Math.max(values.count, c.minCount);
+  if (state.cat === 'hypetrain') {
+    values.level = c.trainPhase === 'start' ? 1 : Math.max(values.level, c.minLevel);
+    if (c.goldenOnly) values.type = 'Golden Kappa Train';
+  }
   if (state.cat === 'sub') {
     if (c.tier !== 'any') values.tier = String(c.tier / 1000);
     values.months = c.subKind === 'new' ? 1 : Math.max(values.months, c.minMonths);
@@ -828,7 +861,7 @@ function renderPreviewOptions() {
 }
 
 function applyPreviewBg() {
-  $('#stage').className = `ed-stage bg-${state.previewBg}`;
+  $('#stage').className = `ed-stage no-i18n bg-${state.previewBg}`;
 }
 
 async function saveCanvas() {
@@ -893,7 +926,7 @@ function renderRewardsView() {
       h('div', { class: 'sub-head' }, 'GRUPPEN'),
       ...groups.map((g) => h('div', { class: 'group-mute-row' },
         h('span', { class: 'group-dot', style: { background: g.color } }),
-        h('span', { class: 'group-mute-name' }, `${g.icon} ${g.name}`),
+        h('span', { class: 'group-mute-name no-i18n' }, `${g.icon} ${g.name}`),
         h('span', { class: 'muted' }, muted.has(g.id) ? 'kein Alert' : 'Alert wie Standard'),
         toggle(!muted.has(g.id), (on) => setGroupMuted(g.id, !on), `Alerts für Gruppe ${g.name}`))),
       h('div', { class: 'note' }, 'Eine eigene Einstellung bei einer einzelnen Belohnung geht immer vor.'));
@@ -903,7 +936,7 @@ function renderRewardsView() {
     ? h('div', { class: 'chips group-chips' },
       h('button', { class: `chip${state.rewardGroupFilter ? '' : ' active'}`, onclick: () => { state.rewardGroupFilter = null; renderRewardsView(); } }, 'Alle'),
       ...groups.map((g) => h('button', {
-        class: `chip${state.rewardGroupFilter === g.id ? ' active' : ''}`,
+        class: `chip no-i18n${state.rewardGroupFilter === g.id ? ' active' : ''}`,
         onclick: () => { state.rewardGroupFilter = g.id; renderRewardsView(); },
       }, `${g.icon} ${g.name}`)))
     : null;
@@ -921,12 +954,12 @@ function renderRewardsView() {
       h('div', { class: `reward-row${r.alert ? '' : ' silent'}` },
         h('div', { class: 'reward-img', style: { background: r.color } }, r.image ? h('img', { src: r.image, alt: '' }) : null),
         h('div', { class: 'reward-info' },
-          h('strong', {}, r.title),
+          h('strong', { class: 'no-i18n' }, r.title),
           h('div', { class: 'reward-meta' },
             h('span', { class: 'muted' }, `${r.cost.toLocaleString('de-DE')} Punkte`),
             !r.enabled ? h('span', { class: 'badge' }, 'deaktiviert') : null,
             r.paused ? h('span', { class: 'badge warn' }, 'pausiert') : null,
-            ...r.groups.map(groupById).filter(Boolean).map((g) => h('span', { class: 'badge', style: { background: `${g.color}33`, color: '#fff' } }, `${g.icon} ${g.name}`)),
+            ...r.groups.map(groupById).filter(Boolean).map((g) => h('span', { class: 'badge no-i18n', style: { background: `${g.color}33`, color: '#fff' } }, `${g.icon} ${g.name}`)),
             reasonBadge(r))),
         h('div', { class: 'reward-actions' },
           r.custom ? h('button', { class: 'btn small', title: 'Auf Standard zurücksetzen', onclick: () => setRewardFilter({ [r.id]: null }) }, '↺') : null,
@@ -962,9 +995,10 @@ function renderRewardsView() {
       h('div', {},
         h('strong', {}, 'Standard: Alert für Belohnungen ohne eigene Einstellung'),
         h('small', { class: 'muted' }, 'Gilt auch für Belohnungen, die du später neu anlegst.'))),
-    groupSection(),
+    // replaceChildren macht aus null den Text „null“ → leeren Text statt null
+    groupSection() ?? '',
     h('div', { class: 'sub-head' }, 'EINZELNE BELOHNUNGEN'),
-    groupFilterChips(),
+    groupFilterChips() ?? '',
     h('div', { class: 'toolbar' },
       search,
       h('button', { class: 'btn small', onclick: () => setVisible(true) }, 'Angezeigte: Alert an'),
@@ -1023,19 +1057,137 @@ async function loadVoices() {
   renderProps();
 }
 
+// ============================================================ Verlauf (Mitte)
+
+function showHistory() {
+  state.view = 'history';
+  renderAll();
+  loadHistory();
+}
+
+async function loadHistory() {
+  try {
+    state.history = await api(`${BASE}/history`);
+    state.historyError = '';
+  } catch (err) {
+    state.historyError = err.message;
+  }
+  if (state.view === 'history') renderHistoryView();
+}
+
+/** Kurzbeschreibung eines Events für die Liste: [Name, was passiert ist] */
+function historyText(e) {
+  const user = e.user?.name ?? 'Anonym';
+  const quote = (text) => (text ? ` · „${text}“` : '');
+  switch (e.type) {
+    case 'follow': return [user, 'folgt jetzt'];
+    case 'sub': return [user, `hat abonniert (Tier ${Number(e.tier) / 1000 || 1})`];
+    case 'resub': return [user, `verlängert: ${e.months} Monate${quote(e.message)}`];
+    case 'giftsub': return [user, `verschenkt ${e.count} Abo${e.count === 1 ? '' : 's'}`];
+    case 'cheer': return [user, `${e.bits} Bits${quote(e.message)}`];
+    case 'raid': return [user, `raidet mit ${e.viewers} Zuschauern`];
+    case 'redemption': return [user, `„${e.reward.title}“ (${e.reward.cost.toLocaleString('de-DE')})${quote(e.input)}`];
+    case 'hypetrain': {
+      const name = e.trainType === 'golden_kappa' ? 'Golden Kappa Train' : e.trainType === 'treasure' ? 'Treasure Train' : 'Hype Train';
+      const top = e.topContributions?.length ? ` · Top: ${[...e.topContributions].sort((a, b) => b.total - a.total)[0].user.name}` : '';
+      if (e.phase === 'begin') return [name, `fährt los${top}`];
+      if (e.phase === 'end') return [name, `vorbei: Level ${e.level}, ${e.total.toLocaleString('de-DE')} Punkte${top}`];
+      return [name, `erreicht Level ${e.level}${top}`];
+    }
+    default: return [user, e.type];
+  }
+}
+
+function timeAgo(t) {
+  const min = Math.floor((Date.now() - t) / 60_000);
+  if (min < 1) return 'gerade eben';
+  if (min < 60) return `vor ${min} Min.`;
+  if (min < 24 * 60) return `vor ${Math.floor(min / 60)} Std.`;
+  return new Date(t).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+async function replay(entry, force = false) {
+  try {
+    const result = await api(`${BASE}/history/replay`, { id: entry.id, force });
+    if (result.shown) toast(`Alert „${result.variant}“ ans Overlay geschickt`, 'ok');
+    else toast('Keine aktive Variante passt zu diesem Event', 'err');
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+}
+
+async function clearHistory() {
+  if (!confirm('Den ganzen Verlauf löschen?')) return;
+  try {
+    await api(`${BASE}/history/clear`, {});
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+  loadHistory();
+}
+
+function historyRow(entry) {
+  const [who, what] = historyText(entry.event);
+  const status = entry.variant
+    ? h('span', { class: 'badge ok', title: 'Diese Variante kam' }, `🔔 ${entry.variant}`)
+    : entry.reason === 'muted'
+      ? h('span', { class: 'badge', title: 'Belohnung ist im Belohnungs-Filter stumm' }, '🔕 stumm')
+      : h('span', { class: 'badge warn', title: 'Keine aktive Variante passte' }, '⚠ kein Alert');
+  return h('div', { class: `reward-row${entry.variant ? '' : ' silent'}` },
+    h('div', { class: 'reward-img hist-icon' }, CATEGORIES[entry.category]?.icon ?? '•'),
+    h('div', { class: 'reward-info' },
+      h('strong', { class: 'no-i18n' }, who), ' ', h('span', { class: 'hist-what' }, what),
+      h('div', { class: 'reward-meta' },
+        h('span', { class: 'muted', title: new Date(entry.at).toLocaleString('de-DE') }, timeAgo(entry.at)),
+        entry.event.test ? h('span', { class: 'badge accent' }, '🧪 Test') : null,
+        status)),
+    h('div', { class: 'reward-actions' },
+      entry.reason === 'muted'
+        ? h('button', { class: 'btn small', title: 'Die Belohnung ist stumm. Trotzdem mit der ersten passenden Variante zeigen?', onclick: () => replay(entry, true) }, '▶ Trotzdem zeigen')
+        : h('button', { class: 'btn small', title: 'Alert nochmal ans Overlay schicken', onclick: () => replay(entry) }, '▶ Nochmal')));
+}
+
+function renderHistoryView() {
+  const all = state.history ?? [];
+  const list = all.filter((e) => !(state.historyHideMuted && e.reason === 'muted'));
+  let content;
+  if (state.historyError) content = h('p', { class: 'error-text' }, state.historyError);
+  else if (!state.history) content = h('p', { class: 'muted' }, 'Lade Verlauf…');
+  else if (!list.length) {
+    content = h('p', { class: 'muted' }, all.length
+      ? 'Im Verlauf sind nur stumme Einlösungen.'
+      : 'Noch keine Events. Sobald jemand folgt, abonniert, cheert, raidet, einen Hype Train startet oder etwas einlöst, steht es hier.');
+  } else content = h('div', { class: 'hist-list' }, ...list.map(historyRow));
+
+  $('#history-view').replaceChildren(
+    h('h2', {}, '🕘 Verlauf'),
+    h('p', { class: 'muted' }, 'Die letzten Events mit Alert. Kam ein Alert nicht durch, schick ihn hier nochmal ans Overlay.'),
+    h('div', { class: 'toolbar' },
+      h('label', { class: 'hist-opt' },
+        toggle(state.historyHideMuted, (on) => { state.historyHideMuted = on; renderHistoryView(); }, 'Stumme ausblenden'),
+        h('span', {}, 'Stumme Belohnungen ausblenden')),
+      h('span', { class: 'spacer' }),
+      h('button', { class: 'btn small', title: 'Neu laden', onclick: loadHistory }, '↻'),
+      h('button', { class: 'btn small', disabled: !all.length, onclick: clearHistory }, '🗑 Leeren')),
+    content);
+}
+
 // ============================================================ Gesamtansicht
 
 function renderAll() {
   const rewardsMode = state.view === 'rewards';
-  $('#stage-wrap').hidden = rewardsMode;
-  $('#preview-opts').hidden = rewardsMode;
-  $('#toolbar').hidden = rewardsMode;
+  const historyMode = state.view === 'history';
+  $('#stage-wrap').hidden = rewardsMode || historyMode;
+  $('#preview-opts').hidden = rewardsMode || historyMode;
+  $('#toolbar').hidden = rewardsMode || historyMode;
   $('#rewards-view').hidden = !rewardsMode;
+  $('#history-view').hidden = !historyMode;
   renderSidebar();
   renderProps();
-  if (rewardsMode) {
+  if (rewardsMode || historyMode) {
     preview?.stop();
-    renderRewardsView();
+    if (rewardsMode) renderRewardsView();
+    else renderHistoryView();
   } else {
     fitStage();
     renderPreview(state.autoplay ? 'muted' : 'static');
@@ -1052,6 +1204,9 @@ function renderAll() {
   };
   $('#btn-preview').onclick = playPreview;
   $('#btn-test').onclick = sendTest;
+  $('#history-btn').onclick = showHistory;
+  // Neue Events erscheinen von selbst, solange der Verlauf offen ist
+  setInterval(() => { if (state.view === 'history' && !document.hidden) loadHistory(); }, 3000);
   $('#canvas-w').onchange = saveCanvas;
   $('#canvas-h').onchange = saveCanvas;
   new ResizeObserver(fitStage).observe($('#stage-wrap'));

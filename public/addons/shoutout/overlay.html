@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Shoutout Overlay</title>
+  <!--
+    In OBS als Browser-Quelle einbinden – WICHTIG mit „localhost“, nicht mit 127.0.0.1:
+      http://localhost:7474/addons/shoutout/overlay.html
+    Twitch spielt Clips nur ab, wenn die Seite unter einem erlaubten Namen läuft (parent=localhost).
+    Größe z.B. 960 × 640. Der Rahmen füllt die ganze Quelle, der Hintergrund ist durchsichtig.
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; color: #fff; }
+
+    #so {
+      --accent: #9147ff; --glow: rgba(145, 71, 255, .45); --dark: #3a2266; --light: #d3b8ff;
+      position: absolute; inset: 12px; display: flex; flex-direction: column;
+      border-radius: 18px; overflow: hidden; background: rgba(14, 14, 18, .92);
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .4), 0 10px 40px rgba(0, 0, 0, .5), 0 0 28px var(--glow);
+      opacity: 0; transform: translateY(24px) scale(.97); transition: opacity .45s, transform .45s cubic-bezier(.2, .9, .3, 1.2);
+    }
+    #so.show { opacity: 1; transform: none; }
+    /* Ohne Clip: nur eine Karte, unten in der Quelle */
+    #so.card-only { inset: auto 12px 12px 12px; }
+
+    .head {
+      display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+      background: linear-gradient(90deg, var(--accent), var(--dark));
+    }
+    .avatar { width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .85); object-fit: cover; flex: none; background: #0e0e12; }
+    .who { flex: 1; min-width: 0; }
+    .label { font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+    .name { font-size: 28px; font-weight: 800; line-height: 1.1; text-shadow: 0 2px 4px rgba(0, 0, 0, .35); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .game { font-size: 15px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(0, 0, 0, .35); white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+
+    .video { position: relative; flex: 1; min-height: 0; background: #000; }
+    .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    .foot { display: flex; align-items: center; gap: 12px; padding: 9px 16px; font-size: 15px; }
+    .foot .title { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .9; }
+    .foot .link { font-weight: 800; color: var(--light); white-space: nowrap; }
+    .hint { padding: 6px 16px; font-size: 13px; background: #f5b041; color: #111; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div id="so"></div>
+  <script>
+    const box = document.getElementById('so');
+    let current = null;
+    let hideTimer = null;
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+    /** Farbe aus #rrggbb mischen (ohne color-mix, das kennen ältere OBS-Versionen nicht) */
+    function mix(hex, other, amount, alpha = 1) {
+      const a = parseInt(hex.slice(1), 16);
+      const b = parseInt(other.slice(1), 16);
+      const ch = (n, shift) => Math.round(((n >> shift) & 255) * amount + ((b >> shift) & 255) * (1 - amount));
+      return `rgba(${ch(a, 16)}, ${ch(a, 8)}, ${ch(a, 0)}, ${alpha})`;
+    }
+
+    function setAccent(hex) {
+      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) hex = '#9147ff';
+      box.style.setProperty('--accent', hex);
+      box.style.setProperty('--glow', mix(hex, hex, 1, 0.45));
+      box.style.setProperty('--dark', mix(hex, '#0e0e12', 0.35));
+      box.style.setProperty('--light', mix(hex, '#ffffff', 0.45));
+    }
+
+    function hide() {
+      clearTimeout(hideTimer);
+      current = null;
+      box.classList.remove('show');
+      // Player erst nach dem Ausblenden entfernen (stoppt auch den Ton)
+      setTimeout(() => { if (!current) box.innerHTML = ''; }, 500);
+    }
+
+    /** show = { name, login, avatar, game, clip, seconds, until }, remainingMs = wie lange noch */
+    function show(s, style, remainingMs) {
+      clearTimeout(hideTimer);
+      current = s;
+      setAccent(style?.accent);
+      box.classList.toggle('card-only', !s.clip);
+
+      // Twitch verlangt parent = Name dieser Seite. Mit 127.0.0.1 klappt das nicht zuverlässig.
+      const host = location.hostname;
+      const hint = s.clip && host !== 'localhost'
+        ? `<div class="hint">⚠ Overlay in OBS über http://localhost:${esc(location.port)}/addons/shoutout/overlay.html einbinden, sonst spielt Twitch den Clip nicht ab.</div>`
+        : '';
+      const src = s.clip
+        ? `https://clips.twitch.tv/embed?clip=${encodeURIComponent(s.clip.id)}&parent=${encodeURIComponent(host)}&autoplay=true&muted=false`
+        : '';
+
+      box.innerHTML = `
+        <div class="head">
+          ${s.avatar ? `<img class="avatar" src="${esc(s.avatar)}" alt="">` : ''}
+          <div class="who">
+            <div class="label">📣 Shoutout</div>
+            <div class="name">${esc(s.name)}</div>
+          </div>
+          ${s.game ? `<div class="game">🎮 ${esc(s.game)}</div>` : ''}
+        </div>
+        ${s.clip ? `<div class="video"><iframe src="${src}" allow="autoplay; fullscreen" scrolling="no"></iframe></div>` : ''}
+        ${hint}
+        <div class="foot">
+          <span class="title">${s.clip && style?.showClipTitle !== false ? `🎬 ${esc(s.clip.title)}` : s.clip ? '' : 'Schaut unbedingt vorbei!'}</span>
+          <span class="link">twitch.tv/${esc(s.login)}</span>
+        </div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('show')));
+
+      // Die Suite schickt selbst „hide“ – zur Sicherheit blendet sich das Overlay aber auch selbst aus
+      hideTimer = setTimeout(hide, Math.max(1000, remainingMs) + 3000);
+    }
+
+    function handle(msg) {
+      if (msg.kind === 'hide') return hide();
+      if (msg.kind === 'show') return show(msg.show, msg.style, msg.show.seconds * 1000);
+      if (msg.kind === 'state') {
+        // Nach (Neu-)Verbinden: läuft gerade noch etwas? Nur zeigen, wenn es sich noch lohnt.
+        if (!msg.show) return;
+        const left = msg.show.until - msg.now;
+        if (left > 4000 && current?.id !== msg.show.id) show(msg.show, msg.style, left);
+      }
+    }
+
+    function connect() {
+      fetch('/api/addons/shoutout/overlay-state').then((r) => r.json()).then(handle).catch(() => {});
+      const ws = new WebSocket(`ws://${location.host}/ws?channel=shoutout`);
+      ws.onmessage = (m) => handle(JSON.parse(m.data));
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+
+    connect();
+  </script>
+</body>
+</html>

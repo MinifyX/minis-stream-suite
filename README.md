@@ -4,7 +4,7 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.4):** Installierbare Windows-App mit Core, Bot-Account und sieben Addons.
+**Aktueller Stand (v0.5):** Installierbare Windows-App mit Core, Bot-Account und 15 Addons. Oberfläche auf Deutsch oder Englisch.
 
 **Kanalpunkte-Addon:**
 
@@ -15,7 +15,9 @@ Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalp
 - Im Dashboard angelegte Belohnungen **übernehmen**, damit die Suite sie steuern kann.
 
 - **Keybinds:** Beim Einlösen Tasten drücken (auch bei HudFX-Belohnungen). Wahlweise auf diesem PC oder per **🛰 Satellite** auf einem zweiten PC.
-- **Spiel-Regeln:** Gruppen nur bei bestimmten Spielen aktiv, automatisch beim Kategoriewechsel.
+- **Spiel-Regeln:** Gruppen oder einzelne Belohnungen nur bei bestimmten Spielen aktiv, automatisch beim Kategoriewechsel.
+
+**📋 Warteschlange:** Einlösungen der Reihe nach abarbeiten. ✓ hakt sie auch bei Twitch ab, ↩ gibt die Punkte zurück (geht nur bei Belohnungen der Suite, andere lassen sich lokal abhaken). Pro Belohnung und Gruppe einstellbar, was in die Liste kommt. Auch als kleines Fenster, das immer im Vordergrund bleibt.
 
 **Chat-Commands-Addon:**
 
@@ -62,9 +64,27 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 
 **Alerts-Addon mit Alert-Editor:**
 
-- **Varianten** pro Event-Art (Follows, Abos, verschenkte Abos, Bits, Raids, Kanalpunkte) mit Bedingungen, z.B. „ab 1000 Bits“, „nur Verlängerungen ab 12 Monaten“ oder „nur diese Belohnungen“. Die oberste passende Variante gewinnt, oder es wird zufällig gewechselt.
+- **Varianten** pro Event-Art (Follows, Abos, verschenkte Abos, Bits, Raids, Kanalpunkte, Hype Train) mit Bedingungen, z.B. „ab 1000 Bits“, „nur Verlängerungen ab 12 Monaten“ oder „nur diese Belohnungen“. Die oberste passende Variante gewinnt, oder es wird zufällig gewechselt.
 - **Editor** wie bei Twitch: Layout, Hintergrund, Schrift, Farben, Animationen, Bild/Video, Sound, Vorlesen (Windows-Stimmen) und Effekte (Konfetti, Feuerwerk, …), mit Live-Vorschau.
 - **Belohnungs-Filter**: Belohnungen, die nie einen Alert auslösen. So verrät kein Alert mehr deinen HudFX-Jumpscare.
+- **🕘 Verlauf** der letzten 200 Events mit „▶ Nochmal“, falls ein Alert nicht durchkam. Im Chat-Fenster geht das direkt am Event, dazu ⏸ Alerts pausieren (was in der Pause kommt, wird danach abgespielt) und ⏭ überspringen.
+- **🚂 Hype Train:** Alerts für Start, Level-Aufstieg und Ende.
+
+**🔮 Vorhersagen:** Twitch-Vorhersagen starten, sperren, auflösen oder abbrechen, mit OBS-Overlay, Chat-Nachrichten, Mod-Commands (`!predict`, `!lock`, `!resolve 1`) und Verlauf.
+
+**📣 Shoutouts:** `!so @name` schreibt eine Nachricht und gibt den echten Twitch-Shoutout (bei Twitchs Wartezeit kommt er in eine Warteschlange). Optional automatisch bei Raids und mit Clip im OBS-Overlay.
+
+**📺 Werbepausen:** Warnung vor der nächsten Werbung im Chat und im Overlay („Werbung in 60 Sek.“), Nachricht beim Start und danach, Werbung verschieben oder selbst starten.
+
+**🛡️ Spam-Schutz:** Links (mit Erlaubt-Liste und `!permit`), Großbuchstaben, verbotene Wörter, Wiederholungen und Emote-/Zeichen-Spam löschen oder mit Timeout belegen, mit Eskalation und Log. Startet im Modus „Nur testen“.
+
+**🎯 Ziele & Events:** Follower-, Abo-, Bits- und eigene Ziele als OBS-Overlay (Balken oder Ring), dazu eine „Letzte Events“-Leiste.
+
+**📝 Stream-Info:** Titel, Kategorie, Tags und Sprache direkt in der Suite ändern, mit Vorlagen und Mod-Commands `!title` / `!game`.
+
+**🎬 OBS-Steuerung:** Über OBS WebSocket (OBS 28+) Szenen wechseln, Quellen und Filter ein- und ausblenden, ausgelöst von Belohnungen, Chat-Commands oder Events, optional mit automatischem Zurückschalten.
+
+**💾 Sicherung:** Alle Einstellungen (optional mit Bildern und Sounds) in eine Datei packen und wieder einspielen, z.B. für einen neuen PC. Einmal am Tag sichert die Suite automatisch. Twitch-Logins sind nie in einer Sicherung.
 
 ## Installieren
 
@@ -84,6 +104,8 @@ Voraussetzung: [Node.js](https://nodejs.org) (LTS).
 ```bash
 npm install
 npm start          # App aus dem Quellcode starten
+npm test           # automatische Tests
+npm run i18n:check # englische Texte vollständig?
 npm run dist       # Installer bauen → release/Minis-Stream-Suite-Setup-<version>.exe
 ```
 
@@ -113,6 +135,7 @@ src/
     chat.ts               Chat-Warteschlange (Bot oder eigener Account), {Variablen}, Rollen
     bot.ts                Bot-Account: Login im eigenen Fenster, Mod-Status, Einstellungen
     desktop.ts            Hauptfenster, Infobereich (Tray), Autostart
+    backup.ts             Sicherung: Export, Import, automatische Sicherung
   addons/
     index.ts              Liste aller Addons
     alerts/index.ts       Alerts-Addon: API, Uploads, Test-Alerts
@@ -123,8 +146,17 @@ src/
     private/             Werkstatt für eigene Plugins (in .gitignore, optional)
     polls/index.ts        Umfragen: Chat- und Twitch-Umfragen, Mod-Commands, Verlauf
     lurk/index.ts         Lurk: !lurk, „Willkommen zurück“, Statistik
+    queue/                Einlöse-Warteschlange
+    predictions/          Vorhersagen
+    shoutout/             Shoutouts (!so, Raid, Clip-Overlay)
+    ads/                  Werbepausen
+    modguard/             Spam-Schutz (rules.ts = Regeln ohne Twitch, testbar)
+    goals/                Ziele & „Letzte Events“
+    streaminfo/           Titel, Kategorie, Vorlagen
+    obs/                  OBS-Steuerung (client.ts = obs-websocket v5)
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
+  app/i18n/en.json        Englische Texte (ui.js übersetzt die Seiten beim Anzeigen)
   addons/alerts/
     editor.*              Alert-Editor
     renderer.js           Zeichnet Alerts (für Overlay UND Vorschau)

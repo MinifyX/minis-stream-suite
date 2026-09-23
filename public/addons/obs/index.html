@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>OBS-Steuerung</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="obs.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <div class="title-row">
+        <h1>🎬 OBS-Steuerung</h1>
+        <span id="status-pill" class="status-pill"></span>
+        <span class="spacer"></span>
+        <span id="kill-switch"></span>
+        <button class="btn" id="stop-all" hidden>⏹ Alles stoppen</button>
+        <button class="btn primary" id="new-action">＋ Neue Aktion</button>
+      </div>
+      <p class="note">Aktionen steuern OBS direkt über den WebSocket-Server: Szene wechseln, Quellen ein- und ausblenden, Filter schalten. Ausgelöst durch Kanalpunkte, Chat-Commands oder Events.</p>
+      <div class="settings-row" id="settings-row"></div>
+    </header>
+
+    <div class="layout">
+      <main>
+        <div id="actions"></div>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>🔌 Verbindung</h2>
+          <div id="conn-status" class="conn-status"></div>
+          <div id="conn-form"></div>
+        </section>
+
+        <section class="card">
+          <details id="howto">
+            <summary><h2>📖 So schaltest du den WebSocket-Server in OBS ein</h2></summary>
+            <ol class="howto">
+              <li>OBS öffnen. Ab <b>OBS 28</b> ist der WebSocket-Server schon eingebaut, du musst nichts installieren.</li>
+              <li>Oben im Menü auf <b>Werkzeuge → WebSocket-Server-Einstellungen</b> klicken.</li>
+              <li>Den Haken bei <b>„WebSocket-Server aktivieren“</b> setzen.</li>
+              <li><b>„Authentifizierung aktivieren“</b> anlassen (sonst kann jeder im Netzwerk dein OBS steuern).</li>
+              <li>Auf <b>„Verbindungsinformationen anzeigen“</b> klicken. Dort stehen Server-IP, Port und Passwort.</li>
+              <li>Port (normalerweise <code>4455</code>) und Passwort hier bei „Verbindung“ eintragen und auf <b>„Speichern &amp; verbinden“</b> klicken.</li>
+            </ol>
+            <p class="note"><b>Zwei-PC-Setup:</b> Läuft OBS auf dem anderen PC, trag bei „Adresse“ dessen IP ein (steht auch in den Verbindungsinformationen, z.B. <code>192.168.0.20</code>). Die Windows-Firewall auf dem OBS-PC muss den Port durchlassen – Windows fragt meist beim ersten Mal nach.</p>
+            <p class="note"><b>Älteres OBS (27 oder früher):</b> Bitte OBS aktualisieren. Die alte Version 4 des WebSocket-Plugins wird nicht unterstützt.</p>
+          </details>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>🕘 Verlauf</h2>
+            <span class="spacer"></span>
+            <button class="btn small" id="log-clear" title="Verlauf leeren">Leeren</button>
+          </div>
+          <div id="log" class="log"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div id="modal-host"></div>
+
+  <script src="/app/ui.js"></script>
+  <script src="obs.js"></script>
+</body>
+</html>

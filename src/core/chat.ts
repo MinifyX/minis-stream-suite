@@ -218,7 +218,7 @@ export async function renderTemplate(template: string, api: TwitchApi, auth: Twi
 
   return template.replace(VAR_RE, (match, rawKey: string, param?: string) => {
     const key = rawKey.toLowerCase();
-    if (context.values && key in context.values) return context.values[key];
+    if (context.values && Object.hasOwn(context.values, key)) return context.values[key];
     const argMatch = /^arg([1-9])$/.exec(key);
     if (argMatch) return args[Number(argMatch[1]) - 1] ?? '';
     switch (key) {

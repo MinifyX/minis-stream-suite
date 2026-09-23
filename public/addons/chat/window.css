@@ -36,10 +36,15 @@ body { overflow: hidden; background: #0e0e10; }
 .cw-list .cr-ev-raid { --cr-ev: #ff9f43; background: rgba(255, 159, 67, .1); }
 .cw-list .cr-ev-redemption { --cr-ev: #4dff88; background: rgba(77, 255, 136, .07); }
 .cw-list .cr-ev-stream { --cr-ev: #ff4d4d; background: rgba(255, 77, 77, .08); }
+.cw-list .cr-ev-hypetrain { --cr-ev: #ff6b3d; background: rgba(255, 107, 61, .1); }
+.cw-list .cr-ev-prediction { --cr-ev: #387aff; background: rgba(56, 122, 255, .09); }
+.cw-list .cr-ev-shoutout { --cr-ev: #f5b041; background: rgba(245, 176, 65, .08); }
+.cw-list .cr-ev-ads { --cr-ev: #9a9aab; background: rgba(154, 154, 171, .08); }
 .cw-list .cr-ev-test { color: var(--muted); font-size: .85em; }
 
 .cw-actions { position: absolute; right: 6px; top: 2px; display: none; gap: 2px; }
-.cw-list .cr-msg:hover .cw-actions { display: flex; }
+.cw-list .cr-msg:hover .cw-actions, .cw-list .cr-event:hover .cw-actions { display: flex; }
+#alerts-pause.on { color: #1b1b1b; background: var(--warn); border-color: var(--warn); }
 .cw-actions button { background: #26262c; border: 1px solid #333; color: var(--muted); border-radius: 5px; font-size: 11px; padding: 1px 6px; cursor: pointer; }
 .cw-actions button:hover { color: #fff; }
 

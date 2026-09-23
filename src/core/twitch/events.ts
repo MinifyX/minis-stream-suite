@@ -17,6 +17,24 @@ export interface ChatFragment {
   emoteId?: string;
 }
 
+/** Wer bei einem Hype Train am meisten beigetragen hat */
+export interface HypeContribution {
+  user: TwitchUserRef;
+  /** bits, subscription oder other */
+  type: string;
+  total: number;
+}
+
+/** Eine Antwort einer Vorhersage */
+export interface PredictionOutcome {
+  id: string;
+  title: string;
+  /** blue oder pink */
+  color: string;
+  users: number;
+  channelPoints: number;
+}
+
 export interface RewardRef {
   id: string;
   title: string;
@@ -24,7 +42,17 @@ export interface RewardRef {
 }
 
 type EventData =
-  | { type: 'redemption'; redemptionId: string; user: TwitchUserRef; reward: RewardRef; input: string }
+  | {
+    type: 'redemption';
+    redemptionId: string;
+    user: TwitchUserRef;
+    reward: RewardRef;
+    input: string;
+    /** "unfulfilled" = wartet in der Warteschlange, "fulfilled" = Belohnung überspringt die Warteschlange */
+    status: string;
+  }
+  /** Einlösung wurde erledigt oder zurückerstattet (von der Suite, im Dashboard oder von einer anderen App) */
+  | { type: 'redemptionupdate'; redemptionId: string; rewardId: string; status: 'fulfilled' | 'canceled' }
   | { type: 'follow'; user: TwitchUserRef }
   | { type: 'sub'; user: TwitchUserRef; tier: string; isGift: boolean }
   | { type: 'resub'; user: TwitchUserRef; tier: string; months: number; message: string }
@@ -60,6 +88,37 @@ type EventData =
   /** Stream ist live gegangen / wurde beendet */
   | { type: 'streamonline'; startedAt: string }
   | { type: 'streamoffline' }
+  /** Hype Train: gestartet, Fortschritt (auch Level-Aufstieg) oder beendet */
+  | {
+    type: 'hypetrain';
+    phase: 'begin' | 'progress' | 'end';
+    level: number;
+    /** Punkte insgesamt / im aktuellen Level / nötig für das nächste Level */
+    total: number;
+    progress: number;
+    goal: number;
+    topContributions: HypeContribution[];
+    /** Bis wann der Zug noch fährt (ISO), bei "end" null */
+    expiresAt: string | null;
+    /** z.B. regular, golden_kappa, treasure */
+    trainType: string;
+  }
+  /** Echte Twitch-Vorhersage: gestartet, neue Tipps, gesperrt (keine Tipps mehr) oder beendet */
+  | {
+    type: 'prediction';
+    phase: 'begin' | 'progress' | 'lock' | 'end';
+    predictionId: string;
+    title: string;
+    outcomes: PredictionOutcome[];
+    /** Bei "end": resolved (Gewinner steht fest) oder canceled (Punkte zurück) */
+    status: string;
+    winningOutcomeId: string | null;
+    locksAt: string | null;
+  }
+  /** Werbepause hat begonnen */
+  | { type: 'adbreak'; durationSeconds: number; automatic: boolean; startedAt: string }
+  /** Du (oder ein Mod) hast jemandem einen Twitch-Shoutout gegeben */
+  | { type: 'shoutout'; to: TwitchUserRef; viewers: number }
   /** Echte Twitch-Umfrage: gestartet, neue Stimmen oder beendet */
   | {
     type: 'poll';
@@ -78,8 +137,8 @@ export type StreamEventType = StreamEvent['type'];
 export type EventOfType<T extends StreamEventType> = Extract<StreamEvent, { type: T }>;
 
 export const EVENT_TYPES: StreamEventType[] = [
-  'redemption', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate', 'streamonline', 'streamoffline',
-  'chatdelete', 'chatclear', 'poll',
+  'redemption', 'redemptionupdate', 'follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'chat', 'channelupdate', 'streamonline', 'streamoffline',
+  'chatdelete', 'chatclear', 'poll', 'hypetrain', 'prediction', 'adbreak', 'shoutout',
 ];
 
 function userRef(id?: string | null, login?: string | null, name?: string | null): TwitchUserRef | null {
@@ -98,6 +157,14 @@ export function normalizeEvent(subscriptionType: string, e: any): StreamEvent | 
         user: userRef(e.user_id, e.user_login, e.user_name)!,
         reward: { id: e.reward.id, title: e.reward.title, cost: e.reward.cost },
         input: e.user_input ?? '',
+        status: e.status ?? 'unfulfilled',
+      };
+    case 'channel.channel_points_custom_reward_redemption.update':
+      return {
+        type: 'redemptionupdate',
+        redemptionId: e.id,
+        rewardId: e.reward?.id ?? '',
+        status: e.status === 'canceled' ? 'canceled' : 'fulfilled',
       };
     case 'channel.follow':
       return { type: 'follow', user: userRef(e.user_id, e.user_login, e.user_name)! };
@@ -173,6 +240,57 @@ export function normalizeEvent(subscriptionType: string, e: any): StreamEvent | 
         status: e.status ?? 'active',
         endsAt: e.ends_at ?? null,
       };
+    case 'channel.hype_train.begin':
+    case 'channel.hype_train.progress':
+    case 'channel.hype_train.end':
+      return {
+        type: 'hypetrain',
+        phase: subscriptionType.endsWith('begin') ? 'begin' : subscriptionType.endsWith('end') ? 'end' : 'progress',
+        level: e.level ?? 1,
+        total: e.total ?? 0,
+        progress: e.progress ?? 0,
+        goal: e.goal ?? 0,
+        topContributions: (e.top_contributions ?? []).map((c: { user_id: string; user_login: string; user_name: string; type: string; total: number }) => ({
+          user: userRef(c.user_id, c.user_login, c.user_name) ?? { id: '', login: '', name: 'Anonym' },
+          type: c.type ?? 'other',
+          total: c.total ?? 0,
+        })),
+        expiresAt: subscriptionType.endsWith('end') ? null : e.expires_at ?? null,
+        trainType: e.type ?? (e.is_golden_kappa_train ? 'golden_kappa' : 'regular'),
+      };
+    case 'channel.prediction.begin':
+    case 'channel.prediction.progress':
+    case 'channel.prediction.lock':
+    case 'channel.prediction.end':
+      return {
+        type: 'prediction',
+        phase: subscriptionType.slice('channel.prediction.'.length) as 'begin' | 'progress' | 'lock' | 'end',
+        predictionId: e.id,
+        title: e.title ?? '',
+        outcomes: (e.outcomes ?? []).map((o: { id: string; title: string; color: string; users?: number; channel_points?: number }) => ({
+          id: o.id,
+          title: o.title,
+          color: o.color ?? 'blue',
+          users: o.users ?? 0,
+          channelPoints: o.channel_points ?? 0,
+        })),
+        status: e.status ?? 'active',
+        winningOutcomeId: e.winning_outcome_id ?? null,
+        locksAt: e.locks_at ?? null,
+      };
+    case 'channel.ad_break.begin':
+      return {
+        type: 'adbreak',
+        durationSeconds: e.duration_seconds ?? 0,
+        automatic: !!e.is_automatic,
+        startedAt: e.started_at ?? new Date().toISOString(),
+      };
+    case 'channel.shoutout.create':
+      return {
+        type: 'shoutout',
+        to: userRef(e.to_broadcaster_user_id, e.to_broadcaster_user_login, e.to_broadcaster_user_name)!,
+        viewers: e.viewer_count ?? 0,
+      };
     default:
       return null;
   }
@@ -196,7 +314,10 @@ export function makeTestEvent(type: StreamEventType, reward?: Partial<RewardRef>
           cost: Number(reward?.cost) || 100,
         },
         input: '',
+        status: 'unfulfilled',
       };
+    case 'redemptionupdate':
+      return { ...base, type, redemptionId: 'test', rewardId: String(reward?.id ?? 'test-reward'), status: 'fulfilled' };
     case 'follow':
       return { ...base, type, user: TEST_USER };
     case 'sub':
@@ -239,6 +360,38 @@ export function makeTestEvent(type: StreamEventType, reward?: Partial<RewardRef>
       return { ...base, type, startedAt: new Date().toISOString() };
     case 'streamoffline':
       return { ...base, type };
+    case 'hypetrain':
+      return {
+        ...base,
+        type,
+        phase: 'progress',
+        level: 2,
+        total: 1800,
+        progress: 300,
+        goal: 1600,
+        topContributions: [{ user: TEST_USER, type: 'bits', total: 1000 }],
+        expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+        trainType: 'regular',
+      };
+    case 'prediction':
+      return {
+        ...base,
+        type,
+        phase: 'progress',
+        predictionId: 'test',
+        title: 'Schaffe ich den Boss beim ersten Versuch?',
+        outcomes: [
+          { id: 'a', title: 'Ja', color: 'blue', users: 12, channelPoints: 4200 },
+          { id: 'b', title: 'Niemals', color: 'pink', users: 20, channelPoints: 9100 },
+        ],
+        status: 'active',
+        winningOutcomeId: null,
+        locksAt: new Date(Date.now() + 2 * 60_000).toISOString(),
+      };
+    case 'adbreak':
+      return { ...base, type, durationSeconds: 90, automatic: true, startedAt: new Date().toISOString() };
+    case 'shoutout':
+      return { ...base, type, to: TEST_USER, viewers: 42 };
     case 'poll':
       return {
         ...base,
