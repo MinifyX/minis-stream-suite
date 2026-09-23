@@ -36,6 +36,14 @@ jobs:
 
       - run: npm run typecheck
 
+      # electron-builder lädt .exe, .blockmap und latest.yml gleichzeitig hoch. Gibt es noch keinen Release,
+      # legt dabei manchmal jeder Upload einen eigenen Entwurf an. Deshalb den Entwurf vorher selbst anlegen.
+      - name: Release-Entwurf anlegen
+        shell: bash
+        run: gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --notes ""
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Installer bauen und als Release-Entwurf hochladen
         run: npx tsc && npx electron-builder --win --publish always
         env:

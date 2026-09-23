@@ -46,6 +46,7 @@ const IGNORE = new Set([
   // Beispiel-Chat in der Vorschau (wird als Chat-Nachricht angezeigt und nie übersetzt)
   'Hallo zusammen!', 'Luna', '@Luna', 'zuschauer123', 'Kappa', 'Das war **mega** gut, *wirklich*! [regenbogen]GG[/]',
   'Denkt an die [gelb]Chat-Regeln[/] ✌️', 'Willkommen Raider! Hier ist `!discord` für euch ~~nicht~~',
+  'Nightbot', 'Folgt gerne auf Insta!', 'Spoilerfan', 'Trollo', 'gelöschte Nachricht', 'Fragefix',
   // Beispielwerte in Vorschauen, die wie das echte Overlay aussehen (class="no-i18n")
   'Schon ein Jahr dabei!', 'Hydrate!', 'Text vom Zuschauer',
   // Alert-Editor: auf Englisch gleich
@@ -66,6 +67,7 @@ const IGNORE = new Set([
 const IGNORE_TEMPLATES = new Set([
   '^Tier (.+)$', '^ab (.+) Monaten$', '^ab Level (.+)$', // Alert-Editor: Teile der Zusammenfassung
   '^Variante (.+)$', '^(.+) \\(Kopie\\)$', // Namen neuer Varianten (Nutzerdaten)
+  '^@(.+) spielst du nachher noch was anderes\\?$', // Chat: Beispiel-Nachricht in der Vorschau
   '^· (.+) 🔒 übersprungen$', '^· (.+) übersprungen \\(🔒\\)$', '^(.+) Belohnung\\(en\\) (.+)$', // Kanalpunkte: Toast in Teilen
   '^Deine Korrektur: (.+)(.+)\\.$', '^Davon von Hand korrigiert: (.+)(.+)\\.$', // Ziele: Zusatz zum Info-Text
   '^→ (.+)(.+)$', // Spam-Schutz-Test: „→ Löschen + Timeout …“ (Patterns für die fertigen Texte)

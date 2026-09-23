@@ -1,6 +1,7 @@
 import type { Addon, AddonContext } from '../../core/addons';
 import { HttpError } from '../../core/server';
 import { makeTestEvent, type ChatFragment, type StreamEvent } from '../../core/twitch/events';
+import { DEFAULTS, ROLE_LEVEL, applyPatch, sanitize, type EventKind, type Settings } from './settings';
 
 // ------------------------------------------------------------------ Datenmodell
 
@@ -20,98 +21,6 @@ interface AlertsStatus {
 
 /** Events, zu denen es Alerts gibt – die bekommen im Chat-Fenster ein ▶ */
 const REPLAYABLE: StreamEvent['type'][] = ['follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'redemption', 'hypetrain'];
-
-const EVENT_KINDS = ['follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'redemption', 'stream', 'hypetrain', 'prediction', 'shoutout', 'ads'] as const;
-type EventKind = (typeof EVENT_KINDS)[number];
-const ROLES = ['everyone', 'subscriber', 'vip', 'moderator', 'broadcaster'] as const;
-type Role = (typeof ROLES)[number];
-const ROLE_LEVEL: Record<Role, number> = { everyone: 0, subscriber: 1, vip: 2, moderator: 3, broadcaster: 4 };
-
-const allEvents = (on: boolean) => Object.fromEntries(EVENT_KINDS.map((k) => [k, on])) as Record<EventKind, boolean>;
-
-interface Settings {
-  /** Markdown (**fett**, *kursiv* …) ab welcher Rolle */
-  markdown: { enabled: boolean; minRole: Role };
-  /** Farben ([rot]Text[/]) ab welcher Rolle */
-  colors: { enabled: boolean; minRole: Role };
-  /** Emotes von Drittanbietern */
-  emotes: { seventv: boolean; bttv: boolean; ffz: boolean };
-  /** Kanalpunkte-Einlösungen, die im Alert-Filter stumm sind, im Overlay verstecken */
-  respectAlertFilter: boolean;
-  overlay: {
-    font: string;
-    fontSize: number;
-    fontWeight: number;
-    textColor: string;
-    nameColorMode: 'twitch' | 'fixed';
-    nameColor: string;
-    background: string;
-    backgroundOpacity: number;
-    rounded: boolean;
-    textShadow: boolean;
-    layout: 'inline' | 'stacked';
-    animation: 'slide' | 'fade' | 'pop' | 'none';
-    direction: 'bottom' | 'top';
-    align: 'left' | 'right';
-    /** 0 = nie ausblenden */
-    fadeOutSeconds: number;
-    maxMessages: number;
-    showBadges: boolean;
-    hideCommands: boolean;
-    /** Logins, deren Nachrichten nicht angezeigt werden (z.B. Bots) */
-    hiddenUsers: string[];
-    events: Record<EventKind, boolean>;
-  };
-  window: {
-    fontSize: number;
-    timestamps: boolean;
-    showBadges: boolean;
-    alternateBackground: boolean;
-    highlightMentions: boolean;
-    highlightWords: string[];
-    hideCommands: boolean;
-    events: Record<EventKind, boolean>;
-  };
-}
-
-const DEFAULTS: Settings = {
-  markdown: { enabled: true, minRole: 'everyone' },
-  colors: { enabled: true, minRole: 'subscriber' },
-  emotes: { seventv: true, bttv: true, ffz: true },
-  respectAlertFilter: true,
-  overlay: {
-    font: 'Nunito',
-    fontSize: 22,
-    fontWeight: 700,
-    textColor: '#FFFFFF',
-    nameColorMode: 'twitch',
-    nameColor: '#9146FF',
-    background: '#000000',
-    backgroundOpacity: 45,
-    rounded: true,
-    textShadow: true,
-    layout: 'inline',
-    animation: 'slide',
-    direction: 'bottom',
-    align: 'left',
-    fadeOutSeconds: 0,
-    maxMessages: 15,
-    showBadges: true,
-    hideCommands: true,
-    hiddenUsers: ['nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot'],
-    events: { ...allEvents(true), stream: false, ads: false },
-  },
-  window: {
-    fontSize: 14,
-    timestamps: true,
-    showBadges: true,
-    alternateBackground: true,
-    highlightMentions: true,
-    highlightWords: [],
-    hideCommands: false,
-    events: allEvents(true),
-  },
-};
 
 /** Ein Eintrag im Chat: Nachricht oder Event */
 type ChatItem =
@@ -147,56 +56,6 @@ type ChatItem =
     /** Kann im Chat-Fenster als Alert nochmal abgespielt werden */
     replay?: boolean;
   };
-
-// ------------------------------------------------------------------ Einstellungen prüfen
-
-function isObject(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
-}
-
-/** Übernimmt nur Werte mit passendem Typ, fehlende kommen aus den Standardwerten */
-function mergeTyped<T>(defaults: T, input: unknown): T {
-  if (isObject(defaults)) {
-    const out: Record<string, unknown> = {};
-    const src = isObject(input) ? input : {};
-    for (const [key, def] of Object.entries(defaults)) out[key] = mergeTyped(def, src[key]);
-    return out as T;
-  }
-  if (Array.isArray(defaults)) {
-    return (Array.isArray(input) ? input.map((x) => String(x).trim()).filter(Boolean).slice(0, 100) : defaults) as T;
-  }
-  return (typeof input === typeof defaults ? input : defaults) as T;
-}
-
-function sanitize(input: unknown): Settings {
-  const s = mergeTyped(DEFAULTS, input);
-  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, Math.round(v)));
-  const hex = (v: string, fallback: string) => (/^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : fallback);
-  const oneOf = <T extends string>(v: string, list: readonly T[], fallback: T): T => (list.includes(v as T) ? (v as T) : fallback);
-
-  s.markdown.minRole = oneOf(s.markdown.minRole, ROLES, 'everyone');
-  s.colors.minRole = oneOf(s.colors.minRole, ROLES, 'subscriber');
-  const o = s.overlay;
-  o.fontSize = clamp(o.fontSize, 10, 80);
-  o.fontWeight = clamp(o.fontWeight, 300, 900);
-  o.textColor = hex(o.textColor, DEFAULTS.overlay.textColor);
-  o.nameColor = hex(o.nameColor, DEFAULTS.overlay.nameColor);
-  o.background = hex(o.background, DEFAULTS.overlay.background);
-  o.backgroundOpacity = clamp(o.backgroundOpacity, 0, 100);
-  o.nameColorMode = oneOf(o.nameColorMode, ['twitch', 'fixed'] as const, 'twitch');
-  o.layout = oneOf(o.layout, ['inline', 'stacked'] as const, 'inline');
-  o.animation = oneOf(o.animation, ['slide', 'fade', 'pop', 'none'] as const, 'slide');
-  o.direction = oneOf(o.direction, ['bottom', 'top'] as const, 'bottom');
-  o.align = oneOf(o.align, ['left', 'right'] as const, 'left');
-  o.fadeOutSeconds = clamp(o.fadeOutSeconds, 0, 3600);
-  o.maxMessages = clamp(o.maxMessages, 1, 100);
-  o.hiddenUsers = [...new Set(o.hiddenUsers.map((u) => u.toLowerCase().replace(/^@/, '')))];
-  o.font = o.font.slice(0, 60) || DEFAULTS.overlay.font;
-  const w = s.window;
-  w.fontSize = clamp(w.fontSize, 10, 30);
-  w.highlightWords = [...new Set(w.highlightWords.map((x) => x.toLowerCase()).filter((x) => x.length <= 40))];
-  return s;
-}
 
 // ------------------------------------------------------------------ Emotes & Abzeichen
 
@@ -266,13 +125,14 @@ export const chatAddon: Addon = {
   id: 'chat',
   name: 'Chat-Overlay & Fenster',
   icon: '🗨️',
-  version: '0.1.0',
+  version: '0.2.0',
   author: 'Mini',
   description: 'Chat für OBS mit Emotes, Markdown und Farben, dazu ein eigenes Chat-Fenster wie Chatterino mit Events.',
   settingsPage: 'index.html',
 
   activate(ctx: AddonContext) {
-    const store = ctx.settings<Settings>(DEFAULTS);
+    // Ohne Standardwerte laden: sanitize() füllt auf und übernimmt dabei alte Einstellungen (bis v0.5)
+    const store = ctx.settings<Partial<Settings>>({});
     let settings = sanitize(store.all());
     const history: ChatItem[] = [];
     let assets: Assets | null = null;
@@ -281,8 +141,8 @@ export const chatAddon: Addon = {
     const alertsService = () => ctx.use<AlertsService>('alerts');
     /** Events zu den Einträgen im Chat, damit das Chat-Fenster sie als Alert nochmal abspielen kann */
     const eventsById = new Map<string, StreamEvent>();
-    const rewardHidden = (rewardId: string | null) =>
-      !!rewardId && settings.respectAlertFilter && alertsService()?.rewardAllowed(rewardId) === false;
+    /** Belohnung ist im Alert-Filter stumm? Ob sie deshalb versteckt wird, entscheiden Overlay und Fenster selbst */
+    const rewardHidden = (rewardId: string | null) => !!rewardId && alertsService()?.rewardAllowed(rewardId) === false;
 
     const push = (item: ChatItem) => {
       history.push(item);
@@ -445,11 +305,12 @@ export const chatAddon: Addon = {
 
     ctx.api.get('/settings', () => settings);
 
+    /** { patch, source }: nur die geänderten Werte, source = welche Seite gespeichert hat */
     ctx.api.post('/settings', ({ body }) => {
       const emotesBefore = JSON.stringify(settings.emotes);
-      settings = sanitize(body?.settings);
+      settings = applyPatch(settings, body?.patch ?? body?.settings);
       store.update(settings);
-      ctx.overlay.broadcast({ kind: 'settings' });
+      ctx.overlay.broadcast({ kind: 'settings', source: typeof body?.source === 'string' ? body.source : null });
       if (JSON.stringify(settings.emotes) !== emotesBefore) {
         void loadAssets(true).then(() => ctx.overlay.broadcast({ kind: 'assets' })).catch(() => {});
       }

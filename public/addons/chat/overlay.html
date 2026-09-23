@@ -44,7 +44,7 @@
 
     function add(item, animate) {
       if (!ChatRender.overlayVisible(item, settings.overlay)) return;
-      const node = ChatRender.overlayItem(item, settings, animate);
+      const node = ChatRender.overlayItem(item, settings.overlay, animate);
       if (settings.overlay.direction === 'top') chat.prepend(node);
       else chat.append(node);
       fadeOut(node, item);

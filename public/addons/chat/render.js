@@ -109,7 +109,8 @@ window.ChatRender = (() => {
   }
 
   /** Klartext + Emotes von 7TV/BTTV/FFZ */
-  function textWithEmotes(text, parent) {
+  function textWithEmotes(text, parent, opts) {
+    if (!opts.emotes) return parent.append(text);
     const map = assets.emotes || {};
     let buffer = '';
     for (const part of text.split(/(\s+)/)) {
@@ -131,7 +132,7 @@ window.ChatRender = (() => {
   ];
 
   function markdown(text, parent, opts) {
-    if (!opts.markdown) return textWithEmotes(text, parent);
+    if (!opts.markdown) return textWithEmotes(text, parent, opts);
     let rest = text;
     while (rest) {
       let best = null;
@@ -139,8 +140,8 @@ window.ChatRender = (() => {
         const m = rule.re.exec(rest);
         if (m && (!best || m.index < best.m.index)) best = { m, rule };
       }
-      if (!best) return textWithEmotes(rest, parent);
-      if (best.m.index) textWithEmotes(rest.slice(0, best.m.index), parent);
+      if (!best) return textWithEmotes(rest, parent, opts);
+      if (best.m.index) textWithEmotes(rest.slice(0, best.m.index), parent, opts);
       const node = el(best.rule.tag, best.rule.cls);
       if (best.rule.literal) node.textContent = best.m[1];
       else markdown(best.m[1], node, opts);
@@ -187,22 +188,25 @@ window.ChatRender = (() => {
 
   // ------------------------------------------------------------ Nachricht
 
-  /** Darf diese Person Markdown / Farben benutzen? */
-  function permissions(item, settings) {
+  /** Darf diese Person Markdown / Farben benutzen? Und sollen Drittanbieter-Emotes erscheinen? */
+  function permissions(item, rules) {
     return {
-      markdown: settings.markdown.enabled && item.level >= ROLE_LEVEL[settings.markdown.minRole],
-      colors: settings.colors.enabled && item.level >= ROLE_LEVEL[settings.colors.minRole],
+      markdown: rules.markdown.enabled && item.level >= ROLE_LEVEL[rules.markdown.minRole],
+      colors: rules.colors.enabled && item.level >= ROLE_LEVEL[rules.colors.minRole],
+      emotes: rules.thirdPartyEmotes !== false,
     };
   }
 
   const plainText = (item) => item.fragments.map((f) => f.text).join('');
 
   /**
-   * options: { settings, showBadges, timestamps, fixedNameColor, deletedText }
+   * options: { rules, showBadges, timestamps, timestampSeconds, fixedNameColor, deletedText, darkBackground }
+   * rules = Einstellungen von Overlay bzw. Fenster: { markdown, colors, thirdPartyEmotes }
+   * (die Browser-Erweiterung übergibt sie noch als "settings")
    */
   function message(item, options) {
     injectCss();
-    const { settings } = options;
+    const rules = options.rules ?? options.settings;
     const root = el('div', 'cr-item cr-msg');
     root.dataset.id = item.id;
     root.dataset.user = item.user.id;
@@ -214,7 +218,8 @@ window.ChatRender = (() => {
 
     const head = el('span', 'cr-head');
     if (options.timestamps) {
-      head.append(el('span', 'cr-time', new Date(item.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })));
+      const format = { hour: '2-digit', minute: '2-digit', ...(options.timestampSeconds ? { second: '2-digit' } : {}) };
+      head.append(el('span', 'cr-time', new Date(item.time).toLocaleTimeString('de-DE', format)));
     }
     if (options.showBadges) {
       for (const b of item.badges) {
@@ -241,7 +246,7 @@ window.ChatRender = (() => {
     if (item.deleted && options.deletedText) {
       body.append(el('em', 'cr-deleted-note', options.deletedText));
     } else {
-      const perms = permissions(item, settings);
+      const perms = permissions(item, rules);
       for (const f of item.fragments) {
         if (f.type === 'emote' && f.emoteId && /^[\w-]+$/.test(f.emoteId)) {
           body.append(emoteImg(`https://static-cdn.jtvnw.net/emoticons/v2/${f.emoteId}/default/dark/2.0`, f.text));
@@ -299,11 +304,44 @@ window.ChatRender = (() => {
 
   /** Soll ein Eintrag im OBS-Overlay erscheinen? */
   function overlayVisible(item, o) {
-    if (item.hiddenReward || item.deleted) return false;
+    if (item.deleted || (item.hiddenReward && o.respectAlertFilter)) return false;
     if (item.kind === 'event') return !!o.events[item.event];
     if (o.hiddenUsers.includes((item.user.login || '').toLowerCase())) return false;
     if (o.hideCommands && plainText(item).trim().startsWith('!')) return false;
     return true;
+  }
+
+  // ------------------------------------------------------------ Chat-Fenster (eigene Regeln, unabhängig vom Overlay)
+
+  /** Soll ein Eintrag im Chat-Fenster erscheinen? w = Fenster-Einstellungen */
+  function windowVisible(item, w) {
+    if (item.hiddenReward && w.mutedRewards === 'hide') return false;
+    if (item.kind === 'event') return !!w.events[item.event];
+    if (item.deleted && w.deletedMessages === 'hide') return false;
+    if (w.hiddenUsers.includes((item.user.login || '').toLowerCase())) return false;
+    if (w.hideCommands && plainText(item).trim().startsWith('!')) return false;
+    return true;
+  }
+
+  /** Wirst du erwähnt, oder steht eines deiner Stichwörter drin? login = dein Twitch-Name */
+  function windowHighlight(item, w, login) {
+    if (item.kind !== 'message' || item.own) return false;
+    const text = plainText(item).toLowerCase();
+    const me = (login || '').toLowerCase();
+    if (w.highlightMentions && me && (text.includes(`@${me}`) || new RegExp(`(^|\\W)${me}(\\W|$)`).test(text))) return true;
+    return w.highlightWords.some((word) => word && text.includes(word));
+  }
+
+  /** Nachricht fürs Chat-Fenster (ohne Knöpfe, die hängt das Fenster selbst an) */
+  function windowMessage(item, w) {
+    return message(item, { rules: w, showBadges: w.showBadges, timestamps: w.timestamps, timestampSeconds: w.timestampSeconds, darkBackground: true });
+  }
+
+  /** Fenster-Einstellungen als Stil auf die Liste legen */
+  function applyWindowStyle(target, w) {
+    target.style.setProperty('--cw-size', `${w.fontSize}px`);
+    target.style.setProperty('--cw-font', `"${w.font}", "Segoe UI", sans-serif`);
+    target.classList.toggle('alt', w.alternateBackground);
   }
 
   /** Gemeinsames Aussehen des Overlays (auch für die Vorschau in den Einstellungen) */
@@ -343,12 +381,11 @@ window.ChatRender = (() => {
     (styleTarget ?? document.head).append(style);
   }
 
-  /** Eintrag fürs Overlay bauen (Nachricht oder Event) */
-  function overlayItem(item, settings, animate) {
+  /** Eintrag fürs Overlay bauen (Nachricht oder Event), o = Overlay-Einstellungen */
+  function overlayItem(item, o, animate) {
     injectOverlayCss();
-    const o = settings.overlay;
     const node = item.kind === 'message'
-      ? message(item, { settings, showBadges: o.showBadges, fixedNameColor: o.nameColorMode === 'fixed' ? o.nameColor : null })
+      ? message(item, { rules: o, showBadges: o.showBadges, fixedNameColor: o.nameColorMode === 'fixed' ? o.nameColor : null })
       : event(item);
     if (animate && o.animation !== 'none') node.classList.add(`cr-anim-${o.animation}`);
     return node;
@@ -356,6 +393,6 @@ window.ChatRender = (() => {
 
   return {
     setAssets, getAssets, setStyleTarget, message, event, plainText, nameColor, readableOnDark, ROLE_LEVEL, FONTS, loadFont,
-    applyOverlayStyle, overlayVisible, overlayItem, injectOverlayCss,
+    applyOverlayStyle, overlayVisible, overlayItem, injectOverlayCss, windowVisible, windowHighlight, windowMessage, applyWindowStyle,
   };
 })();

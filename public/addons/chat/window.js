@@ -17,21 +17,15 @@ let unseen = 0;
 
 // ============================================================ Darstellung
 
+// Das Fenster hat eigene Einstellungen (settings.window), unabhängig vom OBS-Overlay
 const w = () => settings.window;
+const visible = (item) => ChatRender.windowVisible(item, w());
 
-function visible(item) {
-  if (item.kind === 'event') return !!w().events[item.event];
-  if (w().hideCommands && ChatRender.plainText(item).trim().startsWith('!')) return false;
-  return true;
-}
-
-/** Erwähnung von dir oder eines deiner Stichwörter? */
-function isHighlight(item) {
-  if (item.kind !== 'message' || item.own) return false;
-  const text = ChatRender.plainText(item).toLowerCase();
-  const login = (ChatRender.getAssets().broadcaster || '').toLowerCase();
-  if (w().highlightMentions && login && (text.includes(`@${login}`) || new RegExp(`(^|\\W)${login}(\\W|$)`).test(text))) return true;
-  return w().highlightWords.some((word) => word && text.includes(word));
+/** Hinweis an Einlösungen, die im Alert-Filter stumm sind */
+function muteNote() {
+  return settings.overlay.respectAlertFilter
+    ? h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm und wird im Overlay nicht gezeigt' }, '🔕 nicht im Overlay')
+    : h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm (kein Alert)' }, '🔕 stumm');
 }
 
 function build(item) {
@@ -39,7 +33,7 @@ function build(item) {
     const node = ChatRender.event(item);
     if (item.hiddenReward) {
       node.classList.add('cr-muted');
-      node.querySelector('.cr-ev-line').append(h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm und wird im Overlay nicht gezeigt' }, '🔕 nicht im Overlay'));
+      node.querySelector('.cr-ev-line').append(muteNote());
     }
     if (item.replay) {
       node.append(h('div', { class: 'cw-actions' },
@@ -47,11 +41,11 @@ function build(item) {
     }
     return node;
   }
-  const node = ChatRender.message(item, { settings, showBadges: w().showBadges, timestamps: w().timestamps, darkBackground: true });
-  if (isHighlight(item)) node.classList.add('cr-hl');
+  const node = ChatRender.windowMessage(item, w());
+  if (ChatRender.windowHighlight(item, w(), ChatRender.getAssets().broadcaster)) node.classList.add('cr-hl');
   if (item.hiddenReward) {
     node.classList.add('cr-muted');
-    node.append(h('span', { class: 'cr-mute-note' }, '🔕 nicht im Overlay'));
+    node.append(muteNote());
   }
   node.querySelector('.cr-name')?.addEventListener('click', () => insertText(`@${item.user.login || item.user.name} `));
   node.append(h('div', { class: 'cw-actions' },
@@ -61,8 +55,7 @@ function build(item) {
 }
 
 function renderAll() {
-  list.style.setProperty('--cw-size', `${w().fontSize}px`);
-  list.classList.toggle('alt', w().alternateBackground);
+  ChatRender.applyWindowStyle(list, w());
   const shown = items.filter(visible);
   list.replaceChildren(...(shown.length
     ? shown.map(build)
@@ -99,7 +92,9 @@ function markDeleted(predicate) {
   for (const item of items) if (item.kind === 'message' && predicate(item)) item.deleted = true;
   list.querySelectorAll('.cr-msg').forEach((node) => {
     const item = items.find((i) => i.id === node.dataset.id);
-    if (item?.deleted) node.classList.add('cr-deleted');
+    if (!item?.deleted) return;
+    if (w().deletedMessages === 'hide') node.remove();
+    else node.classList.add('cr-deleted');
   });
 }
 
@@ -155,9 +150,16 @@ function autosize() {
 
 // ============================================================ Kopfleiste
 
-async function saveSettings() {
+/** Kennung dieses Fensters, damit es seine eigenen Änderungen nicht nochmal lädt */
+const SOURCE = `window-${Math.random().toString(36).slice(2, 10)}`;
+
+/**
+ * Speichert nur die geänderten Fenster-Werte (z.B. { fontSize: 15 }). So überschreibt das Fenster
+ * nie, was gleichzeitig auf der Einstellungsseite geändert wird.
+ */
+async function saveWindow(patch) {
   try {
-    settings = await api(`${BASE}/settings`, { settings });
+    await api(`${BASE}/settings`, { patch: { window: patch }, source: SOURCE });
   } catch (err) {
     toast(err.message, 'err');
   }
@@ -172,7 +174,7 @@ function renderFilterMenu() {
           w().events[kind] = !w().events[kind];
           renderFilterMenu();
           renderAll();
-          await saveSettings();
+          await saveWindow({ events: { [kind]: w().events[kind] } });
         },
       }, label)),
     h('button', {
@@ -182,7 +184,7 @@ function renderFilterMenu() {
         w().hideCommands = !w().hideCommands;
         renderFilterMenu();
         renderAll();
-        await saveSettings();
+        await saveWindow({ hideCommands: w().hideCommands });
       },
     }, '🙈 !Commands ausblenden'));
 }
@@ -256,12 +258,15 @@ function connect() {
         }
         break;
       case 'settings':
+        // Eigene Änderungen sind schon drin – nur Änderungen von der Einstellungsseite neu laden
+        if (data.source === SOURCE) break;
         settings = await api(`${BASE}/settings`);
         renderFilterMenu();
         renderAll();
         break;
       case 'assets':
         ChatRender.setAssets(await api(`${BASE}/assets`).catch(() => null));
+        renderAll();
         break;
     }
   };
@@ -297,10 +302,13 @@ $('#pin').onclick = async () => {
     toast(err.message, 'err');
   }
 };
-const changeFont = async (delta) => {
+// Schriftgröße: kurz warten, damit schnelles Klicken nicht jedes Mal speichert
+let fontTimer = null;
+const changeFont = (delta) => {
   w().fontSize = Math.max(10, Math.min(30, w().fontSize + delta));
-  renderAll();
-  await saveSettings();
+  ChatRender.applyWindowStyle(list, w());
+  clearTimeout(fontTimer);
+  fontTimer = setTimeout(() => saveWindow({ fontSize: w().fontSize }), 400);
 };
 $('#alerts-pause').onclick = async () => {
   try {

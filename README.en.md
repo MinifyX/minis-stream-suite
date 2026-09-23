@@ -26,7 +26,7 @@ A Windows app for Twitch streamers with an add-on system for alerts, channel poi
 - **Polls:** chat polls (`!vote 2` or just `2`, up to 10 options) or native Twitch polls (affiliate/partner, optional channel points), a live OBS overlay, mod commands `!poll 90 Question | A | B` / `!endpoll`, and a history.
 - **Lurk:** viewers type `!lurk`; as soon as they write again they are welcomed back automatically with their lurk time. Stats via `!lurkstats`, `!lurkstats @name`, `!toplurker`.
 - **Bot account:** link a second Twitch account that writes all of the suite's chat messages (made mod with one click), with fallback to your own account.
-- **Chat overlay & chat window** with 7TV/BTTV/FFZ emotes, badges, Markdown and colors, plus a Chatterino-like chat window (also usable as an OBS dock). A matching **browser extension** replaces the Twitch chat list in your channel.
+- **Chat overlay & chat window** with 7TV/BTTV/FFZ emotes, badges, Markdown and colors, plus a Chatterino-like chat window (also usable as an OBS dock). Overlay and chat window are configured completely separately, each with a live preview. A matching **browser extension** replaces the Twitch chat list in your channel.
 - **Satellite:** run the suite on your streaming PC and press keys on your gaming PC over the local network.
 - Runs in the **system tray**, optional **autostart** with Windows, **automatic updates** from GitHub Releases.
 

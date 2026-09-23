@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>Chat-Overlay & Fenster</title>
   <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="chatlist.css">
   <link rel="stylesheet" href="settings.css">
 </head>
 <body>
@@ -18,7 +19,7 @@
     <nav class="tabs" id="tabs">
       <button data-tab="overlay" class="active">🎨 OBS-Overlay</button>
       <button data-tab="window">🪟 Chat-Fenster</button>
-      <button data-tab="general">⚙️ Markdown, Farben & Emotes</button>
+      <button data-tab="help">😀 Emotes & Hilfe</button>
     </nav>
 
     <section class="tab" id="tab-overlay">
@@ -27,7 +28,7 @@
         <aside class="preview-col">
           <div class="card preview-card">
             <div class="preview-head">
-              <strong>Vorschau</strong>
+              <strong>Vorschau Overlay</strong>
               <span class="spacer"></span>
               <span class="bg-swatches" id="bg-swatches"></span>
             </div>
@@ -49,11 +50,31 @@
     </section>
 
     <section class="tab" id="tab-window" hidden>
-      <div class="form narrow" id="window-form"></div>
+      <div class="split">
+        <div class="form" id="window-form"></div>
+        <aside class="preview-col">
+          <div class="card preview-card">
+            <div class="preview-head">
+              <strong>Vorschau Chat-Fenster</strong>
+            </div>
+            <div class="window-stage no-i18n">
+              <div class="cw-list" id="window-preview"></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary small" id="open-window-2">🪟 Chat-Fenster öffnen</button>
+            </div>
+            <p class="note">Das Fenster merkt sich Größe, Position und 📌 „Immer im Vordergrund“. Auch als OBS-Dock nutzbar: Docks → Benutzerdefinierte Browser-Docks → diese URL:</p>
+            <div class="url-row">
+              <input type="text" id="dock-url" readonly>
+              <button class="btn small" id="copy-dock">Kopieren</button>
+            </div>
+          </div>
+        </aside>
+      </div>
     </section>
 
-    <section class="tab" id="tab-general" hidden>
-      <div class="form narrow" id="general-form"></div>
+    <section class="tab" id="tab-help" hidden>
+      <div class="form narrow" id="help-form"></div>
     </section>
   </div>
 

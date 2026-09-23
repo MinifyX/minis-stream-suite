@@ -51,11 +51,13 @@ function buildConfig() {
     return config;
   }
   const chat = readJson(path.join(dir, 'addons', 'chat.json'));
-  if (chat?.markdown) config.markdown = { enabled: chat.markdown.enabled !== false, minRole: chat.markdown.minRole || 'everyone' };
-  if (chat?.colors) config.colors = { enabled: chat.colors.enabled !== false, minRole: chat.colors.minRole || 'subscriber' };
+  // Die Erweiterung zeigt den Chat für Zuschauer → Regeln vom OBS-Overlay (bis v0.5 lagen sie oben in chat.json)
+  const rules = { ...chat, ...chat?.overlay };
+  if (rules.markdown) config.markdown = { enabled: rules.markdown.enabled !== false, minRole: rules.markdown.minRole || 'everyone' };
+  if (rules.colors) config.colors = { enabled: rules.colors.enabled !== false, minRole: rules.colors.minRole || 'subscriber' };
 
   // Stumme Belohnungen (wie im Alert-Filter), damit auch dieser Chat keine Spoiler zeigt
-  if (chat?.respectAlertFilter !== false) {
+  if (rules.respectAlertFilter !== false) {
     const alerts = readJson(path.join(dir, 'addons', 'alerts.json'));
     const cp = readJson(path.join(dir, 'addons', 'channelpoints.json'));
     const own = alerts?.rewards ?? {};

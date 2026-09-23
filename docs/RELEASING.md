@@ -53,9 +53,10 @@ git worktree add ../release-tmp v0.5.0      # saubere Kopie des Tags, ohne src/a
 cd ../release-tmp
 npm ci
 npx tsc
-GH_TOKEN=$(gh auth token) npx electron-builder --win --publish always   # lädt einen Release-Entwurf hoch
+gh release create v0.5.0 --draft --title v0.5.0 --notes ""              # Entwurf vorher anlegen (sonst gibt es manchmal zwei)
+GH_TOKEN=$(gh auth token) npx electron-builder --win --publish always   # lädt die Dateien in den Entwurf
 cd -
 git worktree remove --force ../release-tmp
 ```
 
-Danach auf GitHub den Entwurf prüfen und veröffentlichen. **Achtung:** electron-builder legt dabei manchmal zwei Entwürfe an und verteilt die Dateien darauf. Der veröffentlichte Release braucht alle drei Dateien: `.exe`, `.exe.blockmap` und `latest.yml` (sonst mit `gh release upload v0.5.0 <datei>` nachladen). Überzählige Entwürfe danach löschen.
+Danach auf GitHub den Entwurf prüfen und veröffentlichen. **Achtung:** Ohne vorher angelegten Entwurf legt electron-builder manchmal zwei Entwürfe an und verteilt die Dateien darauf. Der veröffentlichte Release braucht alle drei Dateien: `.exe`, `.exe.blockmap` und `latest.yml` (sonst mit `gh release upload v0.5.0 <datei>` nachladen). Überzählige Entwürfe danach löschen.

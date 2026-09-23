@@ -1,7 +1,7 @@
 {
   "name": "minis-stream-suite",
   "productName": "Mini's Stream Suite",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Stream-Toolkit für Twitch mit Addons für Alerts, Kanalpunkte, Commands, Umfragen und mehr.",
   "main": "dist/main.js",
   "private": true,
