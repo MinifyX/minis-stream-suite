@@ -106,16 +106,20 @@ describe('Wiedergabe-Queue', () => {
     assert.equal(t.started.at(-1)?.item.ref, 'lokal.mp3');
   });
 
-  it('„Weiter“: eingereiht → Provider macht weiter, sonst startet die Queue selbst', async () => {
+  it('„Weiter“ reiht beim gleichen Provider ein (Playlist bleibt erhalten), sonst startet die Queue selbst', async () => {
     const t = setup();
     t.contextTrack('ctx', 60_000);
-    t.q.addRequest(req('r1', sp('a')));
-    assert.equal(await t.q.skip(), 'queue');
-    assert.equal(t.q.current?.request?.id, 'r1');
     assert.equal(await t.q.skip(), 'none');
-    t.q.addRequest(req('r2', sp('b')));
-    await t.advance(170_000);
-    assert.equal(await t.q.skip(), 'provider');
+    t.q.addRequest(req('r1', sp('a')));
+    assert.equal(await t.q.skip(), 'provider', 'Spotify-Wunsch während Spotify läuft → einreihen + Weiter');
+    assert.deepEqual(t.log, ['enqueue Song a'], 'nicht direkt gestartet');
+    assert.equal(await t.q.skip(), 'provider', 'schon eingereiht → Provider macht weiter');
+
+    const u = setup({ provider: 'local' });
+    u.contextTrack('lokal', 60_000);
+    u.q.addRequest(req('r2', sp('b')));
+    assert.equal(await u.q.skip(), 'queue', 'anderer Provider → direkt starten');
+    assert.equal(u.q.current?.request?.id, 'r2');
   });
 
   it('Liste mit Wiederholen fängt wieder von vorn an', async () => {

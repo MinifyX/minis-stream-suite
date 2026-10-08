@@ -273,7 +273,13 @@ export class PlaybackQueue {
     if (this.committed?.mode === 'enqueued') return 'provider';
     const next = this.committed?.entry ?? this.peekNext();
     if (!next) return 'none';
-    if (!this.committed && next.request) this.requests.shift();
+    if (!this.committed) {
+      // Erst einreihen und den Provider weiterschalten lassen: So bleibt bei Spotify die laufende
+      // Playlist erhalten (direkt starten würde sie durch den einzelnen Titel ersetzen)
+      await this.commit(next, 0);
+      // commit() hat this.committed gesetzt (TypeScript sieht das nicht)
+      if ((this.committed as Committed | null)?.mode === 'enqueued') return 'provider';
+    }
     await this.playEntry(next);
     return 'queue';
   }
