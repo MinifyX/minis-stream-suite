@@ -153,6 +153,10 @@ Nachrichten von Seiten an die Suite werden nur angenommen, wenn die Seite von de
 
 ## Offen / nicht live getestet
 
+- **Versatz Video/Audio über 10 Minuten** wurde nicht am Stück gemessen. In mehreren Läufen von je
+  einigen Minuten (Dummy-Medien, 60 fps) lag er bei max. 14 ms (Grenze: 40 ms). Messen: Player mit
+  `?debug=1` öffnen, im Loop stehen lassen, Anzeige „Versatz … (max …)“ ablesen.
+
 - **Spotify** (SDK und Fernsteuerung) ist gegen eine nachgebaute API getestet, aber nicht mit einem echten
   Account – dafür braucht es deine Client-ID und Premium. Bitte einmal durchklicken:
   Gerät „Stream Suite“ erscheint in der Spotify-App, Auto-Start-Playlist spielt, Fallback auf die Desktop-App.
