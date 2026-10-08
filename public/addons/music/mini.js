@@ -71,7 +71,7 @@ window.MusicMini = (() => {
         if (!img || img.getAttribute('src') !== np.coverUrl) cover.replaceChildren(h('img', { src: np.coverUrl, alt: '' }));
       } else cover.replaceChildren('🎵');
       title.textContent = np ? np.title : 'Gerade läuft nichts';
-      artist.textContent = np ? np.artists.join(', ') : '';
+      artist.textContent = np ? `${np.artists.join(', ')}${np.requestedBy ? ` · 🙋 gewünscht von ${np.requestedBy}` : ''}` : '';
       toggleBtn.textContent = np?.isPlaying ? '⏸' : '▶';
       if (!dragging) {
         volume.value = s.volume;

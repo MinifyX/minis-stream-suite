@@ -2067,7 +2067,110 @@
     "Das ist keine gültige Quelle. Erwartet: Spotify-Link oder -URI (Playlist, Album, Titel) oder eine lokale Playlist.": "That is not a valid source. Expected: Spotify link or URI (playlist, album, track) or a local playlist.",
     "Die Spotify Client-ID besteht aus 32 Zeichen (0-9, a-f).": "The Spotify Client ID consists of 32 characters (0-9, a-f).",
     "Der Schlüssel kommt aus der Umgebungsvariable SUITE_API_TOKEN und lässt sich hier nicht ändern.": "The key comes from the environment variable SUITE_API_TOKEN and can't be changed here.",
-    "Schlüssel fehlt oder ist falsch (Header X-Suite-Token).": "Key missing or wrong (header X-Suite-Token)."
+    "Schlüssel fehlt oder ist falsch (Header X-Suite-Token).": "Key missing or wrong (header X-Suite-Token).",
+    "▶ Player": "▶ Player",
+    "🎛 Musik-Sets": "🎛 Music sets",
+    "🙋 Songwünsche": "🙋 Song requests",
+    "＋ Neues Set": "＋ New set",
+    "Ein Set ist entweder": "A set is either",
+    "verknüpft": "linked",
+    "(eine Spotify-Playlist, ein Album oder ein Musik-Ordner) oder eine": "(a Spotify playlist, an album or a music folder) or a",
+    "eigene Liste": "custom list",
+    ", die du hier zusammenstellst – Spotify und eigene Dateien gemischt. Ordne Sets Spielen zu, dann wechselt die Musik mit der Kategorie.": " that you put together here – Spotify and your own files mixed. Assign sets to games and the music changes with the category.",
+    "🎮 Spielwechsel": "🎮 Game change",
+    "📝 Vorschläge": "📝 Suggestions",
+    "🎶 Queue": "🎶 Queue",
+    "＋ Einreihen": "＋ Add to queue",
+    "⚙️ Einstellungen": "⚙️ Settings",
+    "💜 Kanalpunkte": "💜 Channel Points",
+    "💬 Chat-Antworten": "💬 Chat replies",
+    "🧪 Ausprobieren": "🧪 Try it out",
+    "🎮 Set passend zum Spiel": "🎮 Set matching the game",
+    "– Playlist (unten mit ⭐ wählen oder Link einfügen) –": "– Playlist (pick below with ⭐ or paste a link) –",
+    "läuft": "playing",
+    "passt zum Spiel": "matches the game",
+    "Noch keine Sets. Leg eins an – z.B. „Chill“ für Just Chatting und „Hype“ für Shooter.": "No sets yet. Create one – e.g. \"Chill\" for Just Chatting and \"Hype\" for shooters.",
+    "Aktuelle Kategorie:": "Current category:",
+    "Dazu passt:": "Matching set:",
+    "Dazu passt kein Set (und es gibt kein Standard-Set).": "No set matches (and there is no default set).",
+    "Beim Spielwechsel automatisch umschalten": "Switch automatically on game change",
+    "Automatisch umschalten": "Switch automatically",
+    "Standard-Set (Spiele ohne eigenes Set)": "Default set (games without their own set)",
+    "– nichts ändern –": "– don't change anything –",
+    "🔗 Verknüpft": "🔗 Linked",
+    "📝 Eigene Liste": "📝 Custom list",
+    "oder Spotify-Link einfügen (Playlist/Album)": "or paste a Spotify link (playlist/album)",
+    "Eigene Musik (Ordner)": "Your own music (folder)",
+    "Die Titel pflegst du weiter in Spotify bzw. im Ordner.": "You keep managing the tracks in Spotify or in the folder.",
+    "Song suchen oder Spotify-Link einfügen": "Search for a song or paste a Spotify link",
+    "Noch keine Titel – oben suchen und mit ＋ hinzufügen.": "No tracks yet – search above and add with ＋.",
+    "Ist schon drin.": "Already in there.",
+    "Titel im Set:": "Tracks in the set:",
+    "Zufällig/Wiederholen gelten wie auf dem Reiter „Player“ eingestellt.": "Shuffle/repeat apply as set on the \"Player\" tab.",
+    "Noch keinem Spiel zugeordnet.": "Not assigned to any game yet.",
+    "Spiel/Kategorie suchen, z.B. Minecraft": "Search game/category, e.g. Minecraft",
+    "🎮 Läuft automatisch bei diesen Spielen": "🎮 Plays automatically for these games",
+    "Ein Spiel gehört zu genau einem Set – beim Speichern wird es aus anderen Sets entfernt.": "A game belongs to exactly one set – saving removes it from other sets.",
+    "Set gespeichert": "Set saved",
+    "Neues Set": "New set",
+    "In der Queue": "In the queue",
+    "Als Vorschlag gespeichert": "Saved as a suggestion",
+    "Vorschlag angenommen": "Suggestion approved",
+    "Abgelehnt": "Rejected",
+    "Nichts gefunden": "Nothing found",
+    "Geht nicht (Grund)": "Not possible (reason)",
+    "!song, wenn nichts läuft": "!song when nothing is playing",
+    "!queue, wenn leer": "!queue when empty",
+    "Annehmen": "Approve",
+    "Ablehnen": "Reject",
+    "Keine offenen Vorschläge.": "No open suggestions.",
+    "Schon an Spotify übergeben – kommt als Nächstes": "Already handed to Spotify – plays next",
+    "Entfernen (Kanalpunkte gibt es zurück)": "Remove (Channel Points are refunded)",
+    "Die Queue ist leer.": "The queue is empty.",
+    "Noch nichts.": "Nothing yet.",
+    "ein Wort oder Artist pro Zeile": "one word or artist per line",
+    "Songwünsche an": "Song requests on",
+    "Chat-Command": "Chat command",
+    "Wo suchen": "Where to search",
+    "passend zur Quelle": "matching the source",
+    "Wer darf wünschen": "Who may request",
+    "Direkt in die Queue ab": "Straight into the queue from",
+    "Darunter wird ein Wunsch zum Vorschlag, den du (oder ein Mod hier in der Suite) freigibst.": "Below that, a request becomes a suggestion that you (or a mod here in the suite) approve.",
+    "Offene Wünsche pro Zuschauer": "Open requests per viewer",
+    "Queue max.": "Queue max.",
+    "Max. Länge (Min., 0 = egal)": "Max. length (min., 0 = any)",
+    "Wartezeit pro Zuschauer (Sek.)": "Cooldown per viewer (sec.)",
+    "Explizite Songs erlauben": "Allow explicit songs",
+    "Im Chat antworten": "Reply in chat",
+    "Sperrliste": "Blocklist",
+    "Die Suite legt die Belohnung selbst an – nur so kann sie bei Ablehnung die Punkte zurückgeben. Zuschauer geben beim Einlösen den Song ein.": "The suite creates the reward itself – only then can it refund the points when a request is rejected. Viewers enter the song when redeeming.",
+    "Kosten": "Cost",
+    "Belohnung geändert": "Reward changed",
+    "＋ Belohnung anlegen": "＋ Create reward",
+    "Belohnung bei Twitch löschen?": "Delete the reward on Twitch?",
+    "✓ Belohnung ist angelegt.": "✓ Reward is created.",
+    "Kanalpunkte-Wünsche direkt in die Queue": "Channel Points requests straight into the queue",
+    "Direkt in die Queue": "Straight into the queue",
+    "Platzhalter stehen jeweils dabei. Leer = Standardtext.": "Placeholders are listed with each one. Empty = default text.",
+    "Wunsch eines Test-Zuschauers – es geht nichts in den Chat, die Antwort steht im Log (Reiter „Player“).": "Request from a test viewer – nothing goes to chat, the reply shows up in the log (\"Player\" tab).",
+    "per Kanalpunkte": "via Channel Points",
+    "🧪 Wunsch schicken": "🧪 Send request",
+    "Eingereiht": "Added to queue",
+    "Dieses Musik-Set gibt es nicht (mehr).": "This music set doesn't exist (anymore).",
+    "Bitte einen Link zu einem einzelnen Song schicken.": "Please send a link to a single song.",
+    "Diesen Vorschlag gibt es nicht (mehr).": "This suggestion doesn't exist (anymore).",
+    "Diesen Wunsch gibt es nicht (mehr).": "This request doesn't exist (anymore).",
+    "Der Song läuft gerade – einfach „Weiter“ drücken.": "The song is playing right now – just press \"Next\".",
+    "Der Song ist schon an Spotify übergeben und kommt als Nächstes – entfernen geht nicht mehr, nur überspringen.": "The song has already been handed to Spotify and plays next – it can't be removed anymore, only skipped.",
+    "Diesen Musik-Ordner gibt es nicht (mehr).": "This music folder doesn't exist (anymore).",
+    "Für die Spotify-Suche erst mit Spotify verbinden.": "Connect to Spotify first to search Spotify.",
+    "Nichts gefunden (oder abgelehnt – siehe Ereignisse).": "Nothing found (or rejected – see events).",
+    "Kanalpunkte gibt es nur für Affiliates und Partner.": "Channel Points are only available to affiliates and partners.",
+    "Die Belohnung gibt es bei Twitch nicht mehr. Bitte nochmal klicken, dann wird sie neu angelegt.": "The reward no longer exists on Twitch. Please click again and it will be created anew.",
+    "Der Command braucht ein Präfix und einen Namen, z.B. !sr.": "The command needs a prefix and a name, e.g. !sr.",
+    "Ungültiger Pfad für einen lokalen Titel.": "Invalid path for a local track.",
+    "Bitte gib dem Set einen Namen.": "Please give the set a name.",
+    "Bitte eine Spotify-Playlist, ein Album oder einen Musik-Ordner auswählen.": "Please select a Spotify playlist, an album or a music folder."
   },
   "patterns": [
     [
@@ -4169,6 +4272,70 @@
     [
       "^Spotify(.+)$",
       "Spotify$1"
+    ],
+    [
+      "^(.+) · 🙋 gewünscht von (.+)$",
+      "$1 · 🙋 requested by $2"
+    ],
+    [
+      "^🎛 gelöschtes Set$",
+      "🎛 deleted set"
+    ],
+    [
+      "^🎛 (.+)$",
+      "🎛 $1"
+    ],
+    [
+      "^Eigene Liste · (.+) Titel$",
+      "Custom list · $1 tracks"
+    ],
+    [
+      "^📁 Hauptordner$",
+      "📁 Main folder"
+    ],
+    [
+      "^📁 (.+)$",
+      "📁 $1"
+    ],
+    [
+      "^„(.+)“ läuft$",
+      "\"$1\" is playing"
+    ],
+    [
+      "^Set „(.+)“ löschen\\?$",
+      "Delete set \"$1\"?"
+    ],
+    [
+      "^danach eigene Liste „(.+)“$",
+      "then custom list \"$1\""
+    ],
+    [
+      "^Im Chat: (.+) Songname oder Spotify-Link · !song · !wrongsong · !queue · !skip \\(Mods\\)\\. Mods und du haben keine Limits\\.$",
+      "In chat: $1 song name or Spotify link · !song · !wrongsong · !queue · !skip (mods). Mods and you have no limits."
+    ],
+    [
+      "^Für die aktuelle Kategorie gibt es kein Set und kein Standard-Set\\.$",
+      "There is no set and no default set for the current category."
+    ],
+    [
+      "^Für (.+) gibt es kein Set und kein Standard-Set\\.$",
+      "There is no set and no default set for $1."
+    ],
+    [
+      "^Höchstens (.+) Sets\\.$",
+      "At most $1 sets."
+    ],
+    [
+      "^Das Set „(.+)“ hat keine Titel\\.$",
+      "The set \"$1\" has no tracks."
+    ],
+    [
+      "^„(.+)“ ist kein Spotify-Titel\\.$",
+      "\"$1\" is not a Spotify track."
+    ],
+    [
+      "^Höchstens (.+) Titel pro Set\\.$",
+      "At most $1 tracks per set."
     ]
   ]
 }

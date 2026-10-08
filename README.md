@@ -89,6 +89,10 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 
 **🎵 Musik:** Spotify direkt in der Suite (eigenes Connect-Gerät über das offizielle Web Playback SDK) oder als Fernsteuerung der Spotify-App, dazu eigene Dateien mit Crossfade (Ordner = Playlist). Now-Playing-Overlay, Lautstärke und Titel per Streamdeck, Auto-Start-Playlist nach dem Intro. Einrichtung und Audio-Routing in OBS: siehe [NOTES.md](NOTES.md).
 
+**🎛 Musik-Sets:** Musik passend zum Spiel – Sets aus Spotify-Playlists, Musik-Ordnern oder eigenen Titellisten (Spotify und lokal gemischt), Twitch-Kategorien zugeordnet. Beim Kategoriewechsel blendet die Suite automatisch um.
+
+**🙋 Songwünsche:** `!sr` im Chat oder per Kanalpunkte (Punkte zurück bei Ablehnung). Mods/VIPs und Kanalpunkte direkt in die Queue, andere als Vorschlag zur Freigabe. Limits, Sperrliste, `!song`, `!wrongsong`, `!queue`, „gewünscht von“ im Overlay.
+
 **🎛️ Streamdeck:** Intro und Musik lassen sich per HTTP steuern (`/api/intro/…`, `/api/music/…`), geschützt mit einem Schlüssel im Header `X-Suite-Token`.
 
 **💾 Sicherung:** Alle Einstellungen (optional mit Bildern und Sounds) in eine Datei packen und wieder einspielen, z.B. für einen neuen PC. Einmal am Tag sichert die Suite automatisch. Twitch-Logins sind nie in einer Sicherung.

@@ -85,6 +85,8 @@ function renderHead() {
 
 function sourceName(source) {
   if (!source) return null;
+  if (source === 'game') return '🎮 Set passend zum Spiel';
+  if (source.startsWith('set:')) return `🎛 ${state.s.sets?.sets.find((x) => x.id === source.slice(4))?.name ?? 'gelöschtes Set'}`;
   const all = [...(state.lists?.spotify ?? []), ...(state.lists?.local ?? [])];
   return all.find((p) => p.id === source)?.name ?? source;
 }
@@ -94,6 +96,11 @@ function renderAutostart() {
   const input = h('input', { type: 'text', class: 'no-i18n', placeholder: 'Spotify-Link oder -URI (Playlist, Album, Titel) – oder unten ⭐ klicken', value: source.startsWith('local:') ? '' : source });
   fill('#autostart',
     h('p', { class: 'auto-current' }, source ? ['Nach dem Intro läuft: ', h('b', { class: 'no-i18n' }, sourceName(source))] : 'Noch nichts eingestellt.'),
+    h('div', { class: 'field' },
+      h('select', { onchange: (e) => e.target.value && call('settings', { autoStartSource: e.target.value }, 'Auto-Start gespeichert') },
+        h('option', { value: '', selected: !(source === 'game' || source.startsWith('set:')) }, '– Playlist (unten mit ⭐ wählen oder Link einfügen) –'),
+        h('option', { value: 'game', selected: source === 'game' }, '🎮 Set passend zum Spiel'),
+        ...(state.s.sets?.sets ?? []).map((x) => h('option', { value: `set:${x.id}`, selected: source === `set:${x.id}`, class: 'no-i18n' }, `🎛 ${x.name}`)))),
     h('div', { class: 'auto-row' },
       input,
       h('button', { class: 'btn small', onclick: () => call('settings', { autoStartSource: input.value }, 'Auto-Start gespeichert') }, 'Speichern'),
@@ -275,6 +282,8 @@ function connect() {
   let reloadTimer = null;
   ws.onmessage = (m) => {
     const msg = JSON.parse(m.data);
+    // Reiter „Musik-Sets“ und „Songwünsche“ hören mit
+    window.dispatchEvent(new CustomEvent('music-msg', { detail: msg }));
     if (msg.type === 'system.log' && state.s) {
       state.s.log.unshift({ level: msg.level, message: msg.message, ts: msg.ts });
       state.s.log.length = Math.min(state.s.log.length, 50);
@@ -290,6 +299,24 @@ function connect() {
 }
 
 $('#reload-lists').onclick = loadLists;
+
+// Reiter: Player / Musik-Sets / Songwünsche (gemerkt in der Adresse, z.B. #requests)
+function showTab(tab) {
+  const known = ['player', 'sets', 'requests'];
+  const current = known.includes(tab) ? tab : 'player';
+  document.querySelectorAll('#page-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === current));
+  document.querySelectorAll('[data-panel]').forEach((p) => {
+    p.hidden = p.dataset.panel !== current;
+  });
+  window.dispatchEvent(new CustomEvent('music-tab', { detail: current }));
+}
+document.querySelectorAll('#page-tabs button').forEach((b) => {
+  b.onclick = () => {
+    history.replaceState(null, '', `#${b.dataset.tab}`);
+    showTab(b.dataset.tab);
+  };
+});
+showTab(location.hash.slice(1));
 $('#log-clear').onclick = () => call('log/clear', {});
 
 (async () => {

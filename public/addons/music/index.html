@@ -16,9 +16,14 @@
         <span id="spotify-pill" class="status-pill"></span>
       </div>
       <p class="note">Spotify oder eigene Dateien – gespielt im Music-Host, einem eigenen Browserfenster. Startet nach dem Intro automatisch mit der Auto-Start-Playlist.</p>
+      <nav class="page-tabs" id="page-tabs">
+        <button data-tab="player" class="on">▶ Player</button>
+        <button data-tab="sets">🎛 Musik-Sets</button>
+        <button data-tab="requests">🙋 Songwünsche <span class="tab-badge" id="pending-badge" hidden></span></button>
+      </nav>
     </header>
 
-    <div class="layout">
+    <div class="layout" data-panel="player">
       <main>
         <section class="card">
           <div class="card-head">
@@ -88,11 +93,87 @@
         </section>
       </aside>
     </div>
+
+    <!-- ============================================================ Musik-Sets -->
+    <div class="layout" data-panel="sets" hidden>
+      <main>
+        <section class="card">
+          <div class="card-head">
+            <h2>🎛 Musik-Sets</h2>
+            <span class="spacer"></span>
+            <button class="btn primary small" id="set-new">＋ Neues Set</button>
+          </div>
+          <p class="note">Ein Set ist entweder <b>verknüpft</b> (eine Spotify-Playlist, ein Album oder ein Musik-Ordner) oder eine <b>eigene Liste</b>, die du hier zusammenstellst – Spotify und eigene Dateien gemischt. Ordne Sets Spielen zu, dann wechselt die Musik mit der Kategorie.</p>
+          <div id="sets" class="sets"></div>
+        </section>
+      </main>
+      <aside>
+        <section class="card">
+          <h2>🎮 Spielwechsel</h2>
+          <div id="sets-game"></div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ============================================================ Songwünsche -->
+    <div class="layout" data-panel="requests" hidden>
+      <main>
+        <section class="card">
+          <div class="card-head">
+            <h2>📝 Vorschläge</h2>
+            <span class="note" id="req-status"></span>
+          </div>
+          <div id="req-pending" class="req-list"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>🎶 Queue</h2>
+            <span class="spacer"></span>
+            <span class="note" id="req-list-info"></span>
+          </div>
+          <div class="auto-row">
+            <input type="text" id="req-add-q" class="no-i18n" placeholder="Selbst einen Song einreihen: Name oder Spotify-Link">
+            <button class="btn small" id="req-add">＋ Einreihen</button>
+          </div>
+          <div id="req-queue" class="req-list"></div>
+        </section>
+        <section class="card">
+          <details>
+            <summary><h2>🕘 Verlauf</h2></summary>
+            <div id="req-history" class="req-list"></div>
+          </details>
+        </section>
+      </main>
+      <aside>
+        <section class="card">
+          <h2>⚙️ Einstellungen</h2>
+          <div id="req-settings"></div>
+        </section>
+        <section class="card">
+          <h2>💜 Kanalpunkte</h2>
+          <div id="req-reward"></div>
+        </section>
+        <section class="card">
+          <details>
+            <summary><h2>💬 Chat-Antworten</h2></summary>
+            <div id="req-messages"></div>
+          </details>
+        </section>
+        <section class="card">
+          <h2>🧪 Ausprobieren</h2>
+          <div id="req-test"></div>
+        </section>
+      </aside>
+    </div>
   </div>
+
+  <div id="modal-host"></div>
 
   <script src="/app/ui.js"></script>
   <script src="/app/remote.js"></script>
   <script src="mini.js"></script>
   <script src="music.js"></script>
+  <script src="sets.js"></script>
+  <script src="requests.js"></script>
 </body>
 </html>

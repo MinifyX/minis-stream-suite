@@ -25,3 +25,60 @@
 .status-list { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .status-list .line { display: flex; align-items: center; gap: 8px; }
 .howto code { font-size: 11px; }
+
+/* ------------------------------------------------------------ Reiter */
+.page-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.page-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.page-tabs button:hover { color: var(--text); }
+.page-tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
+.tab-badge { background: var(--accent); color: #fff; border-radius: 99px; font-size: 11px; padding: 0 7px; min-width: 18px; text-align: center; }
+
+.icon-btn { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; }
+.icon-btn:hover:not(:disabled) { background: var(--card-2); color: var(--text); }
+.icon-btn:disabled { opacity: .3; cursor: default; }
+.box { display: flex; flex-direction: column; gap: 8px; background: var(--bg); border-radius: 10px; padding: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--card-2); border-radius: 99px; padding: 2px 10px; font-size: 12px; }
+.chip button { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 0 0 2px; }
+
+/* ------------------------------------------------------------ Sets */
+.sets { display: flex; flex-direction: column; gap: 8px; }
+.set-card { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--border); }
+.set-card.active { border-color: var(--accent); }
+.set-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.set-name { font-weight: 700; font-size: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.set-actions { display: flex; gap: 4px; }
+.seg-toggle { display: inline-flex; background: var(--bg-2); border-radius: 8px; padding: 3px; gap: 2px; align-self: flex-start; }
+.seg-toggle button { background: none; border: 0; color: var(--muted); font: inherit; font-weight: 600; font-size: 13px; padding: 6px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.seg-toggle.small button { font-size: 12px; padding: 4px 8px; }
+.seg-toggle button.on { background: var(--card-2); color: var(--text); }
+
+.track-list, .search-results { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow-y: auto; }
+.track, .req { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; }
+.track:hover, .req:hover { background: var(--card-2); }
+.track img, .req img { width: 34px; height: 34px; border-radius: 4px; object-fit: cover; flex: none; }
+.track-icon { width: 34px; height: 34px; border-radius: 4px; background: var(--card-2); display: grid; place-items: center; flex: none; }
+.track-no { width: 20px; text-align: right; color: var(--muted); font-size: 12px; }
+.track-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.track-main b, .track-main span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-main b { font-size: 13px; }
+.track-main span { font-size: 12px; color: var(--muted); }
+.game-results { display: flex; flex-wrap: wrap; gap: 6px; }
+.game-pick { display: inline-flex; align-items: center; gap: 6px; background: var(--card-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 3px 10px 3px 3px; cursor: pointer; font: inherit; font-size: 12px; }
+.game-pick:hover { border-color: var(--accent); }
+.game-pick img { width: 22px; height: 30px; border-radius: 3px; }
+
+/* ------------------------------------------------------------ Songwünsche */
+.req-list { display: flex; flex-direction: column; gap: 2px; }
+.req.playing { background: var(--accent-soft); }
+.req-meta { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; min-width: 110px; }
+.req-actions { display: flex; align-items: center; gap: 4px; }
+.req-pos { font: 700 12px Consolas, monospace; color: var(--muted); min-width: 26px; text-align: right; }
+
+/* ------------------------------------------------------------ Dialog */
+.modal-back { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); display: grid; place-items: center; z-index: 50; }
+.modal { width: min(760px, 94vw); max-height: 90vh; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+.modal-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.modal-head h2 { margin: 0; flex: 1; }
+.modal-body { overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.modal-foot { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }

@@ -37,6 +37,11 @@ interface CacheEntry {
 }
 
 const cache = new Map<string, CacheEntry>();
+
+/** ID eines lokalen Titels aus seinem Pfad relativ zum Musik-Ordner (so meldet ihn der Host) */
+export function localTrackId(file: string): string {
+  return createHash('sha1').update(file).digest('hex').slice(0, 12);
+}
 const MAX_HEAD = 16 * 1024 * 1024;
 
 const collator = new Intl.Collator('de', { numeric: true, sensitivity: 'base' });
@@ -99,7 +104,7 @@ function trackFor(root: string, abs: string, coverDir: string): LocalTrack {
   }
   const fallback = tagsFromFileName(abs);
   return {
-    id: createHash('sha1').update(rel).digest('hex').slice(0, 12),
+    id: localTrackId(rel),
     file: rel,
     title: entry.tags.title || fallback.title,
     artists: entry.tags.artists?.length ? entry.tags.artists : fallback.artists,

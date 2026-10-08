@@ -1,4 +1,6 @@
 import { HttpError } from '../../core/server';
+import { REQUEST_DEFAULTS, type RequestSettings } from './requests';
+import type { MusicSet } from './sets';
 import { parseSpotifySource } from './spotify';
 
 // ------------------------------------------------------------------ Typen
@@ -24,9 +26,14 @@ export interface NowPlaying {
   provider: ProviderId;
   /** Zum Erkennen von Titelwechseln */
   trackId: string;
+  /** Songwunsch von … */
+  requestedBy?: string;
 }
 
-/** Quelle: Spotify-URI („spotify:playlist:…“) oder lokale Playlist („local:<Ordner>“) */
+/**
+ * Quelle: Spotify-URI („spotify:playlist:…“), lokale Playlist („local:<Ordner>“),
+ * Musik-Set („set:<id>“) oder „game“ (= Set passend zum aktuellen Spiel)
+ */
 export type SourceRef = string;
 
 /**
@@ -69,6 +76,14 @@ export interface Settings {
     rootDir: string;
     crossfadeMs: number;
   };
+  /** Musik-Sets (sets.ts) */
+  sets: MusicSet[];
+  /** Läuft bei Spielen ohne eigenes Set ("" = dann nichts ändern) */
+  defaultSetId: string;
+  /** Beim Kategoriewechsel automatisch auf das passende Set umschalten (nur wenn Musik läuft) */
+  switchOnGameChange: boolean;
+  /** Songwünsche (requests.ts) */
+  requests: RequestSettings;
   overlay: {
     /** So lange bleibt die Anzeige nach einem Titelwechsel sichtbar (0 = immer, solange Musik läuft) */
     showSeconds: number;
@@ -84,6 +99,10 @@ export const DEFAULTS: Settings = {
   repeat: true,
   spotify: { clientId: '', deviceName: 'Stream Suite', connectDeviceName: '' },
   local: { rootDir: '', crossfadeMs: 4000 },
+  sets: [],
+  defaultSetId: '',
+  switchOnGameChange: true,
+  requests: REQUEST_DEFAULTS,
   overlay: { showSeconds: 10, corner: 'bottom-left' },
 };
 
@@ -100,7 +119,7 @@ export function isProvider(value: unknown): value is ProviderId {
 export function cleanSource(value: unknown): string {
   const text = str(value, 500);
   if (!text) return '';
-  if (text.startsWith('local:')) return text;
+  if (text.startsWith('local:') || text.startsWith('set:') || text === 'game') return text;
   const uri = parseSpotifySource(text);
   if (!uri) throw new HttpError(400, 'Das ist keine gültige Quelle. Erwartet: Spotify-Link oder -URI (Playlist, Album, Titel) oder eine lokale Playlist.');
   return uri;
@@ -117,6 +136,8 @@ export function mergeSettings(current: Settings, input: unknown): Settings {
   if (patch.volume !== undefined) next.volume = clampVolume(patch.volume);
   if (typeof patch.shuffle === 'boolean') next.shuffle = patch.shuffle;
   if (typeof patch.repeat === 'boolean') next.repeat = patch.repeat;
+  if (typeof patch.switchOnGameChange === 'boolean') next.switchOnGameChange = patch.switchOnGameChange;
+  if (patch.defaultSetId !== undefined) next.defaultSetId = str(patch.defaultSetId, 60);
   if (patch.spotify && typeof patch.spotify === 'object') {
     if (patch.spotify.clientId !== undefined) {
       const id = str(patch.spotify.clientId, 64);

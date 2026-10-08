@@ -49,6 +49,41 @@ Szenenwechsel muss außerdem „OBS-Steuerung“ an und verbunden sein.
 5. Auto-Start-Playlist mit ⭐ markieren (Spotify-Playlist oder lokaler Ordner).
 6. Now-Playing-Overlay: Browser-Quelle `…/addons/music/now-playing.html`, z.B. 800 × 200.
 
+### 2a. Musik-Sets (Musik je nach Spiel)
+
+Musik-Seite → Reiter **Musik-Sets**:
+
+- **Verknüpftes Set:** zeigt auf eine Spotify-Playlist/-Album oder einen Musik-Ordner.
+- **Eigene Liste:** Titel direkt in der Suite zusammenstellen (Spotify-Suche und eigene Musik gemischt).
+- Jedem Set Spiele (Twitch-Kategorien) zuordnen. Ein Spiel gehört zu genau einem Set.
+- **Standard-Set** für Spiele ohne eigenes Set (oder „nichts ändern“).
+- **Spielwechsel:** Ändert sich die Kategorie (EventSub `channel.update`) und läuft gerade Musik, blendet die
+  Suite aus, startet das passende Set und blendet wieder ein. Songwünsche bleiben in der Queue.
+- Auto-Start nach dem Intro: „Set passend zum Spiel“ oder ein festes Set wählbar.
+- Streamdeck: `POST /api/music/set` mit `{ "set": "Chill" }` (Name oder ID, `"fade": false` ohne Überblenden).
+
+### 2b. Songwünsche
+
+Musik-Seite → Reiter **Songwünsche**, dort einschalten.
+
+- Chat: `!sr Songname` oder `!sr <Spotify-Link>`, `!song` (was läuft, mit „gewünscht von“), `!wrongsong`
+  (eigenen Wunsch zurückziehen), `!queue` (die nächsten 3), `!skip` (nur Mods).
+- **Kanalpunkte:** „Belohnung anlegen“ – die Suite legt sie selbst an, nur dann kann sie bei Ablehnung die
+  Punkte zurückgeben (Twitch erlaubt das nur für Belohnungen der eigenen App). Gespielte Wünsche werden
+  bei Twitch als erledigt markiert.
+- Standard: Mods/VIPs und Kanalpunkte **direkt in die Queue**, alle anderen als **Vorschlag**, den du in der
+  Suite freigibst oder ablehnst. Einstellbar: wer überhaupt wünschen darf, ab welcher Rolle direkt.
+- Limits: offene Wünsche pro Zuschauer, Queue-Größe, max. Länge, Wartezeit, explizite Songs, Sperrliste.
+  Mods und du haben keine Limits. Doppelte Wünsche werden abgelehnt.
+- Gesucht wird passend zur laufenden Quelle (Spotify oder eigene Musik) – einstellbar.
+- **Ausprobieren:** Test-Zuschauer mit Rolle wählen; es geht nichts in den Chat, die Antworten stehen im Log.
+- Now-Playing-Overlay und Mini-Player zeigen „gewünscht von …“.
+
+**Wie die Queue funktioniert:** Aus Spotifys eigener Warteschlange kann man nichts mehr entfernen. Deshalb hält
+die Suite Wünsche selbst und übergibt den nächsten erst kurz vor Titelende (Spotify ca. 15 s, lokal
+Crossfade + 3 s). Bis dahin lässt sich alles umsortieren oder löschen; ein schon übergebener Titel ist mit 🔒
+markiert. Danach spielt die Playlist bzw. das Set normal weiter.
+
 ### 3. Audio-Routing in OBS
 
 - **Intro-Ton** kommt aus der Browserquelle des Players („Audio über OBS steuern“).
@@ -127,7 +162,13 @@ Fehler: `409` falscher Zustand / kein Player verbunden, `503` Provider oder Spot
 - **Events auf einem Log pro Addon:** Intro- und Musik-Seite zeigen jeweils die letzten 50 Einträge
   (`system.log`). Fehler der DONE-Aktionen (OBS, Musik, Webhooks) stehen im Intro-Log.
 - **Now-Playing-Polling** (Fernsteuerung der Desktop-App) läuft nur, solange die Musik-/Intro-Seite oder
-  das Overlay offen ist.
+  das Overlay offen ist – oder Songwünsche bzw. eine eigene Liste anstehen (dann muss die Suite wissen,
+  wann ein Titel endet).
+- **Songwünsche liegen nur im Speicher:** Nach einem Neustart der Suite ist die Queue leer (Verlauf ebenso).
+- **Wünsche aus einer anderen Quelle** (z.B. „Wo suchen: Spotify“, während eigene Musik läuft) werden am
+  Titelende auf Spotify umgeschaltet; danach läuft die vorherige Quelle nicht automatisch weiter.
+- **Länge eigener Dateien** ist vor dem Abspielen unbekannt – das Längen-Limit gilt nur für Spotify.
+- **Spielwechsel nur bei laufender Musik**, damit vor dem Intro oder in Pausen nichts von selbst losgeht.
 
 ## WebSocket-Kanäle
 

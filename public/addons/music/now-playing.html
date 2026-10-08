@@ -36,6 +36,8 @@
     .paused .eq i { animation: none; height: 3px; }
     .title { font-size: 20px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
     .artist { font-size: 15px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .requested { font-size: 13px; font-weight: 700; color: #ffd166; }
+    .requested[hidden] { display: none; }
     .bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .15); overflow: hidden; margin-top: 5px; width: 260px; max-width: 100%; }
     .bar div { height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
   </style>
@@ -47,6 +49,7 @@
       <div class="label"><span class="eq"><i></i><i></i><i></i></span>Now Playing</div>
       <div class="title" id="title"></div>
       <div class="artist" id="artist"></div>
+      <div class="requested" id="requested" hidden></div>
       <div class="bar"><div id="bar"></div></div>
     </div>
   </div>
@@ -75,6 +78,9 @@
       }
       document.getElementById('title').textContent = np.title;
       document.getElementById('artist').textContent = (np.artists || []).join(', ');
+      const req = document.getElementById('requested');
+      req.textContent = np.requestedBy ? `🙋 gewünscht von ${np.requestedBy}` : '';
+      req.hidden = !np.requestedBy;
       const cover = document.getElementById('cover');
       if (np.coverUrl) {
         const img = cover.querySelector('img');

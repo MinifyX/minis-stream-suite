@@ -70,6 +70,8 @@
     crossfadeMs: 4000,
     /** Wurde der Übergang zum nächsten Titel schon gestartet? */
     advancing: false,
+    /** Wird als nächster Titel gespielt (Songwunsch, nächster Titel einer eigenen Liste der Suite) */
+    upNext: null,
   };
 
   const deck = () => local.decks[local.current];
@@ -97,6 +99,11 @@
     const track = local.tracks[local.order[pos]];
     if (!track) return;
     local.pos = pos;
+    await playTrack(track, fadeMs);
+  }
+
+  /** Einen Titel abspielen (auch außerhalb der Reihenfolge, z.B. einen Songwunsch) */
+  async function playTrack(track, fadeMs) {
     local.advancing = false;
     const from = deck();
     local.current = 1 - local.current;
@@ -125,6 +132,13 @@
 
   /** Nächster Titel der Reihenfolge (am Ende: von vorn, wenn Wiederholen an ist) */
   function advance(fadeMs, step = 1) {
+    // Songwunsch o. Ä. als Nächstes? Danach geht die Reihenfolge normal weiter.
+    if (step === 1 && local.upNext) {
+      const track = local.upNext;
+      local.upNext = null;
+      void playTrack(track, fadeMs);
+      return;
+    }
     let pos = local.pos + step;
     if (pos < 0) pos = 0;
     if (pos >= local.order.length) {
@@ -188,7 +202,18 @@
   }, STATUS_EVERY_MS);
 
   function onLocal(msg) {
+    if (msg.type === 'local.next') {
+      local.upNext = msg.track;
+      // Läuft gerade nichts mehr (Liste zu Ende), gleich starten
+      if (deck().audio.paused || deck().audio.ended) {
+        local.upNext = null;
+        engine = 'local';
+        void playTrack(msg.track, 0);
+      }
+      return;
+    }
     if (msg.type === 'local.load') {
+      local.upNext = null;
       engine = 'local';
       sdk.player?.pause().catch(() => {});
       local.tracks = msg.tracks || [];
@@ -399,6 +424,7 @@
 
   function onMessage(msg) {
     switch (msg.type) {
+      case 'local.next':
       case 'local.load':
       case 'local.cmd':
         return onLocal(msg);

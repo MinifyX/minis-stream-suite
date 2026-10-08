@@ -21,6 +21,7 @@ A Windows app for Twitch streamers with an add-on system for alerts, channel poi
 - **OBS control** via OBS WebSocket (OBS 28+): switch scenes, show/hide sources and filters on rewards, chat commands or events.
 - **Intro sequence:** multi-part intro (video + beat) as an OBS browser source with sample-accurate loops; "go" and "outro" switch at the next loop boundary. Afterwards: OBS scene switch, music fade-in, optional webhooks. See [NOTES.md](NOTES.md) (German).
 - **Music:** Spotify inside the suite (Web Playback SDK) or remote control of the Spotify app, plus local files with crossfade; now-playing overlay; Stream Deck control via `/api/intro/…` and `/api/music/…` with an `X-Suite-Token` header.
+- **Music sets & song requests:** music per game (Spotify playlists, folders or custom track lists, switched on category change); viewers request songs with `!sr` or channel points, mods/VIPs go straight into the queue, others need approval.
 - **Backup:** export all settings (optionally with images and sounds) to one file and import them again; automatic daily backup. Twitch logins are never included.
 - **English or German UI** (switch in the overview).
 - **Chat commands** with aliases, variables (`{user}`, `{touser}`, `{count}`, `{random:1-6}`, `{game}`, `{uptime}`, `{followage}` …), permissions, cooldowns and optional key presses.
