@@ -1,7 +1,10 @@
 import { app, shell } from 'electron';
+import { randomBytes } from 'node:crypto';
 import { isTwitchUrl, openTwitchWindow } from './twitchWindow';
 import { satellite } from './satellite';
 import type { AddonManager, AddonManifest } from './addons';
+import type { ConfigStore } from './config';
+import type { CoreConfig } from './coreConfig';
 import type { EventBus } from './eventBus';
 import { getLogs } from './log';
 import { HttpError, type ApiHandler, type LocalServer } from './server';
@@ -17,10 +20,11 @@ interface Deps {
   addons: AddonManager;
   upcomingAddons: AddonManifest[];
   bus: EventBus;
+  config: ConfigStore<CoreConfig>;
 }
 
 /** API-Routen der Oberfläche (Login, Status, Addon-Verwaltung, Test-Events). */
-export function registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus }: Deps): void {
+export function registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus, config }: Deps): void {
   const get = (path: string, handler: ApiHandler) => server.route('core', 'GET', `/api/core${path}`, handler);
   const post = (path: string, handler: ApiHandler) => server.route('core', 'POST', `/api/core${path}`, handler);
 
@@ -92,6 +96,20 @@ export function registerCoreRoutes({ server, auth, botAuth, eventsub, addons, up
     } catch (err) {
       throw new HttpError(400, (err as Error).message);
     }
+  });
+
+  // ------------------------------------------------------------ Fernsteuerung (Streamdeck & Co.)
+
+  get('/api-token', () => ({
+    token: process.env.SUITE_API_TOKEN || config.get('apiToken'),
+    fromEnv: !!process.env.SUITE_API_TOKEN,
+    baseUrl: server.url,
+  }));
+
+  post('/api-token/regenerate', () => {
+    if (process.env.SUITE_API_TOKEN) throw new HttpError(409, 'Der Schlüssel kommt aus der Umgebungsvariable SUITE_API_TOKEN und lässt sich hier nicht ändern.');
+    config.set('apiToken', randomBytes(24).toString('base64url'));
+    return { token: config.get('apiToken'), fromEnv: false, baseUrl: server.url };
   });
 
   get('/logs', () => getLogs());

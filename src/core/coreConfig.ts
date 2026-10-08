@@ -20,6 +20,11 @@ export interface CoreConfig {
   satellitePort: number;
   /** Fenster schließen = in den Infobereich (Tray) statt beenden */
   closeToTray: boolean;
+  /**
+   * Schlüssel für die Fernsteuerung (Streamdeck & Co., Header X-Suite-Token).
+   * Wird beim ersten Start erzeugt. Die Umgebungsvariable SUITE_API_TOKEN hat Vorrang.
+   */
+  apiToken: string;
 }
 
 export const defaultCoreConfig: CoreConfig = {
@@ -38,4 +43,5 @@ export const defaultCoreConfig: CoreConfig = {
   satelliteToken: '',
   satellitePort: 7475,
   closeToTray: true,
+  apiToken: '',
 };

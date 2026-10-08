@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -25,7 +26,12 @@ export class HttpError extends Error {
 interface Route {
   handler: ApiHandler;
   upload: boolean;
+  /** Fernsteuer-Route (Streamdeck & Co.): braucht den Header X-Suite-Token */
+  token: boolean;
 }
+
+/** Eine Seite (Overlay, Player …) hat sich per WebSocket verbunden, getrennt oder etwas geschickt */
+export type ClientListener = (event: { type: 'open' | 'close' | 'message'; channel: string; data?: unknown }) => void;
 
 const JSON_LIMIT = 2 * 1024 * 1024;
 const UPLOAD_LIMIT = 60 * 1024 * 1024;
@@ -43,6 +49,9 @@ const MIME: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.mp3': 'audio/mpeg',
+  '.flac': 'audio/flac',
+  '.m4a': 'audio/mp4',
+  '.opus': 'audio/ogg',
   '.wav': 'audio/wav',
   '.ogg': 'audio/ogg',
   '.webm': 'video/webm',
@@ -93,6 +102,8 @@ export class LocalServer {
   private mounts = new Map<string, { dir: string; scope: string }>();
   private scopes = new Map<string, Set<string>>();
   private clients = new Set<{ ws: WebSocket; channel: string }>();
+  private listeners = new Map<ClientListener, { scope: string; channel: string }>();
+  private apiToken: () => string = () => '';
 
   constructor(
     private publicDir: string,
@@ -108,9 +119,9 @@ export class LocalServer {
    * API-Route registrieren. `scope` = wem sie gehört (z.B. Addon-ID), damit man sie wieder entfernen kann.
    * Upload-Routen bekommen die rohen Dateidaten als Buffer.
    */
-  route(scope: string, method: 'GET' | 'POST', urlPath: string, handler: ApiHandler, options: { upload?: boolean } = {}): void {
+  route(scope: string, method: 'GET' | 'POST', urlPath: string, handler: ApiHandler, options: { upload?: boolean; token?: boolean } = {}): void {
     const key = `${method} ${urlPath}`;
-    this.routes.set(key, { handler, upload: !!options.upload });
+    this.routes.set(key, { handler, upload: !!options.upload, token: !!options.token });
     this.scopeKeys(scope).add(key);
   }
 
@@ -123,6 +134,38 @@ export class LocalServer {
     for (const key of this.scopes.get(scope) ?? []) this.routes.delete(key);
     this.scopes.delete(scope);
     for (const [prefix, mount] of this.mounts) if (mount.scope === scope) this.mounts.delete(prefix);
+    for (const [listener, entry] of this.listeners) if (entry.scope === scope) this.listeners.delete(listener);
+  }
+
+  /** Woher der Schlüssel für Fernsteuer-Routen kommt (leer = Fernsteuerung aus) */
+  setApiToken(get: () => string): void {
+    this.apiToken = get;
+  }
+
+  /**
+   * Auf Seiten eines Kanals hören: verbunden, getrennt, Nachricht.
+   * Nachrichten kommen nur von Seiten der Suite selbst an (Origin-Prüfung beim Verbinden).
+   */
+  listen(scope: string, channel: string, listener: ClientListener): void {
+    this.listeners.set(listener, { scope, channel });
+  }
+
+  /** Wie viele Seiten sind gerade mit diesem Kanal verbunden? */
+  clientCount(channel: string): number {
+    let count = 0;
+    for (const client of this.clients) if (client.channel === channel && client.ws.readyState === WebSocket.OPEN) count++;
+    return count;
+  }
+
+  private notify(event: Parameters<ClientListener>[0]): void {
+    for (const [listener, entry] of this.listeners) {
+      if (entry.channel !== event.channel) continue;
+      try {
+        listener(event);
+      } catch (err) {
+        this.log.error('Fehler beim Verarbeiten einer WebSocket-Nachricht:', err);
+      }
+    }
   }
 
   /** Nachricht an alle Overlays eines Kanals schicken. */
@@ -148,10 +191,26 @@ export class LocalServer {
         socket.destroy();
         return;
       }
+      // Nachrichten nur von Seiten der Suite annehmen – fremde Webseiten im Browser dürfen höchstens mitlesen
+      const trusted = this.isOwnOrigin(req.headers.origin);
       wss.handleUpgrade(req, socket, head, (ws) => {
         const client = { ws, channel: url.searchParams.get('channel') ?? '' };
         this.clients.add(client);
-        ws.on('close', () => this.clients.delete(client));
+        this.notify({ type: 'open', channel: client.channel });
+        ws.on('close', () => {
+          this.clients.delete(client);
+          this.notify({ type: 'close', channel: client.channel });
+        });
+        ws.on('message', (raw) => {
+          if (!trusted) return;
+          let data: unknown;
+          try {
+            data = JSON.parse(String(raw));
+          } catch {
+            return;
+          }
+          this.notify({ type: 'message', channel: client.channel, data });
+        });
       });
     });
 
@@ -174,6 +233,20 @@ export class LocalServer {
   private isAllowedHost(req: http.IncomingMessage): boolean {
     const host = req.headers.host ?? '';
     return host === `127.0.0.1:${this.port}` || host === `localhost:${this.port}`;
+  }
+
+  private isOwnOrigin(origin: string | undefined): boolean {
+    return origin === `http://127.0.0.1:${this.port}` || origin === `http://localhost:${this.port}`;
+  }
+
+  /** Header X-Suite-Token prüfen (zeitkonstant, damit man den Schlüssel nicht Zeichen für Zeichen erraten kann) */
+  private hasValidToken(req: http.IncomingMessage): boolean {
+    const expected = this.apiToken();
+    const given = String(req.headers['x-suite-token'] ?? '');
+    if (!expected || !given) return false;
+    const a = Buffer.from(given);
+    const b = Buffer.from(expected);
+    return a.length === b.length && timingSafeEqual(a, b);
   }
 
   private async handle(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
@@ -200,10 +273,22 @@ export class LocalServer {
     if (!route) return sendJson(res, 404, { error: 'Unbekannte API-Route' });
 
     try {
+      if (route.token && !this.hasValidToken(req)) {
+        throw new HttpError(401, 'Schlüssel fehlt oder ist falsch (Header X-Suite-Token).');
+      }
       let body: unknown;
       if (req.method === 'POST') {
-        // Fremde Webseiten dürfen weder JSON noch eigene Header ungefragt an den Server schicken
-        if (route.upload) {
+        // Fremde Webseiten dürfen weder JSON noch eigene Header ungefragt an den Server schicken.
+        // Fernsteuer-Routen schützt schon der X-Suite-Token-Header → dort darf der Body auch fehlen
+        // (Streamdeck-Plugins schicken oft keinen Content-Type).
+        if (route.token && !String(req.headers['content-type'] ?? '').startsWith('application/json')) {
+          const raw = (await readRaw(req, JSON_LIMIT)).toString('utf8').trim();
+          try {
+            body = raw ? JSON.parse(raw) : {};
+          } catch {
+            throw new HttpError(400, 'Ungültiges JSON');
+          }
+        } else if (route.upload) {
           if (req.headers['x-suite-upload'] !== '1') throw new HttpError(400, 'Upload-Header fehlt');
           body = await readRaw(req, UPLOAD_LIMIT);
         } else {

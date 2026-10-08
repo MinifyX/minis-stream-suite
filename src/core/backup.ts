@@ -28,9 +28,9 @@ const EXT = 'suitebackup';
 const AUTO_KEEP = 10;
 const AUTO_EVERY_MS = 24 * 60 * 60 * 1000;
 /** Diese Einträge in config.json bleiben beim Import, wie sie sind */
-const KEEP_ON_IMPORT: (keyof CoreConfig)[] = ['tokens', 'botTokens'];
+const KEEP_ON_IMPORT: (keyof CoreConfig)[] = ['tokens', 'botTokens', 'apiToken'];
 /** Ordner in addon-data, die nicht gesichert werden (lassen sich neu erzeugen) */
-const SKIP_DATA = ['alerts/tts'];
+const SKIP_DATA = ['alerts/tts', 'music/covers'];
 
 interface Backup {
   format: typeof FORMAT;

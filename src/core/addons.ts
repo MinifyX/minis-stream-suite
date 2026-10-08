@@ -7,7 +7,7 @@ import { ConfigStore } from './config';
 import { defaultCoreConfig, type CoreConfig } from './coreConfig';
 import type { EventBus } from './eventBus';
 import { createLogger, type Logger } from './log';
-import { HttpError, type ApiHandler, type LocalServer } from './server';
+import { HttpError, type ApiHandler, type ClientListener, type LocalServer } from './server';
 import type { TwitchApi } from './twitch/api';
 import type { TwitchAuth, TwitchUser } from './twitch/auth';
 import type { EventOfType, StreamEvent, StreamEventType } from './twitch/events';
@@ -55,8 +55,15 @@ export interface AddonContext {
   /** Eigene Einstellungsdatei des Addons */
   settings<T extends object>(defaults: T): ConfigStore<T>;
   overlay: {
-    /** Schickt Daten an alle offenen Overlays dieses Addons */
-    broadcast(data: unknown): void;
+    /**
+     * Schickt Daten an alle offenen Overlays dieses Addons (WebSocket /ws?channel=<id>).
+     * Mit `channel` nur an einen Unterkanal, z.B. "player" → /ws?channel=<id>.player
+     */
+    broadcast(data: unknown, channel?: string): void;
+    /** Wie viele Seiten sind gerade verbunden (Haupt- oder Unterkanal)? */
+    clients(channel?: string): number;
+    /** Seiten im (Unter-)Kanal verbinden sich, trennen sich oder schicken Nachrichten (JSON) */
+    listen(channel: string | undefined, listener: ClientListener): void;
     /** Basis-URL der Addon-Dateien, z.B. http://127.0.0.1:7474/addons/alerts */
     baseUrl: string;
   };
@@ -66,7 +73,20 @@ export interface AddonContext {
     post(path: string, handler: ApiHandler): void;
     /** Datei-Upload: body ist ein Buffer, der Dateiname steht in query */
     upload(path: string, handler: ApiHandler): void;
+    /**
+     * Fernsteuer-Routen für Streamdeck & Co. unter /api/<id>/…
+     * Brauchen den Header X-Suite-Token (Schlüssel aus der Übersicht), ohne → 401.
+     */
+    remote: {
+      get(path: string, handler: ApiHandler): void;
+      post(path: string, handler: ApiHandler): void;
+    };
   };
+  /**
+   * Einen beliebigen Ordner (z.B. Musik oder Intro-Videos) ausliefern.
+   * Gibt die URL zurück, z.B. /addon-files/music/library. Ein zweiter Aufruf mit gleichem Namen ersetzt den Ordner.
+   */
+  serveFolder(name: string, dir: string): string;
   /** Eigener Datenordner (z.B. für hochgeladene Dateien) … */
   dataDir: string;
   /** … und die URL, unter der er ausgeliefert wird, z.B. /addon-data/alerts */
@@ -178,6 +198,7 @@ export class AddonManager {
     const apiBase = `/api/addons/${addon.id}`;
     const dataDir = path.join(app.getPath('userData'), 'addon-data', addon.id);
     const dataUrl = `/addon-data/${addon.id}`;
+    const channelOf = (channel?: string) => (channel ? `${addon.id}.${channel}` : addon.id);
     fs.mkdirSync(dataDir, { recursive: true });
     server.mount(addon.id, dataUrl, dataDir);
     if (addon.publicDir) server.mount(addon.id, `/addons/${addon.id}`, addon.publicDir);
@@ -193,13 +214,24 @@ export class AddonManager {
       getUser: () => auth.user,
       settings: (defaults) => new ConfigStore(`addons/${addon.id}`, defaults),
       overlay: {
-        broadcast: (data) => server.broadcast(addon.id, data),
+        broadcast: (data, channel) => server.broadcast(channelOf(channel), data),
+        clients: (channel) => server.clientCount(channelOf(channel)),
+        listen: (channel, listener) => server.listen(addon.id, channelOf(channel), listener),
         baseUrl: `${server.url}/addons/${addon.id}`,
       },
       api: {
         get: (path, handler) => server.route(addon.id, 'GET', apiBase + path, handler),
         post: (path, handler) => server.route(addon.id, 'POST', apiBase + path, handler),
         upload: (path, handler) => server.route(addon.id, 'POST', apiBase + path, handler, { upload: true }),
+        remote: {
+          get: (path, handler) => server.route(addon.id, 'GET', `/api/${addon.id}${path}`, handler, { token: true }),
+          post: (path, handler) => server.route(addon.id, 'POST', `/api/${addon.id}${path}`, handler, { token: true }),
+        },
+      },
+      serveFolder: (name, dir) => {
+        const url = `/addon-files/${addon.id}/${name}`;
+        server.mount(addon.id, url, dir);
+        return url;
       },
       dataDir,
       dataUrl,

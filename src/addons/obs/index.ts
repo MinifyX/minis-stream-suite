@@ -59,6 +59,17 @@ const MAX_QUEUE = 20;
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
+/** Name der Schnittstelle für andere Addons: ctx.use<ObsService>(OBS_SERVICE) */
+export const OBS_SERVICE = 'obs';
+
+export interface ObsService {
+  isConnected(): boolean;
+  /** Programm-Szene wechseln. Wirft einen Fehler, wenn OBS nicht verbunden ist oder die Szene fehlt. */
+  setScene(sceneName: string): Promise<void>;
+  /** Alle Szenen (oben → unten wie in OBS), leer wenn nicht verbunden */
+  listScenes(): Promise<string[]>;
+}
+
 /** Wird beim Deaktivieren aufgerufen (deactivate bekommt keinen ctx) */
 let shutdown: (() => Promise<void>) | null = null;
 
@@ -89,7 +100,8 @@ export const obsAddon: Addon = {
     const connection = (): ObsConnection => ({
       host: settings.get('host'),
       port: settings.get('port'),
-      password: settings.get('password'),
+      // Beim Entwickeln darf das Passwort auch aus der .env kommen (OBS_PASSWORD)
+      password: settings.get('password') || process.env.OBS_PASSWORD || '',
     });
 
     // -------------------------------------------------------- Szenen & Quellen aus OBS
@@ -449,6 +461,21 @@ export const obsAddon: Addon = {
     // -------------------------------------------------------- Verbindung
 
     if (settings.get('autoConnect')) client.start(connection());
+
+    // Schnittstelle für andere Addons (z.B. Intro: am Ende auf die Stream-Szene schalten)
+    const service: ObsService = {
+      isConnected: () => client.connected,
+      setScene: async (sceneName) => {
+        if (!client.connected) throw new Error('OBS ist nicht verbunden.');
+        await client.request('SetCurrentProgramScene', { sceneName });
+      },
+      listScenes: async () => {
+        if (!client.connected) return [];
+        const list = await client.request<{ scenes: { sceneName: string }[] }>('GetSceneList');
+        return [...list.scenes].reverse().map((s) => s.sceneName);
+      },
+    };
+    ctx.provide(OBS_SERVICE, service);
 
     shutdown = async () => {
       if (refreshTimer) clearTimeout(refreshTimer);

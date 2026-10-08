@@ -1,4 +1,5 @@
 import { app, dialog, Menu } from 'electron';
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { builtInAddons, upcomingAddons } from './addons';
 import { AddonManager } from './core/addons';
@@ -32,6 +33,9 @@ async function bootstrap(): Promise<void> {
   const api = new TwitchApi(auth);
   const eventsub = new EventSubClient(auth, api, bus, createLogger('EventSub'));
   const server = new LocalServer(path.join(app.getAppPath(), 'public'), PORT, createLogger('Server'));
+  // Schlüssel für die Fernsteuerung (Streamdeck): einmal erzeugen, SUITE_API_TOKEN hat Vorrang
+  if (!config.get('apiToken')) config.set('apiToken', randomBytes(24).toString('base64url'));
+  server.setApiToken(() => process.env.SUITE_API_TOKEN || config.get('apiToken'));
   // Optionaler Bot-Account: eigener Login, eigene Tokens, schreibt die Chat-Nachrichten der Suite
   const botAuth = new TwitchAuth(config, createLogger('Bot'), { tokenKey: 'botTokens', scopes: BOT_SCOPES });
   const botApi = new TwitchApi(botAuth);
@@ -40,7 +44,7 @@ async function bootstrap(): Promise<void> {
   const allAddons = [...builtInAddons, ...loadPlugins(builtInAddons.map((a) => a.id))];
   const addons = new AddonManager(allAddons, { bus, api, auth, server, config, chat });
 
-  registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus });
+  registerCoreRoutes({ server, auth, botAuth, eventsub, addons, upcomingAddons, bus, config });
   registerPluginRoutes(server);
   registerBot({ server, config, auth, api, botAuth, chat, log: createLogger('Bot') });
   registerBackup({ server, config, addons, log: createLogger('Sicherung') });
@@ -71,6 +75,14 @@ async function bootstrap(): Promise<void> {
 
 // Für Entwickler: zweite Instanz mit eigenem Datenordner/Port starten, ohne die echte Suite anzufassen
 // (z.B. SUITE_DATA_DIR=C:\temp\suite-test SUITE_PORT=7480 npm start)
+// Beim Entwickeln: Werte aus .env (siehe .env.example) laden. Die installierte App liest keine .env.
+if (!app.isPackaged) {
+  try {
+    process.loadEnvFile(path.join(app.getAppPath(), '.env'));
+  } catch {
+    // keine .env – auch gut
+  }
+}
 if (process.env.SUITE_DATA_DIR) app.setPath('userData', process.env.SUITE_DATA_DIR);
 
 // Nur eine Instanz erlauben (sonst wäre der Port doppelt belegt). Ein zweiter Start zeigt das vorhandene Fenster.

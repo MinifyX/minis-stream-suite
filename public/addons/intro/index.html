@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Intro-Sequenz</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="/app/panel.css">
+  <link rel="stylesheet" href="intro.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <div class="title-row">
+        <h1>🎞️ Intro-Sequenz</h1>
+        <span id="player-pill" class="status-pill"></span>
+      </div>
+      <p class="note">Intro → Loop 1 („Stream startet“) → Main → Loop 2 → Outro. „Go“ und „Outro“ wechseln immer erst am Ende des laufenden Loop-Durchlaufs, damit der Beat nicht springt. Danach schaltet die Suite auf die Stream-Szene und startet die Musik.</p>
+    </header>
+
+    <div class="layout">
+      <main>
+        <section class="card" id="control">
+          <div class="chain" id="chain"></div>
+          <div class="now">
+            <div class="now-state" id="now-state"></div>
+            <div class="now-info">
+              <div class="countdown" id="countdown"></div>
+              <div id="pending"></div>
+            </div>
+          </div>
+          <div class="cmd-row" id="commands"></div>
+          <p class="note" id="cmd-hint"></p>
+        </section>
+
+        <section class="card" id="music-card" hidden>
+          <div class="card-head">
+            <h2>🎵 Musik</h2>
+            <span class="spacer"></span>
+            <a class="link-btn" href="#" id="music-open">Zur Musik-Seite</a>
+          </div>
+          <div id="music-mini"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>🕘 Ereignisse</h2>
+            <span class="spacer"></span>
+            <button class="btn small" id="log-clear">Leeren</button>
+          </div>
+          <div id="log" class="log"></div>
+        </section>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>📺 OBS-Browserquelle</h2>
+          <div class="copy-row"><code id="player-url" class="no-i18n"></code><button class="btn small" id="copy-url">Kopieren</button></div>
+          <p class="note">In OBS als <b>Browser</b>-Quelle hinzufügen, <b>1920 × 1080</b>, Haken bei <b>„Audio über OBS steuern“</b>. Nur eine solche Quelle anlegen, sonst läuft das Intro mehrfach.</p>
+          <div id="player-detail"></div>
+        </section>
+
+        <section class="card">
+          <h2>📁 Medien</h2>
+          <div class="field">
+            <label>Ordner mit den Segment-Dateien</label>
+            <input type="text" id="media-dir" class="no-i18n">
+            <p class="note" id="media-default"></p>
+          </div>
+          <div class="btn-row">
+            <button class="btn small" id="open-folder">📂 Ordner öffnen</button>
+            <button class="btn small" id="reload-player">↻ Player neu laden</button>
+          </div>
+          <div id="segments" class="segments"></div>
+          <div id="missing"></div>
+          <button class="btn primary" id="save-media">Speichern</button>
+          <details>
+            <summary><span class="note">📖 Anforderungen an die Dateien</span></summary>
+            <ul class="howto">
+              <li><b>Audio:</b> WAV, 48 kHz, 24 bit, eine Datei pro Segment. Loops exakt auf ganze Takte geschnitten, ohne Stille am Anfang oder Ende.</li>
+              <li><b>Video:</b> ohne Tonspur, 1920 × 1080, dieselbe Framerate für alle (z.B. 60 fps), WebM (VP9) oder MP4 (H.264). So lang wie das Audio.</li>
+              <li>Das Outro inklusive Ausklang als <b>eine</b> Datei exportieren.</li>
+              <li>Zum Ausprobieren: <code>npm run intro:dummy</code> erzeugt Testdateien.</li>
+            </ul>
+          </details>
+        </section>
+
+        <section class="card">
+          <h2>🏁 Nach dem Intro</h2>
+          <div id="done-form"></div>
+        </section>
+
+        <section class="card">
+          <details>
+            <summary><h2>🔗 Webhooks</h2></summary>
+            <p class="note">Pro Phase Adressen (eine pro Zeile), die beim Erreichen per POST <code>{ "state", "ts" }</code> benachrichtigt werden – z.B. Home Assistant für DMX-Licht oder Nebel. Wartezeit max. 3 s, Fehler landen nur im Log.</p>
+            <div id="webhooks" class="webhooks"></div>
+          </details>
+        </section>
+
+        <section class="card">
+          <details>
+            <summary><h2>🎛️ Streamdeck</h2></summary>
+            <div id="remote"></div>
+          </details>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/app/ui.js"></script>
+  <script src="/app/remote.js"></script>
+  <script src="intro.js"></script>
+</body>
+</html>

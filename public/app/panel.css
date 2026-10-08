@@ -1,0 +1,65 @@
+/* Gemeinsames Seitenlayout für Steuer-Seiten (Intro, Musik): Kopf, zwei Spalten, Karten, Log */
+body { padding: 24px 28px; }
+[hidden] { display: none !important; }
+select, input[type="password"], textarea {
+  width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 10px; border-radius: 8px; font: inherit;
+}
+textarea { resize: vertical; min-height: 60px; font-family: Consolas, monospace; font-size: 12px; }
+input[type="range"] { accent-color: var(--accent); width: 100%; }
+.spacer { flex: 1; }
+.note { font-size: 12px; color: var(--muted); margin: 0; }
+.warn-note { font-size: 12px; color: var(--warn); margin: 0; }
+.err-note { font-size: 12px; color: var(--err); margin: 0; }
+
+.page { max-width: 1250px; display: flex; flex-direction: column; gap: 16px; }
+.head { display: flex; flex-direction: column; gap: 10px; }
+.title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.title-row h1 { margin: 0; }
+
+.status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; background: var(--card-2); font-size: 12px; font-weight: 600; color: var(--muted); }
+.status-pill.ok { color: var(--ok); background: rgba(46, 204, 113, .12); }
+.status-pill.warn { color: var(--warn); background: rgba(245, 176, 65, .12); }
+.status-pill.err { color: var(--err); background: rgba(255, 92, 92, .12); }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; }
+@media (max-width: 1050px) { .layout { grid-template-columns: 1fr; } }
+main, aside { display: flex; flex-direction: column; gap: 16px; }
+.card { display: flex; flex-direction: column; gap: 12px; }
+aside .card { padding: 16px; }
+.card h2 { margin: 0; }
+.card-head { display: flex; align-items: center; gap: 8px; }
+.field { margin: 0; }
+.field > label { font-size: 13px; }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opt-row { display: flex; align-items: center; gap: 10px; min-height: 32px; }
+.opt-row > span { flex: 1; font-weight: 600; font-size: 13px; }
+.link-btn { background: none; border: 0; color: #bf94ff; cursor: pointer; font: inherit; font-size: 12px; padding: 0; text-align: left; }
+.link-btn:hover { text-decoration: underline; }
+.copy-row { display: flex; gap: 6px; align-items: center; }
+.copy-row code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 6px 8px; }
+
+details summary { cursor: pointer; list-style: none; }
+details summary::-webkit-details-marker { display: none; }
+details summary h2 { display: inline; font-size: 14px; }
+details[open] summary { margin-bottom: 10px; }
+.howto { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+
+/* Log */
+.log { display: flex; flex-direction: column; gap: 2px; max-height: 360px; overflow-y: auto; font-size: 12px; }
+.l-row { display: grid; grid-template-columns: 58px 18px 1fr; gap: 6px; padding: 5px 6px; border-radius: 6px; }
+.l-row:hover { background: var(--card-2); }
+.l-time { color: var(--muted); font-family: Consolas, monospace; }
+.l-text { min-width: 0; overflow-wrap: anywhere; }
+.l-row.error .l-text { color: #ffb3b3; }
+.l-row.warn .l-text { color: #ffd89a; }
+.log-empty { color: var(--muted); font-size: 12px; padding: 6px; }
+
+/* Streamdeck-Karte (remote.js) */
+.remote-row { display: flex; gap: 6px; align-items: center; }
+.remote-token { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 6px 8px; }
+.remote-list { display: flex; flex-direction: column; gap: 4px; }
+.remote-ep { display: grid; grid-template-columns: 44px auto 1fr; gap: 8px; align-items: center; font-size: 12px; }
+.remote-ep code { cursor: pointer; }
+.remote-ep code:hover { color: #cdaaff; }
+.remote-curl { display: block; white-space: pre-wrap; word-break: break-all; padding: 8px; font-size: 11px; }

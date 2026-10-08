@@ -18,7 +18,8 @@
     "dist": "tsc && electron-builder --win",
     "pack": "tsc && electron-builder --win --dir",
     "plugin:install": "tsc && node scripts/install-plugin.mjs",
-    "i18n:check": "node scripts/i18n.mjs check"
+    "i18n:check": "node scripts/i18n.mjs check",
+    "intro:dummy": "node scripts/intro-dummy-media.mjs"
   },
   "build": {
     "appId": "io.github.minifyx.streamsuite",

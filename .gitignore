@@ -9,3 +9,6 @@ release/
 
 # Werkstatt für eigene Plugins (eigenes Git-Repo möglich) – installieren mit npm run plugin:install
 src/addons/private/
+
+# Testmedien (npm run intro:dummy)
+media/

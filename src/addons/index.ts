@@ -5,6 +5,7 @@ import { channelPointsAddon } from './channelpoints';
 import { chatAddon } from './chat';
 import { commandsAddon } from './commands';
 import { goalsAddon } from './goals';
+import { introAddon } from './intro';
 import { lurkAddon } from './lurk';
 import { modguardAddon } from './modguard';
 import { obsAddon } from './obs';
@@ -18,7 +19,7 @@ import { timersAddon } from './timers';
 /** Alle eingebauten Addons. Neues Addon? Hier eintragen. */
 export const builtInAddons: Addon[] = [
   alertsAddon, channelPointsAddon, queueAddon, commandsAddon, timersAddon, pollsAddon, predictionsAddon, goalsAddon, lurkAddon,
-  shoutoutAddon, adsAddon, modguardAddon, streaminfoAddon, obsAddon, chatAddon,
+  shoutoutAddon, adsAddon, modguardAddon, streaminfoAddon, obsAddon, chatAddon, introAddon,
 ];
 // Addons von außerhalb: siehe core/plugins.ts (Ordner „plugins“ im Datenordner)
 
