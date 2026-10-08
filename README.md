@@ -4,7 +4,7 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.5):** Installierbare Windows-App mit Core, Bot-Account und 15 Addons. Oberfläche auf Deutsch oder Englisch.
+**Aktueller Stand (v0.7):** Installierbare Windows-App mit Core, Bot-Account und 17 Addons. Oberfläche auf Deutsch oder Englisch.
 
 **Kanalpunkte-Addon:**
 
