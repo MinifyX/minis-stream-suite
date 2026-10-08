@@ -85,6 +85,12 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 
 **🎬 OBS-Steuerung:** Über OBS WebSocket (OBS 28+) Szenen wechseln, Quellen und Filter ein- und ausblenden, ausgelöst von Belohnungen, Chat-Commands oder Events, optional mit automatischem Zurückschalten.
 
+**🎞️ Intro-Sequenz:** Mehrteiliges Intro (Video + Beat) als OBS-Browserquelle: Intro → Loop 1 („Stream startet“) → Main → Loop 2 → Outro. Der Ton ist die Uhr, Loops laufen sample-genau ohne Lücke. „Go“ und „Outro“ wechseln erst am Ende des laufenden Loop-Durchlaufs (auch vorab drückbar), mit Notausstieg. Danach automatisch OBS-Szenenwechsel, Musikstart mit Einblenden und optionale Webhooks (z.B. Home Assistant für Licht). Steuerbar per Klick oder Streamdeck.
+
+**🎵 Musik:** Spotify direkt in der Suite (eigenes Connect-Gerät über das offizielle Web Playback SDK) oder als Fernsteuerung der Spotify-App, dazu eigene Dateien mit Crossfade (Ordner = Playlist). Now-Playing-Overlay, Lautstärke und Titel per Streamdeck, Auto-Start-Playlist nach dem Intro. Einrichtung und Audio-Routing in OBS: siehe [NOTES.md](NOTES.md).
+
+**🎛️ Streamdeck:** Intro und Musik lassen sich per HTTP steuern (`/api/intro/…`, `/api/music/…`), geschützt mit einem Schlüssel im Header `X-Suite-Token`.
+
 **💾 Sicherung:** Alle Einstellungen (optional mit Bildern und Sounds) in eine Datei packen und wieder einspielen, z.B. für einen neuen PC. Einmal am Tag sichert die Suite automatisch. Twitch-Logins sind nie in einer Sicherung.
 
 ## Installieren
@@ -155,6 +161,8 @@ src/
     goals/                Ziele & „Letzte Events“
     streaminfo/           Titel, Kategorie, Vorlagen
     obs/                  OBS-Steuerung (client.ts = obs-websocket v5)
+    intro/                Intro-Sequenz (State Machine: public/addons/intro/sequencer.js)
+    music/                Musik: MusicManager, Spotify (spotify.ts), lokale Bibliothek (library.ts, tags.ts)
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
   app/i18n/en.json        Englische Texte (ui.js übersetzt die Seiten beim Anzeigen)

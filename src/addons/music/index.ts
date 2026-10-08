@@ -133,6 +133,15 @@ export const musicAddon: Addon = {
     let sdkTimer: NodeJS.Timeout | null = null;
     /** Aktuelle (ggf. gerade eingeblendete) Lautstärke – settings.volume ist das Ziel */
     let volume = settings.get('volume');
+    /** Läuft ein Fade (Lautstärke-Rampe) – ein neuer bricht den alten ab */
+    let fadeRun = 0;
+    let fade: { from: number; to: number; start: number; ms: number } | null = null;
+    /** Lautstärke jetzt gerade – während eines Fades geschätzt, damit „delta“ vom hörbaren Wert ausgeht */
+    const currentVolume = () => {
+      if (!fade) return volume;
+      const k = Math.min(1, (Date.now() - fade.start) / fade.ms);
+      return Math.round(fade.from + (fade.to - fade.from) * k);
+    };
     let nowPlaying: NowPlaying | null = null;
     let lastBroadcastKey = '';
 
@@ -321,7 +330,7 @@ export const musicAddon: Addon = {
       chosenProvider: settings.get('provider'),
       fallback: settings.get('provider') === 'spotify-sdk' && sdkState === 'failed',
       isPlaying: !!nowPlaying?.isPlaying,
-      volume,
+      volume: currentVolume(),
       targetVolume: settings.get('volume'),
     });
 
@@ -336,7 +345,11 @@ export const musicAddon: Addon = {
     /** Nur solange jemand zuschaut (Steuerseite oder Overlay) */
     const anyoneWatching = () => ctx.overlay.clients() + ctx.overlay.clients('overlay') > 0;
 
+    /** Addon ist aus – verzögerte Abfragen dürfen nichts mehr tun */
+    let stopped = false;
+
     const pollConnect = async () => {
+      if (stopped) return;
       try {
         const res = await spotify.request<any>('GET', '/me/player/currently-playing', { query: { additional_types: 'episode' } }); // eslint-disable-line @typescript-eslint/no-explicit-any
         const item = res?.item;
@@ -402,9 +415,6 @@ export const musicAddon: Addon = {
       }
     };
 
-    /** Läuft ein Fade (Lautstärke-Rampe) – ein neuer bricht den alten ab */
-    let fadeRun = 0;
-
     const local: MusicProvider = {
       id: 'local',
       unavailableReason() {
@@ -459,6 +469,12 @@ export const musicAddon: Addon = {
       },
     };
 
+    /** Wirft 503 mit Grund, wenn das SDK-Gerät gerade nicht bedienbar ist */
+    const sdkReady = () => {
+      const reason = sdk.unavailableReason();
+      if (reason) fail(503, reason);
+    };
+
     const sdk: MusicProvider = {
       id: 'spotify-sdk',
       unavailableReason() {
@@ -479,16 +495,20 @@ export const musicAddon: Addon = {
         });
       },
       async pause() {
+        sdkReady();
         toHost({ type: 'sdk.cmd', action: 'pause' });
       },
       async resume() {
+        sdkReady();
         // Ist die Suite gerade nicht das aktive Gerät, holt „play“ mit device_id die Wiedergabe her
         await spotifyCall(() => spotify.request('PUT', '/me/player/play', { query: { device_id: sdkDeviceId! } }));
       },
       async next() {
+        sdkReady();
         toHost({ type: 'sdk.cmd', action: 'next' });
       },
       async previous() {
+        sdkReady();
         toHost({ type: 'sdk.cmd', action: 'previous' });
       },
       async setVolume(v) {
@@ -621,6 +641,7 @@ export const musicAddon: Addon = {
 
     const setVolume = async (v: number, remember = true) => {
       fadeRun++;
+      fade = null;
       volume = clampVolume(v);
       if (remember) settings.set('volume', volume);
       await active().setVolume(volume);
@@ -628,10 +649,13 @@ export const musicAddon: Addon = {
     };
 
     const fadeTo = async (v: number, ms: number) => {
-      fadeRun++;
-      const provider = active();
+      const run = ++fadeRun;
       const target = clampVolume(v);
-      await provider.fadeTo(target, ms);
+      fade = ms > 0 ? { from: volume, to: target, start: Date.now(), ms } : null;
+      await active().fadeTo(target, ms);
+      // Abgelöst (z.B. Lautstärke während des Einblendens von Hand geändert) → nichts überschreiben
+      if (run !== fadeRun) return;
+      fade = null;
       volume = target;
       sendState();
     };
@@ -682,7 +706,14 @@ export const musicAddon: Addon = {
 
     // -------------------------------------------------------- Aufräumen
 
+    // Addon wurde (wieder) eingeschaltet, während der Music-Host schon offen ist → er soll sich neu melden
+    hostClients = ctx.overlay.clients('host');
+    if (hostClients) toHost({ type: 'host.ping' });
+
     shutdown = () => {
+      // Laufende Fades (Fernsteuerung) und verzögerte Abfragen beenden
+      fadeRun++;
+      stopped = true;
       if (sdkTimer) clearTimeout(sdkTimer);
       if (pollTimer) clearInterval(pollTimer);
       toHost({ type: 'local.cmd', action: 'pause' });
@@ -750,7 +781,7 @@ export const musicAddon: Addon = {
     });
 
     ctx.api.post('/volume', async ({ body }) => {
-      const v = body?.delta !== undefined ? volume + Number(body.delta) : Number(body?.volume);
+      const v = body?.delta !== undefined ? currentVolume() + Number(body.delta) : Number(body?.volume);
       if (!Number.isFinite(v)) throw new HttpError(400, 'Bitte volume (0–100) oder delta angeben.');
       await setVolume(v);
       return fullState();
@@ -789,7 +820,7 @@ export const musicAddon: Addon = {
     ctx.api.post('/open-host', () => {
       const url = `${ctx.overlay.baseUrl}/host.html`;
       try {
-        const browser = launchHost(url, path.join(ctx.dataDir, 'host-browser'));
+        const browser = launchHost(url, path.join(ctx.dataDir, 'host-browser'), (err) => addLog('error', `Music-Host konnte nicht gestartet werden: ${errorText(err)}`));
         addLog('info', `Music-Host in ${browser} geöffnet.`);
         return { ok: true, browser };
       } catch (err) {
@@ -870,7 +901,7 @@ export const musicAddon: Addon = {
     ctx.api.remote.post('/next', remote(() => command('next')));
     ctx.api.remote.post('/previous', remote(() => command('previous')));
     ctx.api.remote.post('/volume', remote((b) => {
-      const v = b.delta !== undefined ? volume + Number(b.delta) : Number(b.volume);
+      const v = b.delta !== undefined ? currentVolume() + Number(b.delta) : Number(b.volume);
       if (!Number.isFinite(v)) throw new HttpError(400, 'Bitte { "volume": 0–100 } oder { "delta": ±n } schicken.');
       return setVolume(v);
     }));

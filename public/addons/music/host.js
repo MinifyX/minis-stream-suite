@@ -410,6 +410,10 @@
         if (msg.engine === 'sdk') sdkFade(Number(msg.volume), Number(msg.fadeMs) || 0);
         else rampGain(localMaster, gainOf(Number(msg.volume)), Number(msg.fadeMs) || 0);
         return;
+      case 'host.ping':
+        // Musik-Addon wurde neu eingeschaltet → neu melden
+        send({ type: 'host.hello', audioUnlocked: audioCtx.state === 'running', browser: browserName() });
+        return;
       case 'engine':
         engine = msg.engine;
         if (engine !== 'local') for (const d of local.decks) d.audio.pause();
@@ -418,12 +422,15 @@
     }
   }
 
+  function browserName() {
+    return (navigator.userAgentData?.brands || []).map((b) => b.brand).find((b) => /Chrome|Edge/.test(b)) || '';
+  }
+
   function connect() {
     ws = new WebSocket(`ws://${location.host}/ws?channel=music.host`);
     ws.onopen = () => {
       setRow('suite', 'ok', 'verbunden');
-      const brand = (navigator.userAgentData?.brands || []).map((b) => b.brand).find((b) => /Chrome|Edge/.test(b)) || '';
-      send({ type: 'host.hello', audioUnlocked: audioCtx.state === 'running', browser: brand });
+      send({ type: 'host.hello', audioUnlocked: audioCtx.state === 'running', browser: browserName() });
     };
     ws.onmessage = (m) => {
       try {

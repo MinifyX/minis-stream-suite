@@ -11,8 +11,12 @@
   const { Sequencer, SEGMENTS } = window.IntroSequencer;
 
   const DEBUG = new URLSearchParams(location.search).has('debug');
-  /** So viele Sekunden vor einer Grenze wird das nächste Segment eingeplant */
-  const LOOKAHEAD = 1.0;
+  /**
+   * So viele Sekunden vor einer Grenze wird das nächste Segment eingeplant. Großzügig, damit auch ein
+   * kurz gedrosselter Timer (Browser im Hintergrund) nie zu spät einplant – Trigger werden trotzdem
+   * bis kurz vor der Grenze umgeplant (Sequencer.minReplan).
+   */
+  const LOOKAHEAD = 2.0;
   const TICK_MS = 20;
   const DRIFT_EVERY_MS = 1000;
   /** Ab dieser Abweichung wird das Video hart nachgezogen */
@@ -96,6 +100,11 @@
       if (msg.type === 'intro.cmd') onCommand(msg.id, msg.action);
       if (msg.type === 'intro.config') onConfig(msg, false);
       if (msg.type === 'intro.reload') onConfig(config, true);
+      // Addon wurde neu eingeschaltet → Zustand neu melden
+      if (msg.type === 'intro.hello') {
+        sendStatus();
+        sendState();
+      }
     };
     ws.onclose = () => setTimeout(connect, 2000);
   }
@@ -190,6 +199,8 @@
       for (const url of Object.values(nextVideos)) URL.revokeObjectURL(url);
       if (run !== loadRun) return;
       loadError = err.message;
+      // Ein vorgemerkter Start darf nicht später von selbst losgehen, wenn die Dateien repariert sind
+      startQueued = false;
       sendStatus();
       return;
     }
@@ -225,7 +236,8 @@
   // ============================================================ Befehle
 
   async function onCommand(id, action) {
-    const ack = (result) => send({ type: 'ack', id, ...result });
+    // Ack auch bei kurzer Verbindungslücke zustellen – der Befehl ist ja ausgeführt
+    const ack = (result) => send({ type: 'ack', id, ...result }, true);
     if (!ready) {
       if (action === 'start' && !loadError) {
         startQueued = true;
@@ -341,7 +353,8 @@
 
   function onState() {
     sendState();
-    if (pendingConfig && !isRunning()) setTimeout(() => onConfig(pendingConfig, true), 0);
+    // Neue Dateien erst laden, wenn nichts mehr läuft – auch nicht das Ausblenden nach „abort“
+    if (pendingConfig && !isRunning() && !stopTimer) setTimeout(() => onConfig(pendingConfig, true), 0);
   }
 
   function stopNow() {
@@ -365,6 +378,7 @@
     master.gain.cancelScheduledValues(audioCtx.currentTime);
     master.gain.setValueAtTime(1, audioCtx.currentTime);
     stage.classList.remove('black');
+    if (pendingConfig && !isRunning()) setTimeout(() => onConfig(pendingConfig, true), 0);
   }
 
   function onStop(fade) {
@@ -418,6 +432,9 @@
       `Rate:     ${activeVideo ? activeVideo.playbackRate.toFixed(3) : '–'}`,
     ].join('\n');
   }
+
+  // Messwerte für Tests (nur ?debug=1)
+  if (DEBUG) window.introDebug = () => ({ state: seq?.state, lastDriftMs: Math.round(lastDrift * 1000), maxDriftMs: Math.round(maxDrift * 1000), rate: activeVideo?.playbackRate });
 
   // Im normalen Browser braucht Ton einen Klick
   document.addEventListener('click', () => audioCtx?.resume());

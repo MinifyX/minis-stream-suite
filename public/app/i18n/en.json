@@ -1824,7 +1824,250 @@
     "Emotes von 7TV, BTTV und FFZ werden automatisch geladen, deine eigenen Kanal-Emotes dort inklusive. Ob sie angezeigt werden, stellst du für Overlay und Fenster getrennt ein.": "Emotes from 7TV, BTTV and FFZ are loaded automatically, including your own channel emotes there. Whether they are shown is set separately for the overlay and the window.",
     "✍️ So schreibt man Markdown und Farben": "✍️ How to write Markdown and colors",
     "Wer das darf, stellst du für Overlay und Chat-Fenster getrennt ein.": "Who may use them is set separately for the overlay and the chat window.",
-    "Diese Belohnung ist im Alert-Filter stumm (kein Alert)": "This reward is muted in the alert filter (no alert)"
+    "Diese Belohnung ist im Alert-Filter stumm (kein Alert)": "This reward is muted in the alert filter (no alert)",
+    "Intro-Sequenz": "Intro sequence",
+    "🎞️ Intro-Sequenz": "🎞️ Intro sequence",
+    "Intro → Loop 1 („Stream startet“) → Main → Loop 2 → Outro. „Go“ und „Outro“ wechseln immer erst am Ende des laufenden Loop-Durchlaufs, damit der Beat nicht springt. Danach schaltet die Suite auf die Stream-Szene und startet die Musik.": "Intro → Loop 1 (\"Stream starting\") → Main → Loop 2 → Outro. \"Go\" and \"Outro\" always switch at the end of the current loop pass so the beat doesn't skip. Afterwards the suite switches to the stream scene and starts the music.",
+    "🎵 Musik": "🎵 Music",
+    "Zur Musik-Seite": "To the music page",
+    "🕘 Ereignisse": "🕘 Events",
+    "In OBS als": "In OBS, add as a",
+    "-Quelle hinzufügen,": " source,",
+    ", Haken bei": ", check",
+    "„Audio über OBS steuern“": "\"Control audio via OBS\"",
+    ". Nur eine solche Quelle anlegen, sonst läuft das Intro mehrfach.": ". Only create one such source, otherwise the intro plays multiple times.",
+    "📁 Medien": "📁 Media",
+    "Ordner mit den Segment-Dateien": "Folder with the segment files",
+    "📂 Ordner öffnen": "📂 Open folder",
+    "↻ Player neu laden": "↻ Reload player",
+    "📖 Anforderungen an die Dateien": "📖 File requirements",
+    "Audio:": "Audio:",
+    "WAV, 48 kHz, 24 bit, eine Datei pro Segment. Loops exakt auf ganze Takte geschnitten, ohne Stille am Anfang oder Ende.": "WAV, 48 kHz, 24 bit, one file per segment. Loops cut exactly to whole bars, with no silence at the start or end.",
+    "Video:": "Video:",
+    "ohne Tonspur, 1920 × 1080, dieselbe Framerate für alle (z.B. 60 fps), WebM (VP9) oder MP4 (H.264). So lang wie das Audio.": "no audio track, 1920 × 1080, the same frame rate for all (e.g. 60 fps), WebM (VP9) or MP4 (H.264). As long as the audio.",
+    "Das Outro inklusive Ausklang als": "Export the outro including its tail as",
+    "eine": "one",
+    "Datei exportieren.": "file.",
+    "Zum Ausprobieren:": "To try it out:",
+    "🏁 Nach dem Intro": "🏁 After the intro",
+    "🔗 Webhooks": "🔗 Webhooks",
+    "Pro Phase Adressen (eine pro Zeile), die beim Erreichen per POST": "Addresses per phase (one per line) that are notified via POST",
+    "benachrichtigt werden – z.B. Home Assistant für DMX-Licht oder Nebel. Wartezeit max. 3 s, Fehler landen nur im Log.": "when the phase is reached – e.g. Home Assistant for DMX lights or fog. Timeout max. 3 s, errors only end up in the log.",
+    "🎛️ Streamdeck": "🎛️ Stream Deck",
+    "Spotify-Login – Stream Suite": "Spotify login – Stream Suite",
+    "Mit Spotify verbunden": "Connected to Spotify",
+    "Du kannst dieses Fenster jetzt schließen.": "You can close this window now.",
+    "Login hat nicht geklappt": "Login failed",
+    "Music-Host – Stream Suite": "Music host – Stream Suite",
+    "🎵 Music-Host": "🎵 Music host",
+    "Dieses Fenster spielt die Musik der Suite. Einfach offen lassen (minimieren ist ok). Gesteuert wird über die Suite oder das Streamdeck.": "This window plays the suite's music. Just leave it open (minimizing is fine). It is controlled via the suite or the Stream Deck.",
+    "🔊 Ton aktivieren (einmal klicken)": "🔊 Enable sound (click once)",
+    "Suite": "Suite",
+    "Ton": "Sound",
+    "Spotify-Gerät": "Spotify device",
+    "Läuft gerade": "Now playing",
+    "Musik": "Music",
+    "Spotify oder eigene Dateien – gespielt im Music-Host, einem eigenen Browserfenster. Startet nach dem Intro automatisch mit der Auto-Start-Playlist.": "Spotify or your own files – played in the music host, a separate browser window. Starts automatically after the intro with the autostart playlist.",
+    "⭐ Auto-Start nach dem Intro": "⭐ Autostart after the intro",
+    "📃 Playlists": "📃 Playlists",
+    "🖥 Music-Host": "🖥 Music host",
+    "🟢 Spotify": "🟢 Spotify",
+    "📁 Eigene Musik": "📁 Your own music",
+    "📺 Now-Playing-Overlay": "📺 Now playing overlay",
+    "Kopieren hat nicht geklappt – bitte von Hand markieren.": "Copying failed – please select it by hand.",
+    "Neuen Schlüssel erzeugen? Streamdeck-Buttons mit dem alten Schlüssel funktionieren dann nicht mehr.": "Generate a new key? Stream Deck buttons using the old key will stop working.",
+    "Neuer Schlüssel erzeugt": "New key generated",
+    "Für Streamdeck (Plugin „API Ninja“, „Web Requests“ o. Ä.) oder Bitfocus Companion: HTTP-Anfrage an die Adresse schicken, mit dem Header": "For Stream Deck (plugin \"API Ninja\", \"Web Requests\" or similar) or Bitfocus Companion: send an HTTP request to the address, with the header",
+    ". Läuft nur auf diesem PC (127.0.0.1).": ". Only works on this PC (127.0.0.1).",
+    "Verbergen": "Hide",
+    "Zeigen": "Show",
+    "Schlüssel": "Key",
+    "Der Schlüssel kommt aus der Umgebungsvariable SUITE_API_TOKEN.": "The key comes from the environment variable SUITE_API_TOKEN.",
+    "Neuen Schlüssel erzeugen": "Generate new key",
+    "Klicken zum Kopieren": "Click to copy",
+    "Beispiel mit curl": "Example with curl",
+    "IDLE": "IDLE",
+    "Bereit": "Ready",
+    "INTRO": "INTRO",
+    "Intro": "Intro",
+    "LOOP1": "LOOP1",
+    "Loop 1": "Loop 1",
+    "MAIN": "MAIN",
+    "Main": "Main",
+    "LOOP2": "LOOP2",
+    "Loop 2": "Loop 2",
+    "OUTRO": "OUTRO",
+    "Outro": "Outro",
+    "DONE": "DONE",
+    "Fertig": "Done",
+    "Intro wirklich abbrechen? Ton und Bild werden ausgeblendet, danach Szenenwechsel und Musik wie beim normalen Ende.": "Really abort the intro? Sound and picture fade out, followed by the scene switch and music as with a normal ending.",
+    "Start ist vorgemerkt – läuft los, sobald der Player alles geladen hat.": "Start is queued – it begins as soon as the player has loaded everything.",
+    "bis zum Wechsel": "until the switch",
+    "bis zur Loop-Grenze": "until the loop boundary",
+    "bis zum nächsten Teil": "until the next part",
+    "Kein Player verbunden": "No player connected",
+    "Player: Fehler beim Laden": "Player: error while loading",
+    "Start ist vorgemerkt": "Start is queued",
+    "Bereit zum Start": "Ready to start",
+    "Go": "Go",
+    "zurücknehmen": "cancel",
+    "Sequenz starten": "Start sequence",
+    "⏭ Go": "⏭ Go",
+    "nach Loop 1": "after Loop 1",
+    "🏁 Outro": "🏁 Outro",
+    "nach Loop 2": "after Loop 2",
+    "↩ Zurücknehmen": "↩ Cancel",
+    "Trigger verwerfen": "Discard trigger",
+    "⛔ Abort": "⛔ Abort",
+    "Notausstieg": "Emergency stop",
+    "⟲ Reset": "⟲ Reset",
+    "zurück auf Anfang": "back to the start",
+    "Start spielt das Intro ab. „Go“ darfst du schon während des Intros drücken – Loop 1 läuft dann genau einmal.": "Start plays the intro. You can already press \"Go\" during the intro – Loop 1 then plays exactly once.",
+    "„Go“ jetzt drücken = Loop 1 läuft genau einmal, dann Main.": "Press \"Go\" now = Loop 1 plays exactly once, then Main.",
+    "Loop 1 wiederholt sich, bis du „Go“ drückst. Gewechselt wird am Ende des laufenden Durchlaufs.": "Loop 1 repeats until you press \"Go\". The switch happens at the end of the current pass.",
+    "„Outro“ jetzt drücken = Loop 2 läuft genau einmal, dann Outro.": "Press \"Outro\" now = Loop 2 plays exactly once, then Outro.",
+    "Loop 2 wiederholt sich, bis du „Outro“ drückst.": "Loop 2 repeats until you press \"Outro\".",
+    "Das Outro läuft. Danach: Szenenwechsel, Musik, Webhooks.": "The outro is playing. Afterwards: scene switch, music, webhooks.",
+    "Fertig. „Reset“ setzt alles zurück, ohne etwas auszulösen.": "Done. \"Reset\" resets everything without triggering anything.",
+    "Öffne zuerst die Browserquelle in OBS (Adresse rechts).": "First open the browser source in OBS (address on the right).",
+    "Player nicht verbunden": "Player not connected",
+    "Player: Fehler": "Player: error",
+    "Player bereit": "Player ready",
+    "Leer lassen = Standardordner der Suite.": "Leave empty = the suite's default folder.",
+    "Video (optional)": "Video (optional)",
+    "Video ohne Ton – leer = schwarzes Bild": "Video without sound – empty = black picture",
+    "Audio": "Audio",
+    "Audio (WAV)": "Audio (WAV)",
+    "Text über dem Video (optional)": "Text over the video (optional)",
+    "✓ Alle Dateien gefunden.": "✓ All files found.",
+    "Gespeichert – der Player lädt die Dateien neu (sobald kein Intro läuft).": "Saved – the player reloads the files (as soon as no intro is playing).",
+    "Läuft nach dem Outro und nach „Abort“ in dieser Reihenfolge. Klappt ein Schritt nicht, geht es trotzdem weiter.": "Runs after the outro and after \"Abort\", in this order. If a step fails, it carries on anyway.",
+    "1. OBS auf Stream-Szene schalten": "1. Switch OBS to the stream scene",
+    "OBS-Szene wechseln": "Switch OBS scene",
+    "Stream-Szene gespeichert": "Stream scene saved",
+    "Dafür muss das Addon „OBS-Steuerung“ an und verbunden sein.": "This requires the \"OBS control\" addon to be on and connected.",
+    "2. Musik starten": "2. Start music",
+    "Musik starten": "Start music",
+    "Einblenden (Sek.)": "Fade in (sec.)",
+    "Welche Playlist, stellst du auf der Musik-Seite unter „Auto-Start“ ein.": "Which playlist is set on the music page under \"Autostart\".",
+    "Dafür muss das Addon „Musik“ an sein.": "This requires the \"Music\" addon to be on.",
+    "3. Webhooks „DONE“ auslösen": "3. Trigger \"DONE\" webhooks",
+    "Webhooks auslösen": "Trigger webhooks",
+    "Beim Start auf diese Szene schalten": "Switch to this scene on start",
+    "Intro-Szene gespeichert": "Intro scene saved",
+    "– nicht umschalten –": "– don't switch –",
+    "OBS ist nicht verbunden – Szenen bitte von Hand eintragen.": "OBS is not connected – please enter the scenes by hand.",
+    "Noch nichts passiert.": "Nothing has happened yet.",
+    "Kopieren hat nicht geklappt.": "Copying failed.",
+    "Player lädt neu (sobald kein Intro läuft).": "Player reloads (as soon as no intro is playing).",
+    "Trigger „go“": "Trigger \"go\"",
+    "Trigger „outro“": "Trigger \"outro\"",
+    "Trigger zurücknehmen": "Cancel trigger",
+    "Zustand als JSON": "State as JSON",
+    "blockiert – bitte oben klicken": "blocked – please click above",
+    "Spotify-SDK konnte nicht geladen werden (Internet?).": "Spotify SDK could not be loaded (internet?).",
+    "kein Token": "no token",
+    "keine Verbindung nach 10 s": "no connection after 10 s",
+    "offline – verbinde neu…": "offline – reconnecting…",
+    "connect() hat nicht geklappt": "connect() failed",
+    "verbunden": "connected",
+    "getrennt – verbinde neu…": "disconnected – reconnecting…",
+    "Gerade läuft nichts": "Nothing playing right now",
+    "Weiter": "Next",
+    "Music-Host offen": "Music host open",
+    "Music-Host zu": "Music host closed",
+    "Gerät bereit": "Device ready",
+    "Gerät startet…": "Device starting…",
+    "Gerät geht nicht": "Device not working",
+    "Spotify nicht verbunden": "Spotify not connected",
+    "Spotify-Link oder -URI (Playlist, Album, Titel) – oder unten ⭐ klicken": "Spotify link or URI (playlist, album, track) – or click ⭐ below",
+    "Nach dem Intro läuft:": "After the intro plays:",
+    "Noch nichts eingestellt.": "Nothing set yet.",
+    "Auto-Start gespeichert": "Autostart saved",
+    "▶ Testen": "▶ Test",
+    "Wiederholen": "Repeat",
+    "Einblende-Dauer und ob die Musik nach dem Intro startet, stellst du auf der Intro-Seite ein.": "The fade-in duration and whether the music starts after the intro are set on the intro page.",
+    "Spotify": "Spotify",
+    "Eigene Musik": "Your own music",
+    "Lade…": "Loading…",
+    "Erst rechts mit Spotify verbinden.": "Connect to Spotify on the right first.",
+    "Keine Musik gefunden. Rechts einen Ordner einstellen – jeder Unterordner wird eine Playlist.": "No music found. Set a folder on the right – every subfolder becomes a playlist.",
+    "Keine Playlists.": "No playlists.",
+    "Als Auto-Start nach dem Intro": "As autostart after the intro",
+    "Jetzt abspielen": "Play now",
+    "Nicht offen": "Not open",
+    "Ton freigegeben": "Sound enabled",
+    "Ton blockiert – im Host-Fenster einmal klicken": "Sound blocked – click once in the host window",
+    "Noch ein Fenster öffnen": "Open another window",
+    "🖥 Music-Host öffnen": "🖥 Open music host",
+    "Öffnet ein eigenes Chrome- oder Edge-Fenster. Spotify braucht einen echten Browser – in OBS oder im Suite-Fenster geht es nicht. Das Fenster offen lassen (minimieren ist ok).": "Opens a separate Chrome or Edge window. Spotify needs a real browser – it doesn't work in OBS or in the suite window. Leave the window open (minimizing is fine).",
+    "📖 Ton in OBS einbinden": "📖 Add the sound to OBS",
+    "Anwendungsaudioaufnahme": "Application Audio Capture",
+    "Fenster:": "Window:",
+    "„Music-Host – Stream Suite“": "\"Music host – Stream Suite\"",
+    "(bzw. bei „Desktop-App fernsteuern“: die Spotify-App).": "(or with \"Remote-control desktop app\": the Spotify app).",
+    "Ob die Musik im Twitch-VOD landet, stellst du in OBS unter": "Whether the music ends up in the Twitch VOD is set in OBS under",
+    "Erweiterte Audioeigenschaften": "Advanced Audio Properties",
+    "bei den Spuren ein.": "in the tracks.",
+    "Adresse (falls du es selbst öffnen willst):": "Address (if you want to open it yourself):",
+    "kommt aus SPOTIFY_CLIENT_ID": "comes from SPOTIFY_CLIENT_ID",
+    "32 Zeichen, aus dem Spotify Dashboard": "32 characters, from the Spotify Dashboard",
+    "leer = automatisch (Computer)": "empty = automatic (computer)",
+    "Im Browser hat sich Spotify geöffnet – dort bestätigen.": "Spotify has opened in your browser – confirm there.",
+    "Gerät aus (Music-Host öffnen)": "Device off (open music host)",
+    "Noch nicht verbunden.": "Not connected yet.",
+    "Für Spotify brauchst du eine eigene (kostenlose) Spotify-App – Anleitung unten.": "For Spotify you need your own (free) Spotify app – instructions below.",
+    "Abgemeldet": "Logged out",
+    "Mit Spotify verbinden": "Connect to Spotify",
+    "Gerätename der Suite": "Suite device name",
+    "Desktop-App fernsteuern: Gerät": "Remote-control desktop app: device",
+    "📖 Spotify-App anlegen (einmalig)": "📖 Create a Spotify app (one-time)",
+    "öffnen, mit deinem Spotify-Account anmelden.": "and log in with your Spotify account.",
+    "„Create app“: Name frei wählbar, bei": "\"Create app\": any name, under",
+    "Redirect URI": "Redirect URI",
+    "genau diese Adresse eintragen:": "enter exactly this address:",
+    "Bei „Which API/SDKs“:": "Under \"Which API/SDKs\":",
+    "Web API": "Web API",
+    "und": "and",
+    "Web Playback SDK": "Web Playback SDK",
+    "ankreuzen, speichern.": "tick, then save.",
+    "In den Einstellungen der App die": "In the app's settings, copy the",
+    "Client ID": "Client ID",
+    "kopieren und oben eintragen.": "and enter it above.",
+    "Unter „User Management“ deinen eigenen Spotify-Account eintragen (Name + E-Mail).": "Under \"User Management\", add your own Spotify account (name + email).",
+    "Seit Februar 2026 gilt für solche Apps („Development Mode“): Spotify Premium nötig, höchstens 5 Nutzer, eine Client-ID pro Person.": "Since February 2026, the following applies to such apps (\"Development Mode\"): Spotify Premium required, at most 5 users, one Client ID per person.",
+    "Musik-Ordner": "Music folder",
+    "Jeder Unterordner ist eine Playlist. MP3, FLAC, WAV, OGG. Titel und Cover kommen aus den Tags, sonst aus dem Dateinamen („Artist - Titel.mp3“).": "Every subfolder is a playlist. MP3, FLAC, WAV, OGG. Title and cover come from the tags, otherwise from the file name (\"Artist - Title.mp3\").",
+    "Überblenden (Sek.)": "Crossfade (sec.)",
+    "Ordner neu eingelesen": "Folder rescanned",
+    "↻ Neu einlesen": "↻ Rescan",
+    "In OBS als Browser-Quelle, z.B. 800 × 200. Erscheint bei jedem Titelwechsel – für alle Quellen (Spotify und eigene Musik).": "In OBS as a browser source, e.g. 800 × 200. Appears on every track change – for all sources (Spotify and your own music).",
+    "Sichtbar (Sek., 0 = immer)": "Visible (sec., 0 = always)",
+    "Ecke": "Corner",
+    "Beispiel ansehen": "View example",
+    "Play/Pause umschalten": "Toggle play/pause",
+    "nächster Titel": "next track",
+    "voriger Titel": "previous track",
+    "aktueller Titel": "current track",
+    "Zustand": "State",
+    "Mehrteiliges Intro (Video + Beat) als OBS-Browserquelle mit taktgenauen Loops, Go/Outro per Klick oder Streamdeck. Danach automatisch Szenenwechsel und Musik.": "Multi-part intro (video + beat) as an OBS browser source with bar-accurate loops, Go/Outro via click or Stream Deck. Afterwards automatic scene switch and music.",
+    "Das Addon „OBS-Steuerung“ ist aus. Bitte im Addon-Store einschalten und verbinden.": "The \"OBS control\" addon is off. Please turn it on in the Addon store and connect it.",
+    "Das Addon „Musik“ ist aus.": "The \"Music\" addon is off.",
+    "Kein Intro-Player verbunden. Ist die Browserquelle in OBS aktiv (…/addons/intro/player.html)?": "No intro player connected. Is the browser source in OBS active (…/addons/intro/player.html)?",
+    "Befehl abgelehnt.": "Command rejected.",
+    "Unbekannter Befehl.": "Unknown command.",
+    "Unbekannter Zustand.": "Unknown state.",
+    "Weder Chrome noch Edge gefunden.": "Neither Chrome nor Edge found.",
+    "Musik-Player: Spotify (als eigenes Connect-Gerät oder Fernsteuerung der Desktop-App) und eigene Dateien mit Crossfade. Now-Playing-Overlay, Streamdeck-Steuerung, startet automatisch nach dem Intro.": "Music player: Spotify (as its own Connect device or by remote-controlling the desktop app) and your own files with crossfade. Now playing overlay, Stream Deck control, starts automatically after the intro.",
+    "Keine Auto-Start-Playlist eingestellt (Musik-Seite).": "No autostart playlist set (music page).",
+    "Bitte volume (0–100) oder delta angeben.": "Please specify volume (0–100) or delta.",
+    "Unbekannter Provider.": "Unknown provider.",
+    "Bitte zuerst die Client-ID deiner Spotify-App eintragen.": "Please enter the Client ID of your Spotify app first.",
+    "Dieser Login ist abgelaufen. Bitte in der Suite nochmal auf „Mit Spotify verbinden“ klicken.": "This login has expired. Please click \"Connect to Spotify\" in the suite again.",
+    "Das ist keine gültige Quelle. Erwartet: Spotify-Link oder -URI (Playlist, Album, Titel) oder eine lokale Playlist.": "That is not a valid source. Expected: Spotify link or URI (playlist, album, track) or a local playlist.",
+    "Die Spotify Client-ID besteht aus 32 Zeichen (0-9, a-f).": "The Spotify Client ID consists of 32 characters (0-9, a-f).",
+    "Der Schlüssel kommt aus der Umgebungsvariable SUITE_API_TOKEN und lässt sich hier nicht ändern.": "The key comes from the environment variable SUITE_API_TOKEN and can't be changed here.",
+    "Schlüssel fehlt oder ist falsch (Header X-Suite-Token).": "Key missing or wrong (header X-Suite-Token)."
   },
   "patterns": [
     [
@@ -3746,6 +3989,186 @@
     [
       "^Alerts für (.+)$",
       "Alerts for $1"
+    ],
+    [
+      "^Angemeldet als (.+)\\. Du kannst dieses Fenster jetzt schließen\\.$",
+      "Signed in as $1. You can close this window now."
+    ],
+    [
+      "^(.+)Du kannst dieses Fenster jetzt schließen\\.$",
+      "$1You can close this window now."
+    ],
+    [
+      "^(.+) kopiert$",
+      "$1 copied"
+    ],
+    [
+      "^Player lädt \\((.+)\\/(.+)\\)$",
+      "Player loading ($1/$2)"
+    ],
+    [
+      "^Player lädt (.+)\\/(.+)$",
+      "Player loading $1/$2"
+    ],
+    [
+      "^⚠ (.+) Player verbunden – das Intro läuft in jedem davon\\. Bitte nur eine Browserquelle offen lassen\\.$",
+      "⚠ $1 players connected – the intro plays in each of them. Please keep only one browser source open."
+    ],
+    [
+      "^Fehlt im Ordner \\((.+)\\):$",
+      "Missing from the folder ($1):"
+    ],
+    [
+      "^Webhooks für (.+) verschickt – Ergebnis im Log\\.$",
+      "Webhooks for $1 sent – result in the log."
+    ],
+    [
+      "^Webhooks für (.+) gespeichert$",
+      "Webhooks for $1 saved"
+    ],
+    [
+      "^Titel konnte nicht abgespielt werden \\((.+)\\): (.+)$",
+      "Track could not be played ($1): $2"
+    ],
+    [
+      "^Datei kann nicht abgespielt werden: (.+)$",
+      "File cannot be played: $1"
+    ],
+    [
+      "^geht nicht: (.+)$",
+      "not working: $1"
+    ],
+    [
+      "^(.+) Spotify$",
+      "$1 Spotify"
+    ],
+    [
+      "^Spotify-Token: (.+)$",
+      "Spotify token: $1"
+    ],
+    [
+      "^bereit als „(.+)“$",
+      "ready as \"$1\""
+    ],
+    [
+      "^Start fehlgeschlagen \\((.+)\\)\\. Läuft dieses Fenster in Chrome oder Edge\\?$",
+      "Start failed ($1). Is this window running in Chrome or Edge?"
+    ],
+    [
+      "^Anmeldung abgelehnt \\((.+)\\)$",
+      "Login rejected ($1)"
+    ],
+    [
+      "^Account \\((.+)\\) – Spotify Premium nötig$",
+      "Account ($1) – Spotify Premium required"
+    ],
+    [
+      "^Spotify-Wiedergabe: (.+)$",
+      "Spotify playback: $1"
+    ],
+    [
+      "^Quelle: (.+) \\(Ersatz, weil Spotify in der Suite gerade nicht geht\\)$",
+      "Source: $1 (fallback, because Spotify in the suite isn't working right now)"
+    ],
+    [
+      "^Quelle: (.+)(.+)$",
+      "Source: $1$2"
+    ],
+    [
+      "^Spotify · Gerät bereit$",
+      "Spotify · Device ready"
+    ],
+    [
+      "^Spotify · Gerät startet…$",
+      "Spotify · Device starting…"
+    ],
+    [
+      "^Spotify · Gerät geht nicht$",
+      "Spotify · Device not working"
+    ],
+    [
+      "^⚠ Spotify in der Suite geht gerade nicht \\((.+)\\)\\. Die Suite steuert stattdessen die Spotify-App fern\\. Erneut versuchen: oben „Spotify \\(in der Suite\\)“ wählen\\.$",
+      "⚠ Spotify in the suite isn't working right now ($1). The suite is remote-controlling the Spotify app instead. To try again: select \"Spotify (in the suite)\" above."
+    ],
+    [
+      "^Lautstärke danach: (.+)%$",
+      "Volume afterwards: $1%"
+    ],
+    [
+      "^„(.+)“ läuft nach dem Intro$",
+      "\"$1\" plays after the intro"
+    ],
+    [
+      "^Music-Host öffnet sich in (.+)\\.$",
+      "Music host opens in $1."
+    ],
+    [
+      "^⚠ (.+) Host-Fenster offen – bitte nur eins\\.$",
+      "⚠ $1 host windows open – please only one."
+    ],
+    [
+      "^Verbunden als (.+)$",
+      "Connected as $1"
+    ],
+    [
+      "^Verbunden(.+)$",
+      "Connected$1"
+    ],
+    [
+      "^Gerät „(.+)“ bereit$",
+      "Device \"$1\" ready"
+    ],
+    [
+      "^Gerät geht nicht: (.+)$",
+      "Device not working: $1"
+    ],
+    [
+      "^(.+) Playlist\\(s\\), (.+) Titel\\.$",
+      "$1 playlist(s), $2 tracks."
+    ],
+    [
+      "^Den Ordner „(.+)“ gibt es nicht\\.$",
+      "The folder \"$1\" doesn't exist."
+    ],
+    [
+      "^Für (.+) ist kein Webhook eingetragen\\.$",
+      "No webhook is set for $1."
+    ],
+    [
+      "^(.+): Bitte einen Dateinamen eintragen\\.$",
+      "$1: Please enter a file name."
+    ],
+    [
+      "^(.+): Nur Dateinamen im Medienordner, keine Pfade nach außerhalb\\.$",
+      "$1: Only file names in the media folder, no paths outside of it."
+    ],
+    [
+      "^„(.+)“ ist keine gültige Webhook-Adresse\\.$",
+      "\"$1\" is not a valid webhook address."
+    ],
+    [
+      "^Webhooks brauchen http:\\/\\/ oder https:\\/\\/ \\(„(.+)“\\)\\.$",
+      "Webhooks need http:// or https:// (\"$1\")."
+    ],
+    [
+      "^Höchstens 10 Webhooks pro Zustand \\((.+)\\)\\.$",
+      "At most 10 webhooks per state ($1)."
+    ],
+    [
+      "^Spotify nicht erreichbar: (.+)$",
+      "Spotify not reachable: $1"
+    ],
+    [
+      "^Spotify hat den Login abgelehnt: (.+)$",
+      "Spotify rejected the login: $1"
+    ],
+    [
+      "^Unbekannter Provider\\. Möglich: (.+)$",
+      "Unknown provider. Possible: $1"
+    ],
+    [
+      "^Spotify(.+)$",
+      "Spotify$1"
     ]
   ]
 }

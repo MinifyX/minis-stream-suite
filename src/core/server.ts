@@ -101,7 +101,8 @@ export class LocalServer {
   private routes = new Map<string, Route>();
   private mounts = new Map<string, { dir: string; scope: string }>();
   private scopes = new Map<string, Set<string>>();
-  private clients = new Set<{ ws: WebSocket; channel: string }>();
+  /** trusted = Seite kommt von der Suite selbst (Origin) */
+  private clients = new Set<{ ws: WebSocket; channel: string; trusted: boolean }>();
   private listeners = new Map<ClientListener, { scope: string; channel: string }>();
   private apiToken: () => string = () => '';
 
@@ -150,10 +151,10 @@ export class LocalServer {
     this.listeners.set(listener, { scope, channel });
   }
 
-  /** Wie viele Seiten sind gerade mit diesem Kanal verbunden? */
+  /** Wie viele Seiten der Suite sind gerade mit diesem Kanal verbunden? (fremde Webseiten zählen nicht) */
   clientCount(channel: string): number {
     let count = 0;
-    for (const client of this.clients) if (client.channel === channel && client.ws.readyState === WebSocket.OPEN) count++;
+    for (const client of this.clients) if (client.trusted && client.channel === channel && client.ws.readyState === WebSocket.OPEN) count++;
     return count;
   }
 
@@ -191,10 +192,16 @@ export class LocalServer {
         socket.destroy();
         return;
       }
-      // Nachrichten nur von Seiten der Suite annehmen – fremde Webseiten im Browser dürfen höchstens mitlesen
+      // Nachrichten nur von Seiten der Suite annehmen – fremde Webseiten im Browser dürfen höchstens mitlesen.
+      // Unterkanäle (z.B. intro.player, music.host) sind nur für Seiten der Suite.
       const trusted = this.isOwnOrigin(req.headers.origin);
+      const channel = url.searchParams.get('channel') ?? '';
+      if (!trusted && channel.includes('.')) {
+        socket.destroy();
+        return;
+      }
       wss.handleUpgrade(req, socket, head, (ws) => {
-        const client = { ws, channel: url.searchParams.get('channel') ?? '' };
+        const client = { ws, channel, trusted };
         this.clients.add(client);
         this.notify({ type: 'open', channel: client.channel });
         ws.on('close', () => {
@@ -311,7 +318,9 @@ export class LocalServer {
   private serveFile(root: string, relative: string, req: http.IncomingMessage, res: http.ServerResponse): void {
     if (relative.endsWith('/')) relative += 'index.html';
     const file = path.normalize(path.join(root, relative));
-    if (!file.startsWith(root + path.sep)) return sendJson(res, 403, { error: 'Forbidden' });
+    // Nur Dateien innerhalb von root – auch wenn root eine Laufwerks-Wurzel ist (D:\)
+    const inside = path.relative(root, file);
+    if (!inside || inside.startsWith('..') || path.isAbsolute(inside)) return sendJson(res, 403, { error: 'Forbidden' });
 
     fs.stat(file, (err, stat) => {
       if (err || !stat.isFile()) return sendJson(res, 404, { error: 'Nicht gefunden' });

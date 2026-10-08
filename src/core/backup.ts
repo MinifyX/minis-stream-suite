@@ -30,7 +30,8 @@ const AUTO_EVERY_MS = 24 * 60 * 60 * 1000;
 /** Diese Einträge in config.json bleiben beim Import, wie sie sind */
 const KEEP_ON_IMPORT: (keyof CoreConfig)[] = ['tokens', 'botTokens', 'apiToken'];
 /** Ordner in addon-data, die nicht gesichert werden (lassen sich neu erzeugen) */
-const SKIP_DATA = ['alerts/tts', 'music/covers'];
+// Musik: Cover-Cache und das Browser-Profil des Music-Hosts; Intro: Medien (Videos können GB groß sein)
+const SKIP_DATA = ['alerts/tts', 'music/covers', 'music/host-browser', 'intro/media'];
 
 interface Backup {
   format: typeof FORMAT;

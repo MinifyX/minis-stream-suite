@@ -27,7 +27,7 @@ export function findBrowser(): string | null {
 }
 
 /** Host-Fenster öffnen. Gibt den Browsernamen zurück (oder wirft, wenn keiner gefunden wurde). */
-export function launchHost(url: string, profileDir: string): string {
+export function launchHost(url: string, profileDir: string, onError?: (err: Error) => void): string {
   const exe = findBrowser();
   if (!exe) throw new Error('Weder Chrome noch Edge gefunden.');
   fs.mkdirSync(profileDir, { recursive: true });
@@ -39,6 +39,8 @@ export function launchHost(url: string, profileDir: string): string {
     '--no-default-browser-check',
     '--window-size=520,640',
   ], { detached: true, stdio: 'ignore' });
+  // Fehler beim Starten (z.B. keine Rechte) dürfen die Suite nicht abstürzen lassen
+  child.on('error', (err) => onError?.(err));
   child.unref();
   return path.basename(exe, '.exe') === 'msedge' ? 'Edge' : 'Chrome';
 }

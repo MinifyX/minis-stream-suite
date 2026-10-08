@@ -268,6 +268,10 @@ export const introAddon: Addon = {
       acks.clear();
     });
 
+    // Addon wurde (wieder) eingeschaltet, während der Player schon offen ist → er soll sich neu melden
+    player.connected = ctx.overlay.clients('player');
+    if (player.connected) ctx.overlay.broadcast({ type: 'intro.hello' }, 'player');
+
     /** Befehl an den Player schicken und auf seine Antwort warten */
     const command = async (action: IntroCommand) => {
       if (!ctx.overlay.clients('player')) {
