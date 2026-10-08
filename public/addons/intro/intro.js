@@ -118,7 +118,7 @@ function renderControl() {
   $('#chain').replaceChildren(...CHAIN.flatMap(([id, label], i) => [
     i ? h('span', { class: 'arrow' }, '→') : null,
     h('span', { class: `st${i < index ? ' past' : ''}${i === index ? ' now' : ''}${LOOPS.includes(id) ? ' loop' : ''}` }, label),
-  ]));
+  ]).filter(Boolean));
 
   const title = CHAIN[index]?.[1] ?? intro.state;
   const sub = !intro.playerConnected
@@ -182,10 +182,10 @@ function renderPlayer() {
     pill.replaceChildren(h('span', { class: 'dot ok' }), 'Player bereit');
   }
 
-  $('#player-detail').replaceChildren(
+  $('#player-detail').replaceChildren(...[
     player.connected > 1 ? h('p', { class: 'warn-note' }, `⚠ ${player.connected} Player verbunden – das Intro läuft in jedem davon. Bitte nur eine Browserquelle offen lassen.`) : null,
     player.error ? h('p', { class: 'err-note no-i18n' }, player.error) : null,
-  );
+  ].filter(Boolean));
 }
 
 function renderMedia() {
@@ -260,7 +260,7 @@ function scenePicker(value, onchange, emptyLabel) {
 function renderDone() {
   const { onDone, obs } = state.s.settings;
   const s = state.s;
-  $('#done-form').replaceChildren(
+  $('#done-form').replaceChildren(...[
     h('p', { class: 'note' }, 'Läuft nach dem Outro und nach „Abort“ in dieser Reihenfolge. Klappt ein Schritt nicht, geht es trotzdem weiter.'),
     h('div', { class: 'opt-row' },
       h('span', {}, '1. OBS auf Stream-Szene schalten'),
@@ -282,7 +282,7 @@ function renderDone() {
     h('div', { class: 'field' }, h('label', {}, 'Beim Start auf diese Szene schalten'),
       scenePicker(obs.introScene, (v) => saveSettings({ obs: { introScene: v } }, 'Intro-Szene gespeichert'), '– nicht umschalten –')),
     !state.scenes ? h('p', { class: 'note' }, 'OBS ist nicht verbunden – Szenen bitte von Hand eintragen.') : null,
-  );
+  ].filter(Boolean));
 }
 
 function renderWebhooks() {

@@ -1,0 +1,27 @@
+.provider-select { width: auto; max-width: 280px; padding: 5px 8px; font-size: 13px; }
+.fallback { background: rgba(245, 176, 65, .12); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+
+.tabs { display: inline-flex; background: var(--bg-2); border-radius: 8px; padding: 2px; }
+.tabs button { background: none; border: 0; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px; cursor: pointer; }
+.tabs button.on { background: var(--card-2); color: var(--text); }
+
+.playlists { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; max-height: 420px; overflow-y: auto; }
+.pl { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--border); }
+.pl.auto { border-color: var(--accent); }
+.pl-img { width: 40px; height: 40px; border-radius: 6px; flex: none; background: var(--card-2) center / cover; display: grid; place-items: center; }
+.pl-main { flex: 1; min-width: 0; }
+.pl-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-count { font-size: 11px; color: var(--muted); }
+.pl .icon-btn { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; padding: 4px 6px; border-radius: 6px; }
+.pl .icon-btn:hover { background: var(--card-2); color: var(--text); }
+.pl .icon-btn.on { color: #ffd166; }
+.empty { color: var(--muted); font-size: 13px; padding: 12px; text-align: center; grid-column: 1 / -1; }
+
+.auto-row { display: flex; gap: 8px; align-items: center; }
+.auto-row input { flex: 1; }
+.auto-current { font-size: 13px; }
+.auto-current b { color: #cdaaff; }
+
+.status-list { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.status-list .line { display: flex; align-items: center; gap: 8px; }
+.howto code { font-size: 11px; }

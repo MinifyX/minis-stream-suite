@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Music-Host – Stream Suite</title>
+  <!--
+    Läuft in einem eigenen Chrome/Edge-Fenster (Musik-Seite → „Music-Host öffnen“), NICHT in OBS:
+    Das Spotify Web Playback SDK braucht Widevine, das gibt es nur in echten Browsern.
+    In OBS den Ton dieses Fensters per „Anwendungsaudioaufnahme“ einbinden.
+  -->
+  <link rel="stylesheet" href="/app/theme.css">
+  <style>
+    body { padding: 22px; display: flex; flex-direction: column; gap: 14px; max-width: 520px; }
+    h1 { font-size: 20px; margin: 0; }
+    .rows { display: flex; flex-direction: column; gap: 8px; }
+    .row { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .row b { min-width: 120px; font-size: 13px; }
+    .row span.val { flex: 1; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #unlock { font-size: 16px; padding: 14px; justify-content: center; }
+    .note { font-size: 12px; color: var(--muted); margin: 0; }
+  </style>
+</head>
+<body>
+  <h1>🎵 Music-Host</h1>
+  <p class="note">Dieses Fenster spielt die Musik der Suite. Einfach offen lassen (minimieren ist ok). Gesteuert wird über die Suite oder das Streamdeck.</p>
+  <button class="btn primary" id="unlock" hidden>🔊 Ton aktivieren (einmal klicken)</button>
+  <div class="rows">
+    <div class="row"><b>Suite</b><span class="dot" id="d-suite"></span><span class="val" id="v-suite">verbinde…</span></div>
+    <div class="row"><b>Ton</b><span class="dot" id="d-audio"></span><span class="val" id="v-audio">–</span></div>
+    <div class="row"><b>Spotify-Gerät</b><span class="dot" id="d-sdk"></span><span class="val" id="v-sdk">aus</span></div>
+    <div class="row"><b>Läuft gerade</b><span class="dot" id="d-now"></span><span class="val no-i18n" id="v-now">–</span></div>
+  </div>
+  <script src="/app/ui.js"></script>
+  <script src="host.js"></script>
+</body>
+</html>

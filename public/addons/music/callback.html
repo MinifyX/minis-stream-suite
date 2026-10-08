@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Spotify-Login – Stream Suite</title>
+  <!-- Redirect-URI der Spotify-App: http://127.0.0.1:<Port>/addons/music/callback.html -->
+  <link rel="stylesheet" href="/app/theme.css">
+  <style>
+    body { display: grid; place-items: center; min-height: 100vh; padding: 20px; }
+    .card { max-width: 460px; text-align: center; display: flex; flex-direction: column; gap: 10px; }
+    .big { font-size: 42px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="big" id="icon">⏳</div>
+    <h2 id="title">Verbinde mit Spotify…</h2>
+    <p class="muted" id="text"></p>
+  </div>
+  <script src="/app/ui.js"></script>
+  <script>
+    (async () => {
+      const params = new URLSearchParams(location.search);
+      const show = (icon, title, text) => {
+        document.getElementById('icon').textContent = icon;
+        document.getElementById('title').textContent = title;
+        document.getElementById('text').textContent = text;
+      };
+      try {
+        const res = await window.UI.api('addons/music/spotify/callback', {
+          code: params.get('code'),
+          state: params.get('state'),
+          error: params.get('error'),
+        });
+        show('✅', 'Mit Spotify verbunden', `${res.user ? `Angemeldet als ${res.user.name}. ` : ''}Du kannst dieses Fenster jetzt schließen.`);
+        // Code nicht in der Adresszeile/History stehen lassen
+        history.replaceState(null, '', location.pathname);
+      } catch (err) {
+        show('⚠️', 'Login hat nicht geklappt', err.message);
+      }
+    })();
+  </script>
+</body>
+</html>

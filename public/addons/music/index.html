@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Musik</title>
+  <link rel="stylesheet" href="/app/theme.css">
+  <link rel="stylesheet" href="/app/panel.css">
+  <link rel="stylesheet" href="music.css">
+</head>
+<body>
+  <div class="page">
+    <header class="head">
+      <div class="title-row">
+        <h1>🎵 Musik</h1>
+        <span id="host-pill" class="status-pill"></span>
+        <span id="spotify-pill" class="status-pill"></span>
+      </div>
+      <p class="note">Spotify oder eigene Dateien – gespielt im Music-Host, einem eigenen Browserfenster. Startet nach dem Intro automatisch mit der Auto-Start-Playlist.</p>
+    </header>
+
+    <div class="layout">
+      <main>
+        <section class="card">
+          <div class="card-head">
+            <h2>Läuft gerade</h2>
+            <span class="spacer"></span>
+            <select id="provider" class="provider-select" title="Quelle"></select>
+          </div>
+          <div id="fallback"></div>
+          <div id="player"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>⭐ Auto-Start nach dem Intro</h2>
+          </div>
+          <div id="autostart"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>📃 Playlists</h2>
+            <span class="spacer"></span>
+            <div class="tabs" id="tabs"></div>
+            <button class="btn small" id="reload-lists" title="Neu laden">↻</button>
+          </div>
+          <div id="playlists" class="playlists"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>🕘 Ereignisse</h2>
+            <span class="spacer"></span>
+            <button class="btn small" id="log-clear">Leeren</button>
+          </div>
+          <div id="log" class="log"></div>
+        </section>
+      </main>
+
+      <aside>
+        <section class="card">
+          <h2>🖥 Music-Host</h2>
+          <div id="host"></div>
+        </section>
+
+        <section class="card">
+          <h2>🟢 Spotify</h2>
+          <div id="spotify"></div>
+        </section>
+
+        <section class="card">
+          <h2>📁 Eigene Musik</h2>
+          <div id="local"></div>
+        </section>
+
+        <section class="card">
+          <details>
+            <summary><h2>📺 Now-Playing-Overlay</h2></summary>
+            <div id="overlay"></div>
+          </details>
+        </section>
+
+        <section class="card">
+          <details>
+            <summary><h2>🎛️ Streamdeck</h2></summary>
+            <div id="remote"></div>
+          </details>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script src="/app/ui.js"></script>
+  <script src="/app/remote.js"></script>
+  <script src="mini.js"></script>
+  <script src="music.js"></script>
+</body>
+</html>
