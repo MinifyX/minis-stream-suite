@@ -2170,7 +2170,48 @@
     "Der Command braucht ein Präfix und einen Namen, z.B. !sr.": "The command needs a prefix and a name, e.g. !sr.",
     "Ungültiger Pfad für einen lokalen Titel.": "Invalid path for a local track.",
     "Bitte gib dem Set einen Namen.": "Please give the set a name.",
-    "Bitte eine Spotify-Playlist, ein Album oder einen Musik-Ordner auswählen.": "Please select a Spotify playlist, an album or a music folder."
+    "Bitte eine Spotify-Playlist, ein Album oder einen Musik-Ordner auswählen.": "Please select a Spotify playlist, an album or a music folder.",
+    "Schickt Stream-Events an deinen UwUClip-Server, damit er automatisch die besten Momente clippt: HudFX-Jumpscares, Werbepausen, den Moment, in dem ein Alert erscheint, Umfragen, Vorhersagen, Shoutouts, Abos, Bits und Raids. Chat-Nachrichten und Test-Events werden nie weitergeleitet.": "Sends stream events to your UwUClip server so it can clip the best moments automatically: HudFX jumpscares, ad breaks, the moment an alert appears, polls, predictions, shoutouts, subs, bits and raids. Chat messages and test events are never forwarded.",
+    "Server-Adresse": "Server address",
+    "Verbindung testen": "Test connection",
+    "Schlüssel entfernen": "Remove key",
+    "Erneut versuchen": "Try again",
+    "Warteschlange leeren": "Clear queue",
+    "📖 So richtest du es ein": "📖 How to set it up",
+    "Im UwUClip-Server unter Einstellungen → Stream-Suite den Schlüssel erzeugen und kopieren.": "In the UwUClip server, go to Settings → Stream Suite, generate the key and copy it.",
+    "Hier die Adresse des Servers und den Schlüssel eintragen, dann „Speichern“.": "Enter the server address and the key here, then click “Save”.",
+    "Mit „Verbindung testen“ prüfen, ob alles passt.": "Use “Test connection” to check that everything works.",
+    "HudFX-Belohnungen erkennt UwUClip an ihrer Gruppe: Im Kanalpunkte-Addon gehören sie in die Gruppe „HudFX“ (am besten mit „andere App“). Dafür muss das Kanalpunkte-Addon an sein.": "UwUClip recognizes HudFX rewards by their group: in the Channel Points addon, put them in the group “HudFX” (ideally marked “other app”). The Channel Points addon must be on for this.",
+    "Ist der Server mal nicht erreichbar, sammelt die Suite die Events (auch über einen Neustart hinweg, bis zu 7 Tage) und schickt sie später nach.": "If the server can't be reached, the suite collects the events (even across restarts, for up to 7 days) and sends them later.",
+    "Nicht erreichbar": "Unreachable",
+    "Pausiert": "Paused",
+    "Schlüssel aus UwUClip einfügen": "Paste the key from UwUClip",
+    "•••••••• (gespeichert)": "•••••••• (saved)",
+    "Der gespeicherte Schlüssel wird nicht angezeigt. Leer lassen, um ihn zu behalten.": "The saved key is not shown. Leave empty to keep it.",
+    "Noch kein Schlüssel gespeichert.": "No key saved yet.",
+    "Nicht eingerichtet": "Not set up",
+    "Zuletzt gesendet": "Last sent",
+    "In der Warteschlange": "Queued",
+    "Nächster Versuch": "Next attempt",
+    "Verworfen": "Discarded",
+    "Letzter Fehler": "Last error",
+    "Weiterleitung an/aus": "Forwarding on/off",
+    "Gespeicherten Schlüssel entfernen? Die Weiterleitung stoppt dann.": "Remove the saved key? Forwarding will stop.",
+    "Alle wartenden Events verwerfen? Sie werden dann nie an UwUClip geschickt.": "Discard all queued events? They will never be sent to UwUClip.",
+    "Ungültige Server-Adresse": "Invalid server address",
+    "Die Server-Adresse muss mit http:// oder https:// beginnen": "The server address must start with http:// or https://",
+    "Die Server-Adresse darf keine Zugangsdaten enthalten": "The server address must not contain credentials",
+    "Die Server-Adresse darf kein ? oder # enthalten": "The server address must not contain ? or #",
+    "Schickt Stream-Events (HudFX, Werbepausen, Alerts, Umfragen, Raids …) an deinen UwUClip-Server, damit er automatisch die besten Momente clippt.": "Sends stream events (HudFX, ad breaks, alerts, polls, raids …) to your UwUClip server so it can clip the best moments automatically.",
+    "Abgelehnt (401): Schlüssel falsch oder die Uhr dieses PCs geht falsch.": "Rejected (401): wrong key, or this PC's clock is off.",
+    "Abgelehnt (403): Die Stream-Suite ist auf dem UwUClip-Server nicht eingerichtet.": "Rejected (403): the Stream Suite is not set up on the UwUClip server.",
+    "Abgelehnt (400): Der Server versteht die Daten nicht.": "Rejected (400): the server doesn't understand the data.",
+    "Abgelehnt (413): Zu viele Daten auf einmal.": "Rejected (413): too much data at once.",
+    "Keine Antwort vom Server (Zeitüberschreitung)": "No response from the server (timeout)",
+    "Der Server leitet um – bitte die genaue Adresse eintragen (z.B. mit https://)": "The server redirects – please enter the exact address (e.g. with https://)",
+    "Keine Server-Adresse eingetragen": "No server address entered",
+    "Kein Schlüssel eingetragen": "No key entered",
+    "Server nicht erreichbar": "Server unreachable"
   },
   "patterns": [
     [
@@ -4336,6 +4377,18 @@
     [
       "^Höchstens (.+) Titel pro Set\\.$",
       "At most $1 tracks per set."
+    ],
+    [
+      "^✓ Verbunden \\(Antwort (.+)\\)$",
+      "✓ Connected (response $1)"
+    ],
+    [
+      "^Server antwortet mit Fehler (\\d+)$",
+      "Server responded with error $1"
+    ],
+    [
+      "^Server nicht erreichbar \\((.+)\\)$",
+      "Server unreachable ($1)"
     ]
   ]
 }

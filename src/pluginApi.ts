@@ -12,7 +12,7 @@ export const PLUGIN_API_VERSION = 1;
 
 export { HttpError } from './core/server';
 export { duration, roleLevel, parseRole, ROLES, ROLE_LEVEL, type Role } from './core/chat';
-export { ALERT_SHOWN_SERVICE, type AlertShownListener } from './addons/alerts';
+export { ALERT_SHOWN_SERVICE, type AlertShownInfo, type AlertShownListener } from './addons/alerts';
 export type { Addon, AddonContext, AddonManifest } from './core/addons';
 export type { StreamEvent, StreamEventType, EventOfType, TwitchUserRef, RewardRef } from './core/twitch/events';
 export type { TwitchUser } from './core/twitch/auth';

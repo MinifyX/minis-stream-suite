@@ -4,7 +4,7 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.7):** Installierbare Windows-App mit Core, Bot-Account und 17 Addons. Oberfläche auf Deutsch oder Englisch.
+**Aktueller Stand (v0.8):** Installierbare Windows-App mit Core, Bot-Account und 18 Addons. Oberfläche auf Deutsch oder Englisch.
 
 **Kanalpunkte-Addon:**
 
@@ -93,6 +93,13 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 
 **🙋 Songwünsche:** `!sr` im Chat oder per Kanalpunkte (Punkte zurück bei Ablehnung). Mods/VIPs und Kanalpunkte direkt in die Queue, andere als Vorschlag zur Freigabe. Limits, Sperrliste, `!song`, `!wrongsong`, `!queue`, „gewünscht von“ im Overlay.
 
+**✂️ UwUClip:** Leitet Stream-Events an deinen UwUClip-Server weiter, der daraus automatisch Clips schneidet: HudFX-Jumpscares (Belohnungen aus der Kanalpunkte-Gruppe „HudFX“), Werbepausen, den Moment, in dem ein Alert im Overlay erscheint, Umfragen und Vorhersagen (Start und Ende), Shoutouts, Abos, Bits, Raids, Hype Train und Stream-Start/-Ende. Chat-Nachrichten und Test-Events gehen nie raus.
+
+- **Einrichten:** Im Addon-Store einschalten. In UwUClip unter *Einstellungen → Stream-Suite* den Schlüssel erzeugen, auf der UwUClip-Seite der Suite Server-Adresse und Schlüssel eintragen, „Verbindung testen“.
+- **HudFX:** Die Lumia-Belohnungen im Kanalpunkte-Addon in die Gruppe „HudFX“ sortieren (am besten mit „andere App“). Das Kanalpunkte-Addon muss dafür an sein.
+- **Zuverlässig:** Events werden signiert (HMAC-SHA256) per `POST <server>/api/hooks/suite` geschickt, alle 2 Sek. gesammelt. Ist der Server nicht erreichbar, wartet die Suite (bis zu 7 Tage, auch über einen Neustart) und schickt alles nach. Bei falschem Schlüssel (401) oder fehlender Einrichtung (403) pausiert sie und zeigt den Fehler an.
+- Der Schlüssel wird verschlüsselt gespeichert und ist nie in einer Sicherung.
+
 **🎛️ Streamdeck:** Intro und Musik lassen sich per HTTP steuern (`/api/intro/…`, `/api/music/…`), geschützt mit einem Schlüssel im Header `X-Suite-Token`.
 
 **💾 Sicherung:** Alle Einstellungen (optional mit Bildern und Sounds) in eine Datei packen und wieder einspielen, z.B. für einen neuen PC. Einmal am Tag sichert die Suite automatisch. Twitch-Logins sind nie in einer Sicherung.
@@ -167,6 +174,7 @@ src/
     obs/                  OBS-Steuerung (client.ts = obs-websocket v5)
     intro/                Intro-Sequenz (State Machine: public/addons/intro/sequencer.js)
     music/                Musik: MusicManager, Spotify (spotify.ts), lokale Bibliothek (library.ts, tags.ts)
+    uwuclip/              Weiterleitung an UwUClip (forwarder.ts = Warteschlange, Signatur, ohne Electron testbar)
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
   app/i18n/en.json        Englische Texte (ui.js übersetzt die Seiten beim Anzeigen)
@@ -217,7 +225,7 @@ Im `activate(ctx)` stehen dem Addon zur Verfügung:
 - `ctx.api` für eigene API-Routen
 - `ctx.overlay.broadcast()` um Daten an Overlays zu schicken
 - `ctx.provide()` / `ctx.use()` für Schnittstellen zwischen Addons (z.B. Kanalpunkte-Gruppen → Alerts)
-- „Alert erscheint jetzt im Overlay“: `ctx.provide(ALERT_SHOWN_SERVICE, { alertShown(event) {…} })` (aus `addons/alerts`), z.B. um Licht oder Sounds genau zum Alert zu starten
+- „Alert erscheint jetzt im Overlay“: `ctx.provide(ALERT_SHOWN_SERVICE, { alertShown(event, info) {…} })` (aus `addons/alerts`, `info.variant` = Name der Variante), z.B. um Licht oder Sounds genau zum Alert zu starten. Mehrere Addons dürfen zuhören (`ctx.useAll()`)
 
 Einstellungen liegen unter `%APPDATA%\Mini's Stream Suite\`.
 

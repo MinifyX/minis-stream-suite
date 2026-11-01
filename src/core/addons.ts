@@ -91,10 +91,15 @@ export interface AddonContext {
   dataDir: string;
   /** … und die URL, unter der er ausgeliefert wird, z.B. /addon-data/alerts */
   dataUrl: string;
-  /** Eine Schnittstelle für andere Addons anbieten (z.B. "channelpoints") */
+  /**
+   * Eine Schnittstelle für andere Addons anbieten (z.B. "channelpoints").
+   * Bieten mehrere Addons denselben Namen an, liefert use() die zuletzt angebotene, useAll() alle.
+   */
   provide(name: string, service: object): void;
   /** Schnittstelle eines anderen Addons holen – undefined, wenn es nicht aktiv ist */
   use<T extends object>(name: string): T | undefined;
+  /** Alle Schnittstellen unter diesem Namen (z.B. mehrere Zuhörer für "alert-shown") */
+  useAll<T extends object>(name: string): T[];
   /** Funktion, die beim Deaktivieren aufgerufen wird (z.B. Timer stoppen) */
   onDispose(fn: () => void): void;
   /** Eigene App-Fenster (Seite relativ zu public/addons/<id>/) */
@@ -132,7 +137,8 @@ function manifestOf(addon: Addon): AddonManifest {
 
 export class AddonManager {
   private active = new Map<string, Array<() => void>>();
-  private services = new Map<string, object>();
+  /** Name → angebotene Schnittstellen (mehrere Addons dürfen denselben Namen anbieten) */
+  private services = new Map<string, object[]>();
   private log = createLogger('Addons');
 
   constructor(
@@ -236,10 +242,16 @@ export class AddonManager {
       dataDir,
       dataUrl,
       provide: (name, service) => {
-        this.services.set(name, service);
-        cleanup.push(() => this.services.delete(name));
+        this.services.set(name, [...(this.services.get(name) ?? []), service]);
+        // Beim Deaktivieren nur die eigene Schnittstelle entfernen, nicht die anderer Addons
+        cleanup.push(() => {
+          const rest = (this.services.get(name) ?? []).filter((s) => s !== service);
+          if (rest.length) this.services.set(name, rest);
+          else this.services.delete(name);
+        });
       },
-      use: <T extends object>(name: string) => this.services.get(name) as T | undefined,
+      use: <T extends object>(name: string) => this.services.get(name)?.at(-1) as T | undefined,
+      useAll: <T extends object>(name: string) => [...(this.services.get(name) ?? [])] as T[],
       onDispose: (fn) => {
         cleanup.push(fn);
       },

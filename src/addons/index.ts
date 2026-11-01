@@ -16,11 +16,12 @@ import { queueAddon } from './queue';
 import { shoutoutAddon } from './shoutout';
 import { streaminfoAddon } from './streaminfo';
 import { timersAddon } from './timers';
+import { uwuclipAddon } from './uwuclip';
 
 /** Alle eingebauten Addons. Neues Addon? Hier eintragen. */
 export const builtInAddons: Addon[] = [
   alertsAddon, channelPointsAddon, queueAddon, commandsAddon, timersAddon, pollsAddon, predictionsAddon, goalsAddon, lurkAddon,
-  shoutoutAddon, adsAddon, modguardAddon, streaminfoAddon, obsAddon, chatAddon, introAddon, musicAddon,
+  shoutoutAddon, adsAddon, modguardAddon, streaminfoAddon, obsAddon, chatAddon, introAddon, musicAddon, uwuclipAddon,
 ];
 // Addons von außerhalb: siehe core/plugins.ts (Ordner „plugins“ im Datenordner)
 

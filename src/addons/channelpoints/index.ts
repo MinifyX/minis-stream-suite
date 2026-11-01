@@ -4,7 +4,7 @@ import { parseTarget, runKeys, targetProblem, type KeyTarget } from '../../core/
 import { validateSteps, type KeyStep } from '../../core/keyboard';
 import { HttpError } from '../../core/server';
 import { wantedStates as computeWantedStates, type Game, type GameRule } from './gameRules';
-import { CHANNELPOINTS_SERVICE, type ChannelPointsService, type GroupInfo } from './service';
+import { CHANNELPOINTS_SERVICE, effectOf, type ChannelPointsService, type GroupInfo } from './service';
 
 /** Belohnung, wie Twitch sie liefert (nur die Felder, die wir brauchen) */
 interface HelixReward {
@@ -174,6 +174,7 @@ export const channelPointsAddon: Addon = {
           .get('groups')
           .filter((g) => g.rewardIds.includes(rewardId))
           .map(({ id, name, icon, color }) => ({ id, name, icon, color })),
+      effectOf: (rewardId) => effectOf(settings.get('groups'), settings.get('foreignRewards'), rewardId),
     };
     ctx.provide(CHANNELPOINTS_SERVICE, service);
 

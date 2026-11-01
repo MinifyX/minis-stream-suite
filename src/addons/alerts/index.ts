@@ -31,8 +31,14 @@ import { CHANNELPOINTS_SERVICE, type ChannelPointsService } from '../channelpoin
  * z.B. um Licht oder Sounds genau zum Alert zu starten.
  */
 export const ALERT_SHOWN_SERVICE = 'alert-shown';
+/** Welcher Alert gerade erscheint */
+export interface AlertShownInfo {
+  /** Name der Variante */
+  variant: string;
+  category: CategoryId;
+}
 export interface AlertShownListener {
-  alertShown(event: StreamEvent): void;
+  alertShown(event: StreamEvent, info?: AlertShownInfo): void;
 }
 
 /** So viele gesendete Alerts merken, bis das Overlay meldet, dass sie starten */
@@ -147,7 +153,7 @@ export const alertsAddon: Addon = {
     const tts = new Tts(path.join(ctx.dataDir, 'tts'), `${ctx.dataUrl}/tts`);
 
     /** Gesendete, aber noch nicht gestartete Alerts (für Addons, die genau zum Alert etwas starten) */
-    const pendingShown = new Map<string, StreamEvent>();
+    const pendingShown = new Map<string, { event: StreamEvent; info: AlertShownInfo }>();
 
     /** Pausiert: neue Alerts warten hier (der Reihe nach), bis es weitergeht. Nach einem Neustart läuft alles wieder. */
     let paused = false;
@@ -175,7 +181,7 @@ export const alertsAddon: Addon = {
         }
       }
       const id = randomUUID();
-      pendingShown.set(id, event);
+      pendingShown.set(id, { event, info: { variant: variant.name, category } });
       if (pendingShown.size > MAX_PENDING_SHOWN) pendingShown.delete(pendingShown.keys().next().value!);
       const message = {
         kind: 'alert',
@@ -402,10 +408,17 @@ export const alertsAddon: Addon = {
     /** Das Overlay meldet: dieser Alert startet jetzt. Nur einmal pro Alert, auch bei mehreren offenen Overlays. */
     ctx.api.post('/shown', ({ body }) => {
       const id = String(body?.id ?? '');
-      const event = pendingShown.get(id);
-      if (!event) return;
+      const pending = pendingShown.get(id);
+      if (!pending) return;
       pendingShown.delete(id);
-      ctx.use<AlertShownListener>(ALERT_SHOWN_SERVICE)?.alertShown(event);
+      // Alle Zuhörer (z.B. Licht-Plugin und UwUClip) – einer mit Fehler hält die anderen nicht auf
+      for (const listener of ctx.useAll<AlertShownListener>(ALERT_SHOWN_SERVICE)) {
+        try {
+          listener.alertShown(pending.event, pending.info);
+        } catch (err) {
+          ctx.log.warn('Fehler beim Melden eines Alerts:', err);
+        }
+      }
     });
 
     // ------------------------------------------------------------ Sprachausgabe
