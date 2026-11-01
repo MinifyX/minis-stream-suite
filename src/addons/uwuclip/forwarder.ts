@@ -61,11 +61,15 @@ export function shouldForward(event: StreamEvent): boolean {
   if (event.test || !FORWARDED_TYPES.has(event.type)) return false;
   // Umfragen und Vorhersagen nur Start und Ende, keine Zwischenstände
   if (event.type === 'poll' || event.type === 'prediction') return event.phase === 'begin' || event.phase === 'end';
+  // Hype Train nur, wenn er vorbei ist: UwUClip nutzt nur beendete, der Fortschritt kommt sehr oft
+  if (event.type === 'hypetrain') return event.phase === 'end';
   return true;
 }
 
 export function toSuiteEvent(event: StreamEvent, meta: { id: string; at: number; effect?: SuiteEffect | null }): SuiteEvent {
   const { type, test: _test, ...data } = event;
+  // Wer beim Hype Train am meisten gegeben hat, braucht UwUClip nicht (weniger Namen, kleinere Pakete)
+  if (type === 'hypetrain') delete (data as Record<string, unknown>).topContributions;
   const out: SuiteEvent = { id: meta.id, at: meta.at, type, data };
   if (type === 'redemption') out.effect = meta.effect ?? null;
   return out;

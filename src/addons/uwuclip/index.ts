@@ -57,8 +57,17 @@ export const uwuclipAddon: Addon = {
     const writeSecret = (value: string) => {
       secret = value;
       if (!value) return secrets.set('secret', null);
-      secrets.set('secret', safeStorage.isEncryptionAvailable() ? `enc:${safeStorage.encryptString(value).toString('base64')}` : value);
+      if (safeStorage.isEncryptionAvailable()) return secrets.set('secret', `enc:${safeStorage.encryptString(value).toString('base64')}`);
+      // Ohne Schlüsselbund (z. B. Linux ohne Secret Service) bleibt nur Klartext – nicht stillschweigend
+      ctx.log.warn('Kein Schlüsselbund verfügbar – der UwUClip-Schlüssel wird unverschlüsselt gespeichert');
+      secrets.set('secret', value);
     };
+    /** Liegt der gespeicherte Schlüssel im Klartext auf der Platte? */
+    const secretPlain = (): boolean => {
+      const stored = secrets.get('secret');
+      return !!stored && !stored.startsWith('enc:');
+    };
+    if (secretPlain()) ctx.log.warn('Der UwUClip-Schlüssel liegt unverschlüsselt auf der Platte');
 
     const config = (): ForwarderConfig | null => {
       const { enabled, serverUrl } = settings.all();
@@ -91,10 +100,13 @@ export const uwuclipAddon: Addon = {
     const alertListener: AlertShownListener = {
       alertShown(event, info) {
         if (event.test || !config()) return;
+        // Ohne Bezug (Event nicht weitergeleitet, z. B. ein Hype-Train-Zwischenstand) kann UwUClip nichts damit anfangen
+        const ref = ids.find(event);
+        if (!ref) return;
         forwarder.enqueue(alertShownEvent({
           id: randomUUID(),
           at: Date.now(),
-          ref: ids.find(event),
+          ref,
           variant: info?.variant ?? null,
           category: info?.category,
           event,
@@ -106,7 +118,7 @@ export const uwuclipAddon: Addon = {
     // ------------------------------------------------------------ API für die Einstellungsseite
 
     const state = () => ({
-      settings: { ...settings.all(), hasSecret: !!secret },
+      settings: { ...settings.all(), hasSecret: !!secret, secretPlain: secretPlain() },
       status: forwarder.status(),
     });
 

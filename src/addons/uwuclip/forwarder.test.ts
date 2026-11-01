@@ -128,6 +128,17 @@ describe('UwUClip: was weitergeleitet wird', () => {
     assert.deepEqual(['begin', 'progress', 'lock', 'end'].map((p) => shouldForward(pred(p as 'begin'))), [true, false, false, true]);
   });
 
+  test('Hype Train nur, wenn er beendet ist – ohne Namen der Top-Spender', () => {
+    const train = (phase: 'begin' | 'progress' | 'end'): StreamEvent => ({
+      type: 'hypetrain', phase, level: 3, total: 4200, progress: 0, goal: 0,
+      topContributions: [{ user: USER, type: 'bits', total: 1000 }], expiresAt: null, trainType: 'regular',
+    } as StreamEvent);
+    assert.deepEqual(['begin', 'progress', 'end'].map((p) => shouldForward(train(p as 'begin'))), [false, false, true]);
+    const data = toSuiteEvent(train('end'), { id: 'h', at: 1 }).data;
+    assert.equal('topContributions' in data, false);
+    assert.equal(data.level, 3);
+  });
+
   test('data ohne type/test, effect nur bei Einlösungen', () => {
     const e = toSuiteEvent(redemption(), { id: 'id1', at: 5, effect: { group: 'HudFX', foreign: true } });
     assert.deepEqual(e, {

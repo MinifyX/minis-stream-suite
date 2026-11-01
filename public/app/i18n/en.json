@@ -2189,6 +2189,7 @@
     "•••••••• (gespeichert)": "•••••••• (saved)",
     "Der gespeicherte Schlüssel wird nicht angezeigt. Leer lassen, um ihn zu behalten.": "The saved key is not shown. Leave empty to keep it.",
     "Noch kein Schlüssel gespeichert.": "No key saved yet.",
+    "Auf diesem System gibt es keinen Schlüsselbund. Der Schlüssel liegt deshalb unverschlüsselt in den Einstellungen der Suite.": "There is no keyring on this system, so the key is stored unencrypted in the suite's settings.",
     "Nicht eingerichtet": "Not set up",
     "Zuletzt gesendet": "Last sent",
     "In der Warteschlange": "Queued",

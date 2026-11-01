@@ -20,3 +20,6 @@ input[type="password"] {
 .test-result.err { background: rgba(245, 176, 65, .12); color: var(--warn); }
 
 .howto { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+
+/* Schlüssel liegt im Klartext (kein Schlüsselbund) */
+.secret-plain { color: var(--warn); }

@@ -93,7 +93,7 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 
 **🙋 Songwünsche:** `!sr` im Chat oder per Kanalpunkte (Punkte zurück bei Ablehnung). Mods/VIPs und Kanalpunkte direkt in die Queue, andere als Vorschlag zur Freigabe. Limits, Sperrliste, `!song`, `!wrongsong`, `!queue`, „gewünscht von“ im Overlay.
 
-**✂️ UwUClip:** Leitet Stream-Events an deinen UwUClip-Server weiter, der daraus automatisch Clips schneidet: HudFX-Jumpscares (Belohnungen aus der Kanalpunkte-Gruppe „HudFX“), Werbepausen, den Moment, in dem ein Alert im Overlay erscheint, Umfragen und Vorhersagen (Start und Ende), Shoutouts, Abos, Bits, Raids, Hype Train und Stream-Start/-Ende. Chat-Nachrichten und Test-Events gehen nie raus.
+**✂️ UwUClip:** Leitet Stream-Events an deinen UwUClip-Server weiter, der daraus automatisch Clips schneidet: HudFX-Jumpscares (Belohnungen aus der Kanalpunkte-Gruppe „HudFX“), Werbepausen, den Moment, in dem ein Alert im Overlay erscheint, Umfragen und Vorhersagen (Start und Ende), Shoutouts, Abos, Bits, Raids, das Ende eines Hype Trains und Stream-Start/-Ende. Chat-Nachrichten und Test-Events gehen nie raus.
 
 - **Einrichten:** Im Addon-Store einschalten. In UwUClip unter *Einstellungen → Stream-Suite* den Schlüssel erzeugen, auf der UwUClip-Seite der Suite Server-Adresse und Schlüssel eintragen, „Verbindung testen“.
 - **HudFX:** Die Lumia-Belohnungen im Kanalpunkte-Addon in die Gruppe „HudFX“ sortieren (am besten mit „andere App“). Das Kanalpunkte-Addon muss dafür an sein.

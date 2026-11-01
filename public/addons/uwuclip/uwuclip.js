@@ -44,7 +44,7 @@ function renderToggle() {
 
 let formFilled = false;
 function renderForm() {
-  const { serverUrl, hasSecret } = state.data.settings;
+  const { serverUrl, hasSecret, secretPlain } = state.data.settings;
   // Eingaben nicht überschreiben, während jemand tippt
   if (!formFilled) {
     $('#server-url').value = serverUrl;
@@ -55,6 +55,7 @@ function renderForm() {
     ? 'Der gespeicherte Schlüssel wird nicht angezeigt. Leer lassen, um ihn zu behalten.'
     : 'Noch kein Schlüssel gespeichert.';
   $('#clear-secret').hidden = !hasSecret;
+  $('#secret-plain').hidden = !secretPlain;
 }
 
 function renderStatus() {
