@@ -21,6 +21,37 @@ const TEST_EVENTS = [
   ['adbreak', '📺 Werbung'],
 ];
 
+// Lucide-Icons (ISC) je eingebautem Addon; unbekannte IDs und Plugins behalten ihr Emoji
+const ADDON_ICONS = {
+  alerts: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>', // bell
+  channelpoints: '<path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/>', // coins
+  queue: '<path d="M11 5h10"/><path d="M11 12h10"/><path d="M11 19h10"/><path d="M4 4h1v5"/><path d="M4 9h2"/><path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"/>', // list-ordered
+  commands: '<rect width="18" height="18" x="3" y="3" rx="2"/><line x1="9" x2="15" y1="15" y2="9"/>', // square-slash
+  timers: '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>', // timer
+  polls: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>', // chart-column
+  predictions: '<rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/>', // dices
+  goals: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/>', // flag
+  lurk: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>', // eye
+  shoutout: '<path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14"/><path d="M8 6v8"/>', // megaphone
+  ads: '<path d="m17 2-5 5-5-5"/><rect width="20" height="15" x="2" y="7" rx="2"/>', // tv
+  modguard: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>', // shield
+  streaminfo: '<path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>', // pencil-line
+  chat: '<path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/>', // messages-square
+  intro: '<path d="m12.296 3.464 3.02 3.956"/><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m6.18 5.276 3.1 3.899"/>', // clapperboard
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', // music
+  obs: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/>', // video
+  uwuclip: '<circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>', // scissors
+};
+
+/** Icon eines Addons: Lucide-SVG für eingebaute Addons, sonst das Emoji aus dem Manifest */
+function addonIcon(addon, cls) {
+  const el = h('span', { class: cls, 'aria-hidden': 'true' });
+  const paths = !addon.plugin && ADDON_ICONS[addon.id];
+  if (paths) el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  else el.textContent = addon.icon;
+  return el;
+}
+
 /** API-Aufruf mit Fehlermeldung als Toast. Gibt null zurück, wenn es schiefging. */
 async function call(path, body) {
   try {
@@ -55,7 +86,7 @@ function renderAddonNav() {
   const withPage = state.addons.installed.filter((a) => a.active && a.settingsPage);
   $('#addon-nav').replaceChildren(
     ...(withPage.length
-      ? withPage.map((a) => h('a', { href: `#/addon/${a.id}` }, h('span', {}, a.icon), ` ${a.name}`))
+      ? withPage.map((a) => h('a', { href: `#/addon/${a.id}` }, addonIcon(a, 'nav-icon'), a.name))
       : [h('div', { class: 'nav-empty' }, 'Keine aktiven Addons')]),
   );
 }
@@ -387,7 +418,7 @@ function renderStore() {
   const installed = state.addons.installed.map((addon) =>
     h('div', { class: 'card addon-card' },
       h('div', { class: 'top' },
-        h('div', { class: 'addon-icon' }, addon.icon),
+        addonIcon(addon, 'addon-icon'),
         h('div', {}, h('strong', {}, addon.name), h('small', {}, `v${addon.version} · von ${addon.author}`, addon.plugin ? ' · 🧩 Plugin' : ''))),
       h('p', { class: 'muted' }, addon.description),
       h('div', { class: 'bottom' },
@@ -401,7 +432,7 @@ function renderStore() {
   const upcoming = state.addons.upcoming.map((addon) =>
     h('div', { class: 'card addon-card upcoming' },
       h('div', { class: 'top' },
-        h('div', { class: 'addon-icon' }, addon.icon),
+        addonIcon(addon, 'addon-icon'),
         h('div', {}, h('strong', {}, addon.name), h('small', {}, `von ${addon.author}`))),
       h('p', { class: 'muted' }, addon.description),
       h('div', { class: 'bottom' }, h('span', { class: 'badge accent' }, 'Bald verfügbar'))));

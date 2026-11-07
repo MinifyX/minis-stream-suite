@@ -1,9 +1,5 @@
 body { padding: 24px 28px; }
 [hidden] { display: none !important; }
-select, textarea {
-  width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
-  padding: 7px 9px; border-radius: 8px; font: inherit;
-}
 .spacer { flex: 1; }
 .note { font-size: 12px; color: var(--muted); margin: 0; }
 .save-state { font-size: 12px; color: var(--muted); }
@@ -29,7 +25,7 @@ select, textarea {
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .f { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.f > label { font-weight: 600; font-size: 12px; }
+.f > label { font-weight: 600; font-size: 13px; color: var(--muted); }
 .check { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 13px; }
 .color { display: flex; gap: 6px; }
 .color input[type="color"] { width: 38px; height: 34px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; flex: none; cursor: pointer; }
@@ -57,6 +53,6 @@ select, textarea {
 .syntax code { font-family: var(--font-mono); background: var(--bg-2); padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
 .syntax .result { font-size: 15px; }
 
-.scope { margin: 0; font-size: 13px; color: var(--accent-ink); background: var(--accent-soft); border: 1px solid rgba(145, 70, 255, .35); border-radius: 10px; padding: 9px 12px; }
+.scope { margin: 0; font-size: 13px; color: var(--accent-ink); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: var(--radius-control); padding: 9px 12px; }
 .window-stage { height: 520px; border-radius: 10px; overflow: hidden; outline: 1px solid var(--border); display: flex; }
 .window-stage .cw-list { pointer-events: none; }
