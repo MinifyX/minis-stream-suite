@@ -16,7 +16,7 @@ textarea, select {
   background: none; border: 0; color: var(--text); font: inherit; font-weight: 500; text-align: left; width: 100%;
 }
 .g-item:hover { background: var(--card); }
-.g-item.active { background: var(--accent-soft); color: #d6bcff; }
+.g-item.active { background: var(--accent-soft); color: var(--accent-ink); }
 .g-item .g-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .g-item .count { font-size: 12px; color: var(--muted); }
 .g-sep { height: 1px; background: var(--border); margin: 8px 4px; }
@@ -38,7 +38,7 @@ textarea, select {
 .cp-toolbar input { flex: 1; }
 
 .import-banner {
-  background: rgba(245, 176, 65, .08); border: 1px solid rgba(245, 176, 65, .4); border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 8%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); border-radius: 12px;
   padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;
 }
 .import-banner ol { margin: 0; padding-left: 20px; }
@@ -87,11 +87,11 @@ textarea, select {
 .check-list .cost { margin-left: auto; color: var(--muted); font-size: 12px; }
 .counter { font-size: 11px; color: var(--muted); text-align: right; }
 
-.icon-btn.on { color: var(--warn); border-color: rgba(245, 176, 65, .5); }
+.icon-btn.on { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
 
 /* Spiel-Regeln */
 .game-rule { display: flex; flex-direction: column; gap: 6px; }
-.game-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--accent-soft); color: #d6bcff; font-size: 12px; font-weight: 600; }
+.game-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 600; }
 .chip-x { background: none; border: 0; color: inherit; cursor: pointer; font-size: 11px; padding: 2px 6px; border-radius: 99px; }
 .chip-x:hover { background: rgba(255, 255, 255, .15); }
 .mode-select { width: auto; padding: 4px 8px; font-size: 12px; }
@@ -104,9 +104,9 @@ textarea, select {
 .game-result img, .game-ph { width: 26px; height: 36px; border-radius: 3px; object-fit: cover; flex: none; display: grid; place-items: center; }
 
 /* Keybinds */
-.icon-btn.on-accent { color: #d6bcff; border-color: rgba(145, 70, 255, .6); background: var(--accent-soft); }
-.kill-switch { display: inline-flex; align-items: center; gap: 8px; padding: 2px 10px 2px 4px; border-radius: 99px; background: var(--accent-soft); color: #d6bcff; font-size: 12px; font-weight: 600; }
-.kill-switch.off { background: rgba(255, 92, 92, .15); color: var(--err); }
+.icon-btn.on-accent { color: var(--accent-ink); border-color: rgba(145, 70, 255, .6); background: var(--accent-soft); }
+.kill-switch { display: inline-flex; align-items: center; gap: 8px; padding: 2px 10px 2px 4px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 600; }
+.kill-switch.off { background: color-mix(in srgb, var(--err) 15%, transparent); color: var(--err); }
 .kill-switch .switch { transform: scale(.8); }
 .sub { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--muted); margin-top: 4px; }
 .kb-games { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -115,8 +115,8 @@ textarea, select {
 /* Satellite */
 .badge-btn { border: 1px solid var(--border); background: var(--card-2); color: var(--muted); border-radius: 99px; padding: 2px 10px; font: 600 12px inherit; font-family: inherit; cursor: pointer; }
 .badge-btn:hover { color: var(--text); }
-.badge-btn.ok { color: var(--ok); border-color: rgba(46, 204, 113, .4); background: rgba(46, 204, 113, .12); }
-.badge-btn.warn { color: var(--warn); border-color: rgba(245, 176, 65, .4); background: rgba(245, 176, 65, .1); }
+.badge-btn.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.badge-btn.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
 .sat { display: flex; flex-direction: column; gap: 12px; }
 .sat-status { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--bg-2); font-weight: 600; }
 .sat-status.ok { color: var(--ok); }

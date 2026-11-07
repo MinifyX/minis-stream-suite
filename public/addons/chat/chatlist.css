@@ -22,7 +22,7 @@
 .cw-list .cr-ev-stream { --cr-ev: #ff4d4d; background: rgba(255, 77, 77, .08); }
 .cw-list .cr-ev-hypetrain { --cr-ev: #ff6b3d; background: rgba(255, 107, 61, .1); }
 .cw-list .cr-ev-prediction { --cr-ev: #387aff; background: rgba(56, 122, 255, .09); }
-.cw-list .cr-ev-shoutout { --cr-ev: #f5b041; background: rgba(245, 176, 65, .08); }
+.cw-list .cr-ev-shoutout { --cr-ev: #f5b041; background: color-mix(in srgb, var(--warn) 8%, transparent); }
 .cw-list .cr-ev-ads { --cr-ev: #9a9aab; background: rgba(154, 154, 171, .08); }
 .cw-list .cr-ev-test { color: var(--muted); font-size: .85em; }
 .cw-actions { position: absolute; right: 6px; top: 2px; display: none; gap: 2px; }

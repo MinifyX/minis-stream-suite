@@ -14,17 +14,22 @@
   --warn: #f5b041;
   --err: #ff5c5c;
   --radius: 12px;
+  --accent-ink: #cdaaff;
+  --on-accent: #fff;
+  --border-strong: #45455a;
+  --font: "Segoe UI", system-ui, sans-serif;
+  --font-mono: Consolas, monospace;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { background: var(--bg); color: var(--text); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
-a { color: #bf94ff; }
+body { background: var(--bg); color: var(--text); font: 14px/1.5 var(--font); }
+a { color: var(--accent-ink); }
 h1 { font-size: 24px; margin: 0 0 4px; }
 h2 { font-size: 16px; margin: 0 0 12px; }
 p { margin: 0 0 12px; }
-code { font-family: Consolas, monospace; background: var(--card-2); padding: 1px 5px; border-radius: 4px; }
+code { font-family: var(--font-mono); background: var(--card-2); padding: 1px 5px; border-radius: 4px; }
 .muted { color: var(--muted); }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
@@ -35,8 +40,8 @@ code { font-family: Consolas, monospace; background: var(--card-2); padding: 1px
   padding: 8px 14px; border-radius: 8px; cursor: pointer;
   font: inherit; font-weight: 600; text-decoration: none; white-space: nowrap;
 }
-.btn:hover { border-color: #45455a; background: #2b2b38; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:hover { border-color: var(--border-strong); background: #2b2b38; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn.primary:hover { background: var(--accent-2); }
 .btn.small { padding: 4px 10px; font-size: 12px; }
 .btn:disabled { opacity: 0.5; cursor: default; }
@@ -67,7 +72,7 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .badge.ok { background: rgba(46, 204, 113, 0.15); color: var(--ok); }
 .badge.warn { background: rgba(245, 176, 65, 0.15); color: var(--warn); }
 .badge.err { background: rgba(255, 92, 92, 0.15); color: var(--err); }
-.badge.accent { background: var(--accent-soft); color: #cdaaff; }
+.badge.accent { background: var(--accent-soft); color: var(--accent-ink); }
 
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--muted); flex: none; }
 .dot.ok { background: var(--ok); }

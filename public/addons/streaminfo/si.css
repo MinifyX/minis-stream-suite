@@ -1,8 +1,8 @@
 /* Baut auf polls.css auf (gleiches Grundlayout) */
 .card-head { display: flex; align-items: center; gap: 8px; }
 .card-head h2 { margin: 0; }
-.status { background: rgba(245, 176, 65, .12); border: 1px solid rgba(245, 176, 65, .4); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
-.conflict { background: rgba(245, 176, 65, .12); border: 1px solid rgba(245, 176, 65, .4); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+.status { background: color-mix(in srgb, var(--warn) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+.conflict { background: color-mix(in srgb, var(--warn) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
 .dirty-note { font-size: 12px; font-weight: 700; color: var(--warn); }
 
 /* Karte „Jetzt“ */
@@ -37,7 +37,7 @@
 .tag-box { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; min-height: 40px; cursor: text; }
 .tag-box:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .tag-box input[type="text"] { flex: 1; min-width: 90px; width: auto; border: 0; background: none; padding: 4px; outline: none; }
-.tag-chip { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 9px; border-radius: 99px; background: var(--accent-soft); color: #d6bcff; font-size: 12px; font-weight: 600; }
+.tag-chip { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 600; }
 .tag-chip button { background: none; border: 0; color: inherit; cursor: pointer; font-size: 10px; padding: 2px 6px; border-radius: 99px; }
 .tag-chip button:hover { background: rgba(255, 255, 255, .15); }
 .tag-err { font-size: 12px; color: var(--err); min-height: 0; }

@@ -36,7 +36,7 @@ select {
   display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; cursor: pointer;
   background: var(--card); border: 1px solid var(--border); width: 100%; font: inherit; color: var(--text); text-align: left;
 }
-.variant-item:hover { border-color: #45455a; }
+.variant-item:hover { border-color: var(--border-strong); }
 .variant-item.selected { background: var(--accent); border-color: var(--accent); }
 .variant-item.selected small { color: rgba(255, 255, 255, .8); }
 .variant-item.disabled:not(.selected) { opacity: .55; }
@@ -101,7 +101,7 @@ select {
 
 .color { display: flex; gap: 6px; }
 .color input[type="color"] { width: 36px; height: 34px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; flex: none; cursor: pointer; }
-.color input[type="text"] { font-family: Consolas, monospace; text-transform: uppercase; }
+.color input[type="text"] { font-family: var(--font-mono); text-transform: uppercase; }
 
 .slider { display: flex; align-items: center; gap: 10px; }
 .slider input { flex: 1; accent-color: var(--accent); }
@@ -118,11 +118,11 @@ select {
 .choice.small svg { width: 22px; height: 18px; }
 
 .chips { display: flex; gap: 4px; flex-wrap: wrap; }
-.chip { font: 600 11px Consolas, monospace; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: #cdaaff; border: 0; cursor: pointer; }
-.chip:hover { background: var(--accent); color: #fff; }
+.chip { font: 600 11px var(--font-mono); padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); border: 0; cursor: pointer; }
+.chip:hover { background: var(--accent); color: var(--on-accent); }
 
 .media-card {
-  border: 1px dashed #45455a; border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; min-height: 76px;
+  border: 1px dashed var(--border-strong); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; min-height: 76px;
 }
 .media-thumb { width: 64px; height: 56px; display: grid; place-items: center; flex: none; background: var(--card); border-radius: 6px; overflow: hidden; font-size: 24px; }
 .media-thumb img, .media-thumb video, .media-thumb svg { max-width: 100%; max-height: 100%; }
@@ -130,7 +130,7 @@ select {
 .icon-btn { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 6px; }
 .icon-btn:hover { color: var(--text); background: var(--card-2); }
 .btn.block { width: 100%; justify-content: center; }
-.btn.danger { background: var(--err); border-color: var(--err); color: #fff; }
+.btn.danger { background: var(--err); border-color: var(--err); color: var(--on-accent); }
 
 .reward-pick { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; background: var(--bg); border-radius: 8px; padding: 6px; }
 .reward-pick label { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; font-size: 13px; cursor: pointer; }
@@ -189,7 +189,7 @@ select {
 .group-mute-name { flex: 1; font-weight: 600; }
 .group-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .group-chips { margin: 8px 0; }
-.chip.active { background: var(--accent); color: #fff; }
+.chip.active { background: var(--accent); color: var(--on-accent); }
 .ed-rewards .sub-head { margin-top: 14px; }
 
 /* Verlauf */

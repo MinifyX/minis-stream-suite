@@ -1,5 +1,5 @@
 .provider-select { width: auto; max-width: 280px; padding: 5px 8px; font-size: 13px; }
-.fallback { background: rgba(245, 176, 65, .12); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.fallback { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
 
 .tabs { display: inline-flex; background: var(--bg-2); border-radius: 8px; padding: 2px; }
 .tabs button { background: none; border: 0; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px; cursor: pointer; }
@@ -20,7 +20,7 @@
 .auto-row { display: flex; gap: 8px; align-items: center; }
 .auto-row input { flex: 1; }
 .auto-current { font-size: 13px; }
-.auto-current b { color: #cdaaff; }
+.auto-current b { color: var(--accent-ink); }
 
 .status-list { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .status-list .line { display: flex; align-items: center; gap: 8px; }
@@ -31,7 +31,7 @@
 .page-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .page-tabs button:hover { color: var(--text); }
 .page-tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
-.tab-badge { background: var(--accent); color: #fff; border-radius: 99px; font-size: 11px; padding: 0 7px; min-width: 18px; text-align: center; }
+.tab-badge { background: var(--accent); color: var(--on-accent); border-radius: 99px; font-size: 11px; padding: 0 7px; min-width: 18px; text-align: center; }
 
 .icon-btn { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; }
 .icon-btn:hover:not(:disabled) { background: var(--card-2); color: var(--text); }
@@ -73,7 +73,7 @@
 .req.playing { background: var(--accent-soft); }
 .req-meta { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; min-width: 110px; }
 .req-actions { display: flex; align-items: center; gap: 4px; }
-.req-pos { font: 700 12px Consolas, monospace; color: var(--muted); min-width: 26px; text-align: right; }
+.req-pos { font: 700 12px var(--font-mono); color: var(--muted); min-width: 26px; text-align: right; }
 
 /* ------------------------------------------------------------ Dialog */
 .modal-back { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); display: grid; place-items: center; z-index: 50; }

@@ -30,32 +30,32 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 /* Umschalter Chat / Twitch */
 .seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 3px; align-self: flex-start; }
 .seg button { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 7px; cursor: pointer; }
-.seg button.on { background: var(--accent); color: #fff; }
+.seg button.on { background: var(--accent); color: var(--on-accent); }
 .seg button:disabled { opacity: .4; cursor: default; }
 
 .choices { display: flex; flex-direction: column; gap: 6px; }
 .choice-row { display: grid; grid-template-columns: 26px 1fr 52px auto; gap: 6px; align-items: center; }
-.choice-num { font: 700 13px Consolas, monospace; color: var(--muted); text-align: center; }
+.choice-num { font: 700 13px var(--font-mono); color: var(--muted); text-align: center; }
 .counter { font-size: 11px; color: var(--muted); text-align: right; }
 .counter.over { color: var(--err); font-weight: 700; }
 .presets { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.presets .btn.on { border-color: var(--accent); background: var(--accent-soft); color: #d6bcff; }
+.presets .btn.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 .presets input { width: 90px; }
 
 /* Laufende Umfrage */
 .live-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .live-title { font-size: 20px; font-weight: 700; flex: 1; min-width: 200px; }
-.time-left { font: 700 18px Consolas, monospace; }
+.time-left { font: 700 18px var(--font-mono); }
 .progress { height: 6px; background: var(--bg-2); border-radius: 3px; overflow: hidden; }
 .progress div { height: 100%; background: var(--accent); transition: width 1s linear; }
 .bars { display: flex; flex-direction: column; gap: 8px; }
 .bar { position: relative; background: var(--bg-2); border-radius: 10px; overflow: hidden; }
 .bar-fill { position: absolute; inset: 0 auto 0 0; background: var(--accent-soft); transition: width .4s; }
-.bar.lead .bar-fill { background: rgba(145, 71, 255, .35); }
+.bar.lead .bar-fill { background: color-mix(in srgb, var(--accent) 35%, transparent); }
 .bar-content { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
 .bar-label { flex: 1; font-weight: 600; }
-.bar-num { font: 700 13px Consolas, monospace; color: var(--muted); }
-.bar-pct { font: 700 15px Consolas, monospace; min-width: 48px; text-align: right; }
+.bar-num { font: 700 13px var(--font-mono); color: var(--muted); }
+.bar-pct { font: 700 15px var(--font-mono); min-width: 48px; text-align: right; }
 
 /* Verlauf */
 .hist { display: flex; flex-direction: column; gap: 8px; }
@@ -70,12 +70,12 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 .mini .track div { height: 100%; background: var(--muted); }
 .mini.win .track div { background: var(--accent); }
 .mini.win span:first-child { font-weight: 700; }
-.mini span:last-child { text-align: right; font-family: Consolas, monospace; }
+.mini span:last-child { text-align: right; font-family: var(--font-mono); }
 .h-actions { display: flex; gap: 2px; }
 .empty { padding: 24px; text-align: center; color: var(--muted); }
 
 .copy-row { display: flex; gap: 6px; }
-.copy-row input { font: 12px Consolas, monospace; }
+.copy-row input { font: 12px var(--font-mono); }
 .help { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
 .help code { font-size: 12px; }
 
@@ -90,5 +90,5 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 .tabs button { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 10px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
 .tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
 .chips { display: flex; gap: 4px; flex-wrap: wrap; }
-.chip { font: 600 11px Consolas, monospace; padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: #cdaaff; border: 0; cursor: pointer; }
-.chip:hover { background: var(--accent); color: #fff; }
+.chip { font: 600 11px var(--font-mono); padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); border: 0; cursor: pointer; }
+.chip:hover { background: var(--accent); color: var(--on-accent); }

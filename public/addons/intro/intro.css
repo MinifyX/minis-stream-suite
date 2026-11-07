@@ -2,7 +2,7 @@
 .chain { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .chain .st { padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; letter-spacing: .04em; background: var(--card-2); color: var(--muted); }
 .chain .st.past { color: #8b8ba0; background: transparent; }
-.chain .st.now { background: var(--accent); color: #fff; box-shadow: 0 0 0 3px var(--accent-soft); }
+.chain .st.now { background: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .chain .st.loop::after { content: " ↻"; font-weight: 400; }
 .chain .arrow { color: #4a4a5c; font-size: 12px; }
 
@@ -10,19 +10,19 @@
 .now-state { font-size: 44px; font-weight: 800; letter-spacing: .03em; line-height: 1; min-width: 210px; }
 .now-state small { display: block; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-top: 6px; }
 .now-info { display: flex; flex-direction: column; gap: 8px; }
-.countdown { font: 700 28px Consolas, monospace; }
+.countdown { font: 700 28px var(--font-mono); }
 .countdown small { font: 600 12px "Segoe UI", system-ui, sans-serif; color: var(--muted); display: block; }
-.pending-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 99px; background: rgba(245, 176, 65, .15); color: var(--warn); font-weight: 700; font-size: 13px; }
+.pending-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 99px; background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); font-weight: 700; font-size: 13px; }
 .pending-badge button { background: none; border: 0; color: inherit; cursor: pointer; font: inherit; text-decoration: underline; padding: 0; }
 
 .cmd-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
 @media (max-width: 760px) { .cmd-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .cmd { padding: 14px 8px; font-size: 15px; justify-content: center; flex-direction: column; gap: 2px; }
 .cmd small { font-weight: 500; font-size: 11px; color: var(--muted); }
-.cmd.hot { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 3px var(--accent-soft); }
+.cmd.hot { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .cmd.hot small { color: #e9dcff; }
-.cmd.danger { border-color: rgba(255, 92, 92, .5); }
-.cmd.danger:hover:not(:disabled) { background: rgba(255, 92, 92, .15); }
+.cmd.danger { border-color: color-mix(in srgb, var(--err) 50%, transparent); }
+.cmd.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--err) 15%, transparent); }
 
 /* ------------------------------------------------------------ Medien */
 .segments { display: flex; flex-direction: column; gap: 8px; }

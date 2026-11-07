@@ -8,15 +8,15 @@ body { overflow: hidden; background: #0e0e10; }
 .cw-title { font-weight: 700; font-size: 13px; }
 .cw-btn { background: none; border: 1px solid transparent; color: var(--muted); font: 600 12px inherit; font-family: inherit; padding: 3px 7px; border-radius: 6px; cursor: pointer; }
 .cw-btn:hover { color: var(--text); background: #26262c; }
-.cw-btn.on { color: #d6bcff; background: var(--accent-soft); border-color: rgba(145, 70, 255, .5); }
+.cw-btn.on { color: var(--accent-ink); background: var(--accent-soft); border-color: rgba(145, 70, 255, .5); }
 
 .cw-filter { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; background: #18181b; border-bottom: 1px solid #2a2a30; font-size: 12px; }
 .cw-filter button { background: #26262c; border: 1px solid #333; color: var(--muted); border-radius: 99px; padding: 2px 9px; cursor: pointer; font: inherit; }
-.cw-filter button.on { color: #fff; border-color: var(--accent); background: var(--accent-soft); }
+.cw-filter button.on { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
 
 #alerts-pause.on { color: #1b1b1b; background: var(--warn); border-color: var(--warn); }
 
-.cw-more { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); background: var(--accent); color: #fff; border: 0; border-radius: 99px; padding: 5px 14px; font: 600 12px inherit; font-family: inherit; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.5); z-index: 5; }
+.cw-more { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); background: var(--accent); color: var(--on-accent); border: 0; border-radius: 99px; padding: 5px 14px; font: 600 12px inherit; font-family: inherit; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.5); z-index: 5; }
 
 .cw-foot { flex: none; background: #18181b; border-top: 1px solid #2a2a30; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
 .cw-reply { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; padding: 0 4px; }
@@ -27,5 +27,5 @@ body { overflow: hidden; background: #0e0e10; }
   padding: 7px 9px; font: inherit; font-size: 13px; max-height: 90px; line-height: 1.35;
 }
 .cw-input-row textarea:focus { outline: none; border-color: var(--accent); }
-.cw-send { background: var(--accent); color: #fff; border: 0; border-radius: 6px; width: 36px; height: 34px; cursor: pointer; font-size: 15px; }
+.cw-send { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 6px; width: 36px; height: 34px; cursor: pointer; font-size: 15px; }
 .cw-send:disabled { opacity: .5; }

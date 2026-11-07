@@ -32,18 +32,18 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 /* Formular */
 .outcomes { display: flex; flex-direction: column; gap: 6px; }
 .outcome-row { display: grid; grid-template-columns: 26px 1fr 52px auto; gap: 6px; align-items: center; }
-.outcome-num { font: 700 13px Consolas, monospace; color: #fff; text-align: center; border-radius: 6px; padding: 2px 0; background: var(--blue); }
+.outcome-num { font: 700 13px var(--font-mono); color: #fff; text-align: center; border-radius: 6px; padding: 2px 0; background: var(--blue); }
 .outcome-num.pink { background: var(--pink); }
 .counter { font-size: 11px; color: var(--muted); text-align: right; }
 .counter.over { color: var(--err); font-weight: 700; }
 .presets { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.presets .btn.on { border-color: var(--accent); background: var(--accent-soft); color: #d6bcff; }
+.presets .btn.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
 .presets input { width: 90px; }
 
 /* Laufende Vorhersage */
 .live-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .live-title { font-size: 20px; font-weight: 700; }
-.time-left { font: 700 18px Consolas, monospace; }
+.time-left { font: 700 18px var(--font-mono); }
 .progress { height: 6px; background: var(--bg-2); border-radius: 3px; overflow: hidden; }
 .progress div { height: 100%; background: var(--accent); transition: width 1s linear; }
 .bars { display: flex; flex-direction: column; gap: 8px; }
@@ -56,8 +56,8 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 .bar.lose { opacity: .55; }
 .bar-content { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
 .bar-label { flex: 1; font-weight: 600; min-width: 120px; }
-.bar-stats { font: 12px Consolas, monospace; color: var(--muted); display: flex; gap: 10px; }
-.bar-pct { font: 700 15px Consolas, monospace; min-width: 48px; text-align: right; color: var(--text); }
+.bar-stats { font: 12px var(--font-mono); color: var(--muted); display: flex; gap: 10px; }
+.bar-pct { font: 700 15px var(--font-mono); min-width: 48px; text-align: right; color: var(--text); }
 .bar .outcome-num { background: var(--c); min-width: 26px; }
 .totals { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .totals b { color: var(--text); }
@@ -76,12 +76,12 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 .mini .track div { height: 100%; background: var(--c); opacity: .5; }
 .mini.win .track div { opacity: 1; }
 .mini.win span:first-child { font-weight: 700; }
-.mini span:last-child { text-align: right; font-family: Consolas, monospace; }
+.mini span:last-child { text-align: right; font-family: var(--font-mono); }
 .h-actions { display: flex; gap: 2px; }
 .empty { padding: 24px; text-align: center; color: var(--muted); }
 
 .copy-row { display: flex; gap: 6px; }
-.copy-row input { font: 12px Consolas, monospace; }
+.copy-row input { font: 12px var(--font-mono); }
 .help { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
 .help code { font-size: 12px; }
 
@@ -96,6 +96,6 @@ main, aside { display: flex; flex-direction: column; gap: 16px; }
 .tabs button { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 10px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
 .tabs button.on { color: var(--text); border-bottom-color: var(--accent); }
 .chips { display: flex; gap: 4px; flex-wrap: wrap; }
-.chip { font: 600 11px Consolas, monospace; padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: #cdaaff; border: 0; cursor: pointer; }
-.chip:hover { background: var(--accent); color: #fff; }
+.chip { font: 600 11px var(--font-mono); padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); border: 0; cursor: pointer; }
+.chip:hover { background: var(--accent); color: var(--on-accent); }
 .msg-block { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--bg-2); }

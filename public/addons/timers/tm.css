@@ -52,11 +52,11 @@ textarea, select {
 .msg-row { display: flex; gap: 6px; align-items: flex-start; }
 .msg-row .num { width: 24px; height: 24px; margin-top: 6px; border-radius: 6px; display: grid; place-items: center; background: var(--card-2); font-size: 12px; font-weight: 700; flex: none; }
 .chips { display: flex; gap: 4px; flex-wrap: wrap; }
-.chip { font: 600 11px Consolas, monospace; padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: #cdaaff; border: 0; cursor: pointer; }
-.chip:hover { background: var(--accent); color: #fff; }
+.chip { font: 600 11px var(--font-mono); padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); border: 0; cursor: pointer; }
+.chip:hover { background: var(--accent); color: var(--on-accent); }
 .preview { background: var(--bg-2); border-radius: 10px; padding: 10px 12px; font-size: 13px; border-left: 3px solid var(--accent); }
 .game-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.game-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--accent-soft); color: #d6bcff; font-size: 12px; font-weight: 600; }
+.game-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 600; }
 .chip-x { background: none; border: 0; color: inherit; cursor: pointer; font-size: 11px; padding: 2px 6px; border-radius: 99px; }
 .game-results { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; }
 .game-result {

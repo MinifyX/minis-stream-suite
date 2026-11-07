@@ -9,7 +9,7 @@ select, textarea {
 .save-state { font-size: 12px; color: var(--muted); }
 .login-note {
   margin: 0; padding: 10px 14px; border-radius: 10px; font-size: 13px;
-  background: rgba(245, 176, 65, .1); border: 1px solid rgba(245, 176, 65, .35); color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 10%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); color: var(--warn);
 }
 
 .page { max-width: 1200px; display: flex; flex-direction: column; gap: 16px; }
@@ -22,7 +22,7 @@ select, textarea {
   padding: 9px 14px; cursor: pointer; margin-bottom: -1px;
 }
 .tabs button:hover { color: var(--text); }
-.tabs button.active { color: #d6bcff; border-bottom-color: var(--accent); }
+.tabs button.active { color: var(--accent-ink); border-bottom-color: var(--accent); }
 .tab { display: flex; flex-direction: column; gap: 16px; }
 
 /* ---------------- Liste der Ziele */
@@ -40,13 +40,13 @@ select, textarea {
   display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(120px, 1fr) auto auto; gap: 12px; align-items: center;
   background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; cursor: pointer;
 }
-.goal-row:hover { border-color: #45455a; }
+.goal-row:hover { border-color: var(--border-strong); }
 .goal-row.selected { border-color: var(--accent); background: var(--accent-soft); }
 .goal-row .g-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .goal-row .g-type { font-size: 12px; color: var(--muted); }
 .mini-bar { height: 6px; background: var(--card-2); border-radius: 3px; overflow: hidden; }
 .mini-bar div { height: 100%; background: linear-gradient(90deg, var(--accent), #ff6bd6); transition: width .4s; }
-.goal-row .g-num { font: 700 13px Consolas, monospace; white-space: nowrap; }
+.goal-row .g-num { font: 700 13px var(--font-mono); white-space: nowrap; }
 .row-btns { display: flex; gap: 2px; }
 .icon-btn { background: none; border: 1px solid transparent; color: var(--muted); cursor: pointer; font-size: 13px; padding: 3px 7px; border-radius: 7px; }
 .icon-btn:hover { color: var(--text); background: var(--card-2); border-color: var(--border); }
@@ -68,12 +68,12 @@ select, textarea {
 .color input[type="color"] { width: 38px; height: 34px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; flex: none; cursor: pointer; }
 .seg { display: inline-flex; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 3px; align-self: flex-start; flex-wrap: wrap; }
 .seg button { border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 7px 14px; border-radius: 7px; cursor: pointer; }
-.seg button.on { background: var(--accent); color: #fff; }
+.seg button.on { background: var(--accent); color: var(--on-accent); }
 .type-info { font-size: 12px; color: var(--muted); background: var(--bg-2); border-radius: 8px; padding: 9px 11px; margin: 0; }
 
 /* Stand */
 .value-box { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.big-value { font: 800 30px/1 Consolas, monospace; }
+.big-value { font: 800 30px/1 var(--font-mono); }
 .big-value small { font-size: 16px; color: var(--muted); font-weight: 600; }
 .set-row { display: flex; gap: 6px; align-items: center; }
 .set-row input { width: 130px; }
