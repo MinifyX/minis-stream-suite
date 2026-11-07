@@ -67,7 +67,8 @@ export interface Settings {
   window: WindowSettings;
 }
 
-export const OVERLAY_FONTS = ['Segoe UI', 'Arial', 'Verdana', 'Nunito', 'Roboto', 'Montserrat', 'Poppins', 'Fredoka', 'Inter', 'Oswald', 'Bangers', 'Press Start 2P', 'Comic Neue'];
+/** UwU Sans liefert die App selbst mit (public/addons/overlay.css), alle anderen außer den Systemschriften kommen von Google Fonts */
+export const OVERLAY_FONTS = ['UwU Sans', 'Segoe UI', 'Arial', 'Verdana', 'Nunito', 'Roboto', 'Montserrat', 'Poppins', 'Fredoka', 'Inter', 'Oswald', 'Bangers', 'Press Start 2P', 'Comic Neue'];
 /** Im Chat-Fenster nur Schriften, die auf jedem Windows-PC da sind (kein Internet nötig) */
 export const WINDOW_FONTS = ['Segoe UI', 'Arial', 'Verdana', 'Tahoma', 'Consolas'];
 
@@ -82,16 +83,16 @@ export const DEFAULTS: Settings = {
     hiddenUsers: ['nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot'],
     events: { ...allEvents(true), stream: false, ads: false },
     respectAlertFilter: true,
-    font: 'Nunito',
+    font: 'UwU Sans',
     fontSize: 22,
-    fontWeight: 700,
-    textColor: '#FFFFFF',
+    fontWeight: 600,
+    textColor: '#F8F2F6',
     nameColorMode: 'twitch',
-    nameColor: '#9146FF',
-    background: '#000000',
-    backgroundOpacity: 45,
+    nameColor: '#FF7FAC',
+    background: '#1C171F',
+    backgroundOpacity: 85,
     rounded: true,
-    textShadow: true,
+    textShadow: false,
     layout: 'inline',
     animation: 'slide',
     direction: 'bottom',
