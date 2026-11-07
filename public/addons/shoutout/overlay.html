@@ -9,39 +9,35 @@
     Twitch spielt Clips nur ab, wenn die Seite unter einem erlaubten Namen läuft (parent=localhost).
     Größe z.B. 960 × 640. Der Rahmen füllt die ganze Quelle, der Hintergrund ist durchsichtig.
   -->
+  <link rel="stylesheet" href="../overlay.css">
   <style>
-    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; color: #fff; }
+    body { color: var(--ov-text); }
 
     #so {
-      --accent: #9147ff; --glow: rgba(145, 71, 255, .45); --dark: #3a2266; --light: #d3b8ff;
+      --accent: var(--ov-accent); --light: var(--ov-accent-ink); --soft: rgb(255 127 172 / .16);
       position: absolute; inset: 12px; display: flex; flex-direction: column;
-      border-radius: 18px; overflow: hidden; background: rgba(14, 14, 18, .92);
-      border: 3px solid var(--accent);
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, .4), 0 10px 40px rgba(0, 0, 0, .5), 0 0 28px var(--glow);
-      opacity: 0; transform: translateY(24px) scale(.97); transition: opacity .45s, transform .45s cubic-bezier(.2, .9, .3, 1.2);
+      border-radius: 20px; overflow: hidden; background: rgb(28 23 31 / .96);
+      border: 2px solid var(--accent); box-shadow: 0 12px 40px rgb(0 0 0 / .5), 0 2px 8px rgb(0 0 0 / .35);
+      opacity: 0; transform: translateY(20px) scale(.98); transition: opacity .4s ease, transform .5s cubic-bezier(.2, 1.2, .3, 1);
     }
     #so.show { opacity: 1; transform: none; }
     /* Ohne Clip: nur eine Karte, unten in der Quelle */
     #so.card-only { inset: auto 12px 12px 12px; }
 
-    .head {
-      display: flex; align-items: center; gap: 14px; padding: 12px 16px;
-      background: linear-gradient(90deg, var(--accent), var(--dark));
-    }
-    .avatar { width: 52px; height: 52px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .85); object-fit: cover; flex: none; background: #0e0e12; }
+    .head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--soft); }
+    .avatar { width: 54px; height: 54px; border-radius: 50%; box-shadow: 0 0 0 3px var(--accent); object-fit: cover; flex: none; background: var(--ov-surface); margin: 3px; }
     .who { flex: 1; min-width: 0; }
-    .label { font-size: 13px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
-    .name { font-size: 28px; font-weight: 800; line-height: 1.1; text-shadow: 0 2px 4px rgba(0, 0, 0, .35); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .game { font-size: 15px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgba(0, 0, 0, .35); white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+    .label { font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--light); }
+    .name { font-size: 28px; font-weight: 800; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .game { font-size: 15px; font-weight: 700; padding: 6px 12px; border-radius: 99px; background: rgb(0 0 0 / .35); border: 1px solid var(--ov-line); white-space: nowrap; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
 
     .video { position: relative; flex: 1; min-height: 0; background: #000; }
     .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
-    .foot { display: flex; align-items: center; gap: 12px; padding: 9px 16px; font-size: 15px; }
-    .foot .title { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .9; }
+    .foot { display: flex; align-items: center; gap: 12px; padding: 10px 16px; font-size: 15px; }
+    .foot .title { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ov-muted); }
     .foot .link { font-weight: 800; color: var(--light); white-space: nowrap; }
-    .hint { padding: 6px 16px; font-size: 13px; background: #f5b041; color: #111; font-weight: 700; }
+    .hint { padding: 6px 16px; font-size: 13px; background: var(--ov-warn); color: #1c1420; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -62,11 +58,10 @@
     }
 
     function setAccent(hex) {
-      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) hex = '#9147ff';
+      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) hex = '#ff7fac';
       box.style.setProperty('--accent', hex);
-      box.style.setProperty('--glow', mix(hex, hex, 1, 0.45));
-      box.style.setProperty('--dark', mix(hex, '#0e0e12', 0.35));
-      box.style.setProperty('--light', mix(hex, '#ffffff', 0.45));
+      box.style.setProperty('--soft', mix(hex, hex, 1, 0.16));
+      box.style.setProperty('--light', mix(hex, '#ffffff', 0.6));
     }
 
     function hide() {
@@ -97,15 +92,15 @@
         <div class="head">
           ${s.avatar ? `<img class="avatar" src="${esc(s.avatar)}" alt="">` : ''}
           <div class="who">
-            <div class="label">📣 Shoutout</div>
+            <div class="label">Shoutout</div>
             <div class="name">${esc(s.name)}</div>
           </div>
-          ${s.game ? `<div class="game">🎮 ${esc(s.game)}</div>` : ''}
+          ${s.game ? `<div class="game">${esc(s.game)}</div>` : ''}
         </div>
         ${s.clip ? `<div class="video"><iframe src="${src}" allow="autoplay; fullscreen" scrolling="no"></iframe></div>` : ''}
         ${hint}
         <div class="foot">
-          <span class="title">${s.clip && style?.showClipTitle !== false ? `🎬 ${esc(s.clip.title)}` : s.clip ? '' : 'Schaut unbedingt vorbei!'}</span>
+          <span class="title">${s.clip && style?.showClipTitle !== false ? esc(s.clip.title) : s.clip ? '' : 'Schaut unbedingt vorbei!'}</span>
           <span class="link">twitch.tv/${esc(s.login)}</span>
         </div>`;
       requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add('show')));

@@ -8,15 +8,14 @@
     z.B. 800 x 200. Hintergrund ist durchsichtig. Erscheint bei jedem Titelwechsel und blendet
     nach der eingestellten Zeit wieder aus (Musik-Seite → Overlay). ?demo=1 zeigt ein Beispiel.
   -->
+  <link rel="stylesheet" href="../overlay.css">
   <style>
-    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; }
     #np {
-      --accent: #9147ff;
+      --accent: var(--ov-accent);
       position: absolute; display: flex; align-items: center; gap: 14px;
       max-width: calc(100% - 32px); box-sizing: border-box; padding: 12px 18px 12px 12px;
-      border-radius: 14px; background: rgba(24, 24, 27, .86); color: #fff;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, .35);
+      border-radius: 16px; background: rgb(28 23 31 / .94); color: var(--ov-text);
+      border: 1px solid var(--ov-line); box-shadow: var(--ov-shadow);
       opacity: 0; transition: opacity .45s, transform .45s cubic-bezier(.2, .8, .2, 1);
     }
     #np.bottom-left { left: 16px; bottom: 16px; transform: translateY(20px); }
@@ -24,21 +23,21 @@
     #np.top-left { left: 16px; top: 16px; transform: translateY(-20px); }
     #np.top-right { right: 16px; top: 16px; transform: translateY(-20px); }
     #np.show { opacity: 1; transform: none; }
-    .cover { width: 64px; height: 64px; border-radius: 9px; flex: none; background: linear-gradient(135deg, #9147ff, #ff4fd8); display: grid; place-items: center; font-size: 28px; overflow: hidden; }
+    .cover { width: 64px; height: 64px; border-radius: 10px; flex: none; background: linear-gradient(135deg, #c93a72, var(--ov-accent)); display: grid; place-items: center; font-size: 28px; overflow: hidden; }
     .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-    .label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #cdaaff; display: flex; align-items: center; gap: 6px; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ov-accent-ink); display: flex; align-items: center; gap: 6px; }
     .eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 10px; }
     .eq i { width: 2px; background: currentColor; animation: eq 1s ease-in-out infinite; }
     .eq i:nth-child(2) { animation-delay: -.3s; }
     .eq i:nth-child(3) { animation-delay: -.6s; }
     @keyframes eq { 0%, 100% { height: 3px; } 50% { height: 10px; } }
     .paused .eq i { animation: none; height: 3px; }
-    .title { font-size: 20px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
-    .artist { font-size: 15px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .requested { font-size: 13px; font-weight: 700; color: #ffd166; }
+    .title { font-size: 20px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .artist { font-size: 15px; color: var(--ov-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .requested { font-size: 13px; font-weight: 700; color: var(--ov-warn); }
     .requested[hidden] { display: none; }
-    .bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .15); overflow: hidden; margin-top: 5px; width: 260px; max-width: 100%; }
+    .bar { height: 4px; border-radius: 99px; background: var(--ov-surface-2); overflow: hidden; margin-top: 5px; width: 260px; max-width: 100%; }
     .bar div { height: 100%; width: 0; background: var(--accent); transition: width 1s linear; }
   </style>
 </head>

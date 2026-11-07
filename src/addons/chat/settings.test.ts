@@ -103,4 +103,11 @@ describe('Chat-Einstellungen', () => {
     assert.equal(s.window.fontSize, DEFAULTS.window.fontSize);
     assert.equal(s.overlay.fontSize, 50);
   });
+
+  test('gespeichertes Overlay-Aussehen bleibt nach dem Suite-Redesign erhalten', () => {
+    const saved = { overlay: { font: 'Nunito', fontWeight: 700, textColor: '#FFFFFF', nameColor: '#9146FF', background: '#000000', backgroundOpacity: 45, textShadow: true } };
+    const s = applyPatch(sanitize(saved), { overlay: { fontSize: 30 } });
+    assert.deepEqual({ ...s.overlay, fontSize: undefined }, { ...DEFAULTS.overlay, ...saved.overlay, fontSize: undefined });
+    assert.equal(sanitize({}).overlay.font, 'UwU Sans');
+  });
 });

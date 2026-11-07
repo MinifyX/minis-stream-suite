@@ -1,6 +1,6 @@
 // Feier-Effekte (Konfetti, Feuerwerk, Herzen, Sterne) auf einem Canvas.
 window.AlertEffects = (() => {
-  const COLORS = ['#9146FF', '#FFE14D', '#FF3B6B', '#35D0FF', '#4DFF88', '#FFFFFF', '#FF8A3D'];
+  const COLORS = ['#FF7FAC', '#FFE14D', '#FF3B6B', '#35D0FF', '#4DFF88', '#FFFFFF', '#FF8A3D'];
   const AMOUNT = { light: 1, medium: 2, heavy: 4 };
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -28,6 +28,8 @@ window.AlertEffects = (() => {
    * stop() lässt ihn ausklingen, stop(true) entfernt ihn sofort.
    */
   function start(host, config, targetBox) {
+    // „Animationen reduzieren“: keine herumfliegenden Teilchen
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
     const canvas = document.createElement('canvas');
     canvas.className = 'ma-fx';
     let x0 = 0, y0 = 0, W = host.clientWidth || window.innerWidth, H = host.clientHeight || window.innerHeight;
@@ -73,13 +75,13 @@ window.AlertEffects = (() => {
       hearts(initial) {
         const n = initial ? 8 * amount : Math.random() < 0.25 * amount ? 1 : 0;
         for (let i = 0; i < n; i++) {
-          particles.push({ kind: 'heart', x: rand(0, W), y: H + rand(0, initial ? H * 0.3 : 20), vx: 0, vy: -rand(1.5, 3.5), phase: rand(0, 6), size: rand(18, 40), color: pick(['#FF3B6B', '#FF6B9A', '#9146FF', '#FFFFFF']), life: 1 });
+          particles.push({ kind: 'heart', x: rand(0, W), y: H + rand(0, initial ? H * 0.3 : 20), vx: 0, vy: -rand(1.5, 3.5), phase: rand(0, 6), size: rand(18, 40), color: pick(['#FF3B6B', '#FF6B9A', '#FF7FAC', '#FFFFFF']), life: 1 });
         }
       },
       stars(initial) {
         const n = initial ? 10 * amount : Math.random() < 0.3 * amount ? 1 : 0;
         for (let i = 0; i < n; i++) {
-          particles.push({ kind: 'star', x: rand(0, W), y: rand(0, H), size: rand(14, 36), age: 0, maxAge: rand(50, 110), color: pick(['#FFE14D', '#FFFFFF', '#9146FF', '#35D0FF']), rot: rand(0, Math.PI), life: 1 });
+          particles.push({ kind: 'star', x: rand(0, W), y: rand(0, H), size: rand(14, 36), age: 0, maxAge: rand(50, 110), color: pick(['#FFE14D', '#FFFFFF', '#FF7FAC', '#35D0FF']), rot: rand(0, Math.PI), life: 1 });
         }
       },
     };

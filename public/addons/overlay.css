@@ -1,0 +1,38 @@
+/* Gemeinsame Grundlage der OBS-Overlays: UwUSuite-Design dunkel, Schriften liegen in der App (kein Internet nötig).
+   Eigene Farben/Größen aus den Einstellungen setzen die Overlays als Inline-Variablen darüber. */
+@font-face {
+  font-family: "UwU Sans";
+  src: url("/app/fonts/UwUSans-wght.woff2") format("woff2");
+  font-weight: 200 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/app/fonts/JetBrainsMono-wght.woff2") format("woff2");
+  font-weight: 100 800; font-style: normal; font-display: swap;
+}
+
+:root {
+  --ov-surface: #1c171f;
+  --ov-surface-2: rgb(255 255 255 / 0.08);
+  --ov-line: rgb(255 255 255 / 0.1);
+  --ov-text: #f8f2f6;
+  --ov-muted: #b3a8b3;
+  --ov-accent: #ff7fac;
+  --ov-accent-ink: #ffa3c4;
+  --ov-on-accent: #1c1420;
+  --ov-warn: #f5b94a;
+  --ov-radius: 0.8em;
+  /* Schatten trennt die Karte auch von hellem Spielbild */
+  --ov-shadow: 0 0.5em 1.6em rgb(0 0 0 / 0.45), 0 0.1em 0.3em rgb(0 0 0 / 0.35);
+  --ov-font: "UwU Sans", "Segoe UI", system-ui, sans-serif;
+  --ov-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  --ov-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+body { font-family: var(--ov-font); -webkit-font-smoothing: antialiased; }
+
+/* „Animationen reduzieren“ (Windows): keine Bewegung, nur noch weiches Ein-/Ausblenden */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-property: opacity, color, background-color !important; }
+}

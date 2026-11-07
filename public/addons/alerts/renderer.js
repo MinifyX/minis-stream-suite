@@ -3,6 +3,7 @@
 window.AlertRenderer = (() => {
   /** Schriften: null = auf dem PC installiert, sonst Google-Fonts-Stärken */
   const FONTS = {
+    'UwU Sans': null, // mitgeliefert (overlay.css)
     'Segoe UI': null,
     Arial: null,
     Impact: null,

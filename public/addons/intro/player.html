@@ -9,9 +9,10 @@
     Gesteuert wird über die Suite (Intro-Seite) oder das Streamdeck.
     ?debug=1 zeigt Zustand, Countdown und Video-Versatz an.
   -->
+  <link rel="stylesheet" href="../overlay.css">
   <style>
-    html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; }
+    /* Vollbild-Videoquelle: bleibt schwarz statt durchsichtig */
+    html, body { width: 100%; background: #000; }
     #stage { position: absolute; inset: 0; transition: opacity 1s linear; }
     #stage.black { opacity: 0; }
     video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; visibility: hidden; }
@@ -19,12 +20,13 @@
     #overlay {
       position: absolute; left: 50%; bottom: 9%; transform: translate(-50%, 12px);
       display: flex; align-items: center; gap: .6em;
-      padding: .45em 1.1em; border-radius: 99px; background: rgba(0, 0, 0, .55); color: #fff;
+      padding: .45em 1.1em; border-radius: 99px; background: rgb(28 23 31 / .9); color: var(--ov-text);
+      border: 1px solid var(--ov-line); box-shadow: var(--ov-shadow);
       font-size: 34px; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
       opacity: 0; transition: opacity .6s, transform .6s;
     }
     #overlay.show { opacity: 1; transform: translate(-50%, 0); }
-    #overlay .pulse { width: .5em; height: .5em; border-radius: 50%; background: #ff4d4d; animation: pulse 1.4s ease-in-out infinite; }
+    #overlay .pulse { width: .5em; height: .5em; border-radius: 50%; background: var(--ov-accent); animation: pulse 1.4s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: .25; transform: scale(.8); } }
     #debug {
       position: absolute; top: 12px; left: 12px; padding: 8px 12px; border-radius: 8px;

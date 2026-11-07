@@ -114,19 +114,19 @@ interface Settings {
   recentStyle: RecentStyle;
 }
 
-/** Schriften, die die Overlays kennen (Google Fonts bzw. Windows) – gleiche Liste wie render.js */
-const FONTS = ['Segoe UI', 'Arial', 'Verdana', 'Nunito', 'Roboto', 'Montserrat', 'Poppins', 'Fredoka', 'Inter', 'Oswald', 'Bangers', 'Press Start 2P', 'Comic Neue'];
+/** Schriften, die die Overlays kennen (mitgeliefert, Google Fonts bzw. Windows) – gleiche Liste wie render.js */
+const FONTS = ['UwU Sans', 'Segoe UI', 'Arial', 'Verdana', 'Nunito', 'Roboto', 'Montserrat', 'Poppins', 'Fredoka', 'Inter', 'Oswald', 'Bangers', 'Press Start 2P', 'Comic Neue'];
 
 const DEFAULT_STYLE: GoalStyle = {
   layout: 'bar',
-  font: 'Montserrat',
+  font: 'UwU Sans',
   fontSize: 22,
   width: 600,
-  textColor: '#FFFFFF',
-  barColor: '#9147FF',
-  barColor2: '#FF6BD6',
-  trackColor: '#18181B',
-  trackOpacity: 80,
+  textColor: '#F8F2F6',
+  barColor: '#B8306A',
+  barColor2: '#E85A92', // dunkler als der Akzent, damit weiße Zahlen im Balken lesbar bleiben
+  trackColor: '#1C171F',
+  trackOpacity: 90,
   rounded: true,
   textShadow: true,
   showTitle: true,
@@ -157,14 +157,14 @@ const DEFAULT_RECENT_STYLE: RecentStyle = {
     giftsub: 'Letztes Geschenk',
     topcheer: 'Top-Cheerer',
   },
-  font: 'Montserrat',
+  font: 'UwU Sans',
   fontSize: 20,
-  textColor: '#FFFFFF',
-  labelColor: '#BF94FF',
-  background: '#18181B',
-  backgroundOpacity: 80,
+  textColor: '#F8F2F6',
+  labelColor: '#FFA3C4',
+  background: '#1C171F',
+  backgroundOpacity: 92,
   rounded: true,
-  textShadow: true,
+  textShadow: false,
   showIcons: true,
   tickerSeconds: 6,
   width: 0,

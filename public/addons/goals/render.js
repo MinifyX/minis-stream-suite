@@ -1,9 +1,9 @@
 // Zeichnet Ziele und die „Letzte Events“-Leiste. Wird von den OBS-Overlays (overlay.html, recent.html)
 // und von der Vorschau auf der Einstellungsseite benutzt – so sieht die Vorschau genau wie in OBS aus.
 window.GoalRender = (() => {
-  /** Schriften: Name → Google-Fonts-Stärken (null = auf Windows vorhanden). Gleiche Liste wie im Addon (index.ts). */
+  /** Schriften: Name → Google-Fonts-Stärken (null = auf Windows vorhanden bzw. mitgeliefert wie UwU Sans). Gleiche Liste wie im Addon (index.ts). */
   const FONTS = {
-    'Segoe UI': null, Arial: null, Verdana: null,
+    'UwU Sans': null, 'Segoe UI': null, Arial: null, Verdana: null,
     Nunito: '400;600;700;800;900', Roboto: '400;500;700;900', Montserrat: '400;600;700;800;900',
     Poppins: '400;600;700;800;900', Fredoka: '400;500;600;700', Inter: '400;500;600;700;800;900',
     Oswald: '400;500;600;700', Bangers: '400', 'Press Start 2P': '400', 'Comic Neue': '400;700',
@@ -37,7 +37,7 @@ window.GoalRender = (() => {
   const CSS = `
     .gr-goal { position: relative; box-sizing: border-box; color: var(--gr-text); font-family: var(--gr-font); font-size: var(--gr-size); line-height: 1.2; }
     .gr-goal *, .gr-recent * { box-sizing: border-box; }
-    .gr-shadow { text-shadow: 0 1px 3px rgba(0, 0, 0, .65); }
+    .gr-shadow { text-shadow: 0 1px 2px rgba(0, 0, 0, .8), 0 0 .35em rgba(0, 0, 0, .6); }
     .gr-head { display: flex; align-items: baseline; gap: .6em; margin-bottom: .3em; }
     .gr-title { font-weight: 800; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .gr-nums { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -108,7 +108,7 @@ window.GoalRender = (() => {
     .gr-recent .gr-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .gr-recent .gr-detail { font-size: .72em; opacity: .85; white-space: nowrap; font-weight: 600; flex: none; }
     .gr-recent .gr-empty .gr-name { opacity: .5; }
-    .gr-recent.gr-rounded .gr-panel { border-radius: .55em; }
+    .gr-recent.gr-rounded .gr-panel { border-radius: .7em; }
     .gr-panel { background: var(--gr-bg); }
 
     .gr-r-bar .gr-panel { display: inline-flex; align-items: stretch; padding: .45em .2em; max-width: 100%; }

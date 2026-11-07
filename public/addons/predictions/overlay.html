@@ -7,38 +7,43 @@
     In OBS als Browser-Quelle einbinden: http://127.0.0.1:7474/addons/predictions/overlay.html
     z.B. 600 x 500. Hintergrund ist durchsichtig, das Overlay erscheint nur während einer Vorhersage.
   -->
+  <link rel="stylesheet" href="../overlay.css">
   <style>
-    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
-    body { font-family: "Segoe UI", system-ui, sans-serif; }
     #pred {
-      --blue: #387aff; --pink: #f5009b; --text: #fff; --bg: rgba(24, 24, 27, .85); --size: 22px;
-      position: absolute; top: 16px; left: 16px; width: 520px; box-sizing: border-box;
-      padding: 1em 1.1em; border-radius: .7em; background: var(--bg); color: var(--text);
-      font-size: var(--size); box-shadow: 0 .4em 1.4em rgba(0, 0, 0, .35);
-      opacity: 0; transform: translateY(-12px) scale(.98); transition: opacity .35s, transform .35s;
+      --blue: #7aa7ff; --pink: var(--ov-accent); --text: var(--ov-text); --bg: rgb(28 23 31 / .94); --size: 22px;
+      --blue-soft: rgb(122 167 255 / .22); --pink-soft: rgb(255 127 172 / .22); --blue-ink: #1c1420; --pink-ink: #1c1420;
+      position: absolute; top: 16px; left: 16px; width: 520px; max-width: calc(100% - 32px); box-sizing: border-box;
+      padding: .9em 1em 1em; border-radius: var(--ov-radius); background: var(--bg); color: var(--text);
+      border: 1px solid var(--ov-line); font-size: var(--size); box-shadow: var(--ov-shadow);
+      opacity: 0; transform: translateY(-14px); transition: opacity .35s ease, transform .45s var(--ov-ease);
     }
     #pred.show { opacity: 1; transform: none; }
-    .head { display: flex; align-items: center; gap: .5em; font-size: .6em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
-    .head .time { margin-left: auto; font-family: Consolas, monospace; font-size: 1.25em; letter-spacing: 0; opacity: 1; }
-    .head .state { margin-left: auto; letter-spacing: .04em; }
-    .title { font-weight: 800; font-size: 1.05em; line-height: 1.25; margin: .3em 0 .6em; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
-    .timebar { height: .22em; border-radius: .11em; background: rgba(255, 255, 255, .15); overflow: hidden; margin-bottom: .7em; }
-    .timebar div { height: 100%; background: var(--text); opacity: .7; transition: width 1s linear; }
-    .outcomes { display: flex; flex-direction: column; gap: .4em; }
-    .outcome { --c: var(--blue); position: relative; border-radius: .45em; background: rgba(255, 255, 255, .08); overflow: hidden; transition: opacity .4s; }
-    .outcome.pink { --c: var(--pink); }
-    .fill { position: absolute; inset: 0 auto 0 0; background: var(--c); opacity: .45; transition: width .5s cubic-bezier(.2, .8, .2, 1), opacity .4s; }
-    .outcome.lead .fill { opacity: .7; }
-    .outcome.win { box-shadow: 0 0 0 .12em var(--text) inset; }
-    .outcome.win .fill { opacity: .95; }
-    .outcome.lose { opacity: .45; }
-    .row { position: relative; display: flex; align-items: center; gap: .5em; padding: .38em .6em; font-size: .78em; }
-    .num { font-weight: 800; min-width: 1.4em; height: 1.4em; border-radius: .35em; background: var(--c); display: grid; place-items: center; font-size: .85em; box-shadow: 0 0 0 .08em rgba(0, 0, 0, .25); }
+    .head { display: flex; align-items: center; gap: .5em; font-size: .58em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ov-muted); }
+    .head .time, .head .state {
+      margin-left: auto; font-size: 1.2em; letter-spacing: 0; color: var(--text);
+      padding: .15em .55em; border-radius: 99em; background: var(--ov-surface-2);
+    }
+    .head .time { font-family: var(--ov-mono); font-variant-numeric: tabular-nums; }
+    .head .state { font-size: 1em; letter-spacing: .04em; color: var(--ov-warn); }
+    .title { font-weight: 800; font-size: 1.05em; line-height: 1.25; margin: .35em 0 .65em; }
+    .timebar { height: .2em; border-radius: 99em; background: var(--ov-surface-2); overflow: hidden; margin-bottom: .75em; }
+    .timebar div { height: 100%; border-radius: inherit; background: var(--text); opacity: .75; transition: width 1s linear; }
+    .outcomes { display: flex; flex-direction: column; gap: .45em; }
+    .outcome { --c: var(--blue); --soft: var(--blue-soft); --ink: var(--blue-ink); position: relative; border-radius: .5em; background: var(--ov-surface-2); overflow: hidden; transition: opacity .4s, box-shadow .3s; }
+    .outcome.pink { --c: var(--pink); --soft: var(--pink-soft); --ink: var(--pink-ink); }
+    /* Anteil als Farbton + kräftige Linie unten, damit der Text auf jeder Farbe lesbar bleibt */
+    .fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(to top, var(--c) .18em, transparent .18em), var(--soft); transition: width .6s var(--ov-ease); }
+    .outcome.win { box-shadow: inset 0 0 0 .1em var(--c); }
+    .outcome.lose { opacity: .5; }
+    .row { position: relative; display: flex; align-items: center; gap: .55em; padding: .45em .65em .5em; font-size: .78em; }
+    .num { font-weight: 800; min-width: 1.5em; height: 1.5em; border-radius: .4em; background: var(--c); color: var(--ink); display: grid; place-items: center; font-size: .82em; }
     .label { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .stats { font-size: .8em; opacity: .8; font-family: Consolas, monospace; white-space: nowrap; }
-    .pct { font-weight: 800; min-width: 3em; text-align: right; font-family: Consolas, monospace; }
-    .foot { margin-top: .6em; font-size: .6em; opacity: .8; display: flex; gap: .6em; flex-wrap: wrap; }
-    .winner { margin-top: .6em; font-size: .75em; font-weight: 800; }
+    .stats { font-size: .8em; color: var(--ov-muted); font-family: var(--ov-mono); white-space: nowrap; }
+    .pct { font-weight: 800; min-width: 3em; text-align: right; font-variant-numeric: tabular-nums; }
+    .outcome.lead .pct { color: var(--c); }
+    .foot { margin-top: .7em; font-size: .6em; color: var(--ov-muted); }
+    .winner { margin-top: .65em; font-size: .75em; font-weight: 800; }
+    #pred.clear { border-color: transparent; box-shadow: none; }
   </style>
 </head>
 <body>
@@ -61,13 +66,23 @@
       const n = parseInt(hex.slice(1), 16);
       return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
     };
+    /** Lesbare Schrift auf einer Farbe (dunkel auf hellen, weiß auf dunklen Farben) */
+    const ink = (hex) => {
+      const n = parseInt(hex.slice(1), 16);
+      return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 150 ? '#1c1420' : '#ffffff';
+    };
     const sum = (list, key) => list.reduce((s, o) => s + (o[key] || 0), 0);
 
     function applyStyle(o) {
-      box.style.setProperty('--blue', o.blue);
-      box.style.setProperty('--pink', o.pink);
+      // Kein color-mix: ältere OBS-Versionen kennen es nicht
+      for (const [name, hex] of [['blue', o.blue], ['pink', o.pink]]) {
+        box.style.setProperty(`--${name}`, hex);
+        box.style.setProperty(`--${name}-soft`, hexToRgba(hex, 0.22));
+        box.style.setProperty(`--${name}-ink`, ink(hex));
+      }
       box.style.setProperty('--text', o.textColor);
       box.style.setProperty('--bg', hexToRgba(o.background, o.backgroundOpacity / 100));
+      box.classList.toggle('clear', !o.backgroundOpacity); // durchsichtig eingestellt: auch ohne Rahmen/Schatten wie bisher
       box.style.setProperty('--size', `${o.fontSize}px`);
       box.style.width = `${o.width}px`;
     }
@@ -92,7 +107,7 @@
       const left = pred ? pred.locksAt - (Date.now() + offset) : 0;
       const span = pred ? Math.max(1, pred.locksAt - pred.startedAt) : 1;
 
-      const headText = result ? (canceled ? '↩ Abgebrochen' : '🏆 Ergebnis') : '🔮 Vorhersage';
+      const headText = result ? (canceled ? 'Abgebrochen' : 'Ergebnis') : 'Vorhersage';
       const headRight = locked ? '<span class="state">🔒 Gesperrt</span>' : o.showTimer && pred ? '<span class="time"></span>' : '';
 
       // Gerüst nur neu bauen, wenn sich Vorhersage oder Status ändern – sonst nur Zahlen und Balken

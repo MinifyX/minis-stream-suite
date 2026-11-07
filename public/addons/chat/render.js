@@ -48,9 +48,9 @@ window.ChatRender = (() => {
     (styleTarget ?? document.head).append(style);
   }
 
-  /** Schriften: null = auf dem PC installiert, sonst Google-Fonts-Stärken */
+  /** Schriften: null = auf dem PC installiert bzw. mitgeliefert (UwU Sans, overlay.css), sonst Google-Fonts-Stärken */
   const FONTS = {
-    'Segoe UI': null, Arial: null, Verdana: null,
+    'UwU Sans': null, 'Segoe UI': null, Arial: null, Verdana: null,
     Nunito: '400;600;700;800;900', Roboto: '400;500;700;900', Montserrat: '400;600;700;800;900',
     Poppins: '400;600;700;800;900', Fredoka: '400;500;600;700', Inter: '400;500;600;700;800;900',
     Oswald: '400;500;600;700', Bangers: '400', 'Press Start 2P': '400', 'Comic Neue': '400;700',
@@ -357,8 +357,8 @@ window.ChatRender = (() => {
     .cr-overlay.cr-shadow .cr-item { text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6); }
     .cr-overlay.cr-stacked .cr-head { display: block; }
     .cr-overlay.cr-stacked .cr-colon { display: none; }
-    .cr-overlay .cr-highlighted { box-shadow: inset 4px 0 0 #9146ff; }
-    .cr-overlay .cr-event { box-shadow: inset 4px 0 0 var(--cr-ev, #9146ff); }
+    .cr-overlay .cr-highlighted { box-shadow: inset 4px 0 0 #ff7fac; }
+    .cr-overlay .cr-event { box-shadow: inset 4px 0 0 var(--cr-ev, #ff7fac); }
     .cr-ev-follow { --cr-ev: #b580ff; } .cr-ev-sub, .cr-ev-resub { --cr-ev: #ffd700; } .cr-ev-giftsub { --cr-ev: #ff6bd6; }
     .cr-ev-cheer { --cr-ev: #35d0ff; } .cr-ev-raid { --cr-ev: #ff9f43; } .cr-ev-redemption { --cr-ev: #4dff88; } .cr-ev-stream { --cr-ev: #ff4d4d; }
     .cr-ev-hypetrain { --cr-ev: #ff6b3d; } .cr-ev-prediction { --cr-ev: #387aff; } .cr-ev-shoutout { --cr-ev: #f5b041; } .cr-ev-ads { --cr-ev: #9a9aab; }

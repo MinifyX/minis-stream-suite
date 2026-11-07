@@ -324,6 +324,11 @@ describe('sanitizeCategories', () => {
     assert.equal('hack' in v.design, false);
   });
 
+  test('gespeichertes Design bleibt nach neuen Standardwerten unverändert', () => {
+    const design = { ...DEFAULT_DESIGN, font: 'Roboto', accentColor: '#9146FF', textColor: '#FFFFFF', background: '#000000', backgroundOpacity: 0, shadow: false, textShadow: true, fontSize: 36 };
+    assert.deepEqual(sanitizeVariant({ id: 'alt', design }).design, design);
+  });
+
   test('rewardIds, die keine Liste sind → leer', () => {
     assert.deepEqual(sanitizeVariant({ conditions: { rewardIds: 'a,b' } }).conditions.rewardIds, []);
   });

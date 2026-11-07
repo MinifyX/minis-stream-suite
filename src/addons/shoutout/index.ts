@@ -149,7 +149,7 @@ const DEFAULTS: Settings = {
     allTimeFallback: true,
     maxSeconds: 30,
     cardSeconds: 8,
-    accent: '#9147ff',
+    accent: '#ff7fac',
     showClipTitle: true,
   },
   history: [],
