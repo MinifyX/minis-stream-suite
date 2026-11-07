@@ -43,14 +43,59 @@ const ADDON_ICONS = {
   uwuclip: '<circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>', // scissors
 };
 
-/** Icon eines Addons: Lucide-SVG für eingebaute Addons, sonst das Emoji aus dem Manifest */
-function addonIcon(addon, cls) {
+// Lucide-Icons (ISC) für die Shell selbst
+const SHELL_ICONS = {
+  back: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>', // arrow-left
+  grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>', // layout-grid
+  search: '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>', // search
+  home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', // house
+  store: '<path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"/>', // puzzle
+  settings: '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>', // settings
+  tools: '<path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>', // flask-conical
+};
+
+const svg = (paths) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+
+/** Icon-Element aus Lucide-Pfaden */
+function icon(paths, cls = 'nav-icon') {
   const el = h('span', { class: cls, 'aria-hidden': 'true' });
-  const paths = !addon.plugin && ADDON_ICONS[addon.id];
-  if (paths) el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
-  else el.textContent = addon.icon;
+  el.innerHTML = svg(paths);
   return el;
 }
+
+/** Icon eines Addons: Lucide-SVG für eingebaute Addons, sonst das Emoji aus dem Manifest */
+function addonIcon(addon, cls) {
+  const paths = !addon.plugin && ADDON_ICONS[addon.id];
+  if (paths) return icon(paths, cls);
+  return h('span', { class: `${cls} emoji`, 'aria-hidden': 'true' }, addon.icon);
+}
+
+/** Gruppen auf dem Startbildschirm und im Store, in dieser Reihenfolge. Unbekannte Addons und Plugins landen in OTHER. */
+const GROUPS = [
+  ['Chat', ['chat', 'commands', 'timers', 'lurk', 'modguard']],
+  ['Zuschauer-Interaktion', ['channelpoints', 'queue', 'polls', 'predictions', 'goals', 'shoutout']],
+  ['Overlays & Show', ['alerts', 'intro', 'music', 'uwuclip']],
+  ['Stream-Steuerung', ['streaminfo', 'obs', 'ads']],
+];
+const OTHER = 'Weitere Addons';
+const GROUP_NAMES = [...GROUPS.map(([name]) => name), OTHER];
+const ORDER = GROUPS.flatMap(([, ids]) => ids);
+const groupOf = (a) => (!a.plugin && GROUPS.find(([, ids]) => ids.includes(a.id))?.[0]) || OTHER;
+/** Addons nach Gruppe: [[Gruppenname, Addons], …], leere Gruppen fallen weg */
+function grouped(list) {
+  const rank = (a) => (a.plugin || !ORDER.includes(a.id) ? ORDER.length : ORDER.indexOf(a.id));
+  return GROUP_NAMES
+    .map((name) => [name, list.filter((a) => groupOf(a) === name).sort((x, y) => rank(x) - rank(y))])
+    .filter(([, items]) => items.length);
+}
+
+/** Bereiche der Suite selbst (eigene Kacheln und Routen) */
+const SUITE = [
+  { view: 'store', name: 'Addon-Store', icon: SHELL_ICONS.store },
+  { view: 'settings', name: 'Einstellungen', icon: SHELL_ICONS.settings, text: 'Twitch, Bot-Account, App und Sicherung' },
+  { view: 'tools', name: 'Test & Log', icon: SHELL_ICONS.tools, text: 'Test-Events senden und sehen, was passiert' },
+];
+const VIEWS = ['overview', 'addon', ...SUITE.map((s) => s.view)];
 
 /** API-Aufruf mit Fehlermeldung als Toast. Gibt null zurück, wenn es schiefging. */
 async function call(path, body) {
@@ -66,10 +111,17 @@ async function call(path, body) {
 
 // ---------------------------------------------------------------- Navigation
 
-function route() {
+/** Aktuelle Route: { view, id } aus #/overview, #/store, #/settings, #/tools, #/addon/<id> */
+function currentRoute() {
   const [, view = 'overview', id] = (location.hash || '#/overview').split('/');
+  return { view: VIEWS.includes(view) ? view : 'overview', id };
+}
+
+function route(event) {
+  const { view, id } = currentRoute();
+  let addon = null;
   if (view === 'addon') {
-    const addon = state.addons.installed.find((a) => a.id === id && a.active && a.settingsPage);
+    addon = state.addons.installed.find((a) => a.id === id && a.active && a.settingsPage);
     if (!addon) {
       location.hash = '#/store';
       return;
@@ -77,19 +129,230 @@ function route() {
     const src = `/addons/${addon.id}/${addon.settingsPage}`;
     const frame = $('#addon-frame');
     if (frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+    frame.title = addon.name;
   }
+  document.body.dataset.view = view;
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === `view-${view}`));
-  document.querySelectorAll('nav a').forEach((a) => a.classList.toggle('active', a.getAttribute('href') === location.hash));
+  renderCrumbs(view, addon);
+  if (view === 'overview') refreshDetails();
+  if (event) {
+    // Nach einem Wechsel startet der Screenreader/Tab im neuen Inhalt statt oben in der Leiste
+    const main = $('#main');
+    main.scrollTop = 0;
+    main.focus({ preventScroll: true });
+  }
 }
 
+/** Brotkrumen in der oberen Leiste: Start › Gruppe › Addon */
+function renderCrumbs(view, addon) {
+  const current = (text) => h('li', { 'aria-current': 'page' }, text);
+  const items = view === 'overview'
+    ? [current('Start')]
+    : [h('li', {}, h('a', { class: 'crumb-home', href: '#/overview' }, icon(SHELL_ICONS.back), 'Start')),
+      ...(addon ? [h('li', {}, groupOf(addon)), current(addon.name)] : [current(SUITE.find((s) => s.view === view).name)])];
+  $('#crumbs').replaceChildren(...items);
+}
+
+/** Startbildschirm: aktive Addons als Kacheln, nach Zweck gruppiert, dazu die Bereiche der Suite */
 function renderAddonNav() {
   const withPage = state.addons.installed.filter((a) => a.active && a.settingsPage);
+  state.details = {};
+  const tile = (href, iconEl, name, text, id) => {
+    const detail = h('span', { class: 'tile-detail' }, text);
+    if (id) state.details[id] = { el: detail, text };
+    return h('li', {}, h('a', { class: 'tile', href }, iconEl, h('span', { class: 'tile-name' }, name), detail));
+  };
+  const section = (name, i, tiles) => h('section', { class: 'tile-group', 'aria-labelledby': `group-${i}` },
+    h('h2', { id: `group-${i}` }, name),
+    h('ul', { class: 'tiles' }, tiles));
+
+  const { installed } = state.addons;
+  const suiteText = { store: `${installed.filter((a) => a.active).length} von ${installed.length} Addons aktiv` };
   $('#addon-nav').replaceChildren(
     ...(withPage.length
-      ? withPage.map((a) => h('a', { href: `#/addon/${a.id}` }, addonIcon(a, 'nav-icon'), a.name))
-      : [h('div', { class: 'nav-empty' }, 'Keine aktiven Addons')]),
-  );
+      ? grouped(withPage).map(([name, list], i) => section(name, i, list.map((a) => tile(`#/addon/${a.id}`, addonIcon(a, 'tile-icon'), a.name, a.description, a.id))))
+      : [h('p', { class: 'nav-empty' }, 'Keine aktiven Addons. Im Addon-Store kannst du welche einschalten.')]),
+    section('Suite', 'suite', SUITE.map((s) => tile(`#/${s.view}`, icon(s.icon, 'tile-icon'), s.name, suiteText[s.view] ?? s.text))));
+  refreshDetails();
 }
+
+/** Live-Angaben für einzelne Kacheln: [API-Pfad, Status → Text oder null (= Kurzbeschreibung)] */
+const LIVE = {
+  queue: ['state', (s) => (s.entries.length ? `${s.entries.length} in der Warteschlange` : 'Warteschlange ist leer')],
+  lurk: ['state', (s) => (s.active.length ? `${s.active.length} im Lurk` : null)],
+  polls: ['state', (s) => (s.active ? `Läuft: ${s.active.title}` : null)],
+  obs: ['state', (s) => (s.status.state !== 'connected' ? 'Nicht mit OBS verbunden' : s.status.currentScene ? `Szene: ${s.status.currentScene}` : 'Mit OBS verbunden')],
+  alerts: ['pause', (s) => (s.paused ? `Pausiert, ${s.held} warten` : null)],
+  ads: ['state', (s) => {
+    state.live = s.live === true;
+    return null;
+  }],
+};
+
+async function refreshDetails() {
+  if (currentRoute().view !== 'overview' || !state.details) return;
+  await Promise.all(Object.entries(state.details).map(async ([id, { el, text }]) => {
+    if (!LIVE[id]) return;
+    const [path, fn] = LIVE[id];
+    const s = await api(`addons/${id}/${path}`).catch(() => null);
+    if (!s) return;
+    const next = fn(s) ?? text;
+    if (el.textContent !== next) el.textContent = next;
+  }));
+  if (!state.details.ads) state.live = false;
+  renderHomeStatus();
+}
+
+/** Begrüßung mit Nyu und Verbindungsstatus als ein Satz mit Aktion */
+function renderHomeStatus() {
+  if (!state.status) return;
+  const { auth, eventsub } = state.status;
+  const key = JSON.stringify(auth) + eventsub + state.live;
+  if (key === state.homeKey) return;
+  state.homeKey = key;
+
+  const btn = (text, onclick, primary) => h('button', { class: `btn${primary ? ' primary' : ''}`, onclick }, text);
+  const link = (text, href, primary) => h('a', { class: `btn${primary ? ' primary' : ''}`, href }, text);
+  let mood = 'sleepy';
+  let dot = 'err';
+  let sentence;
+  let actions = [];
+  switch (auth.state) {
+    case 'no-client-id':
+      sentence = 'Die Suite braucht noch eine Twitch-Client-ID.';
+      actions = [link('Einrichten', '#/settings', true)];
+      break;
+    case 'logged-out':
+      sentence = 'Noch nicht mit Twitch verbunden. Ohne Verbindung kommen keine Events an.';
+      actions = [btn('Mit Twitch verbinden', () => call('core/login/start', {}), true)];
+      break;
+    case 'pending':
+      mood = 'puzzled';
+      dot = 'warn';
+      sentence = 'Im Browser hat sich Twitch geöffnet. Bestätige dort den Login. Falls nach einem Code gefragt wird:';
+      actions = [h('span', { class: 'code-box no-i18n' }, auth.userCode),
+        h('a', { class: 'btn', href: auth.verificationUri, target: '_blank' }, 'Seite erneut öffnen'),
+        btn('Abbrechen', () => call('core/login/cancel', {}))];
+      break;
+    case 'error':
+      mood = 'sad';
+      sentence = auth.message;
+      actions = [btn('Erneut verbinden', () => call('core/login/start', {}), true)];
+      break;
+    case 'logged-in':
+      if (eventsub === 'connected') {
+        mood = state.live ? 'cheer' : 'uwu';
+        dot = 'ok';
+        sentence = state.live ? 'Du bist live und alle Events kommen an.' : 'Mit Twitch verbunden, Events kommen an.';
+        actions = [link('Test-Event senden', '#/tools')];
+      } else if (eventsub === 'connecting') {
+        mood = 'puzzled';
+        dot = 'warn';
+        sentence = 'Mit Twitch verbunden, die Events verbinden sich gerade …';
+      } else {
+        mood = 'sad';
+        sentence = 'Mit Twitch verbunden, aber gerade kommen keine Events an.';
+        actions = [link('Verbindung prüfen', '#/settings')];
+      }
+      break;
+  }
+  const name = auth.state === 'logged-in' ? auth.user.displayName : '';
+  $('#hello').textContent = name ? `Hallo, ${name}!` : 'Hallo!';
+  $('#nyu').innerHTML = window.NYU[mood];
+  $('#home-status').replaceChildren(
+    h('p', { class: 'hero-sentence' }, h('span', { class: `dot ${dot}` }), h('span', {}, sentence)),
+    actions.length ? h('div', { class: 'btn-row' }, actions) : null);
+}
+
+// ---------------------------------------------------------------- Schnellwechsler (Strg+K)
+
+const sw = { items: [], index: 0 };
+
+function openSwitcher() {
+  const dlg = $('#switcher');
+  if (dlg.open) return;
+  const here = location.hash || '#/overview';
+  const entry = (href, iconEl, name, group) => {
+    const li = h('li', { role: 'option', class: 'sw-item', 'aria-current': href === here ? 'page' : null, onclick: () => go(href) },
+      iconEl, h('span', { class: 'sw-name' }, name), h('span', { class: 'sw-group' }, group));
+    li.dataset.href = href;
+    return li;
+  };
+  const addons = state.addons.installed.filter((a) => a.active && a.settingsPage);
+  const lis = [
+    entry('#/overview', icon(SHELL_ICONS.home), 'Start', 'Suite'),
+    ...grouped(addons).flatMap(([group, list]) => list.map((a) => entry(`#/addon/${a.id}`, addonIcon(a, 'nav-icon'), a.name, group))),
+    ...SUITE.map((s) => entry(`#/${s.view}`, icon(s.icon), s.name, 'Suite')),
+  ];
+  lis.forEach((li, i) => {
+    li.id = `sw-${i}`;
+    li.addEventListener('mousemove', () => setSwitch(sw.items.indexOf(li)));
+  });
+  $('#switch-list').replaceChildren(...lis, h('li', { class: 'sw-empty', role: 'presentation', hidden: true }, 'Nichts gefunden'));
+  $('#switch-input').value = '';
+  dlg.showModal();
+  filterSwitch();
+}
+
+function filterSwitch() {
+  // Gefiltert wird nach dem angezeigten (ggf. übersetzten) Text
+  const q = $('#switch-input').value.trim().toLowerCase();
+  const all = [...$('#switch-list').querySelectorAll('.sw-item')];
+  all.forEach((li) => { li.hidden = !!q && !li.textContent.toLowerCase().includes(q); });
+  sw.items = all.filter((li) => !li.hidden);
+  $('#switch-list .sw-empty').hidden = sw.items.length > 0;
+  const currentIndex = sw.items.findIndex((li) => li.hasAttribute('aria-current'));
+  setSwitch(q || currentIndex < 0 ? 0 : currentIndex);
+}
+
+function setSwitch(index) {
+  if (index < 0) return;
+  sw.index = index;
+  const input = $('#switch-input');
+  sw.items.forEach((li, i) => li.setAttribute('aria-selected', String(i === index)));
+  const active = sw.items[index];
+  if (active) {
+    input.setAttribute('aria-activedescendant', active.id);
+    active.scrollIntoView({ block: 'nearest' });
+  } else input.removeAttribute('aria-activedescendant');
+}
+
+function go(href) {
+  $('#switcher').close();
+  location.hash = href;
+}
+
+$('#switch-input').addEventListener('input', filterSwitch);
+$('#switch-input').addEventListener('keydown', (e) => {
+  const n = sw.items.length;
+  if (!n) return;
+  if (e.key === 'ArrowDown') setSwitch((sw.index + 1) % n);
+  else if (e.key === 'ArrowUp') setSwitch((sw.index - 1 + n) % n);
+  else if (e.key === 'Home' && e.ctrlKey) setSwitch(0);
+  else if (e.key === 'End' && e.ctrlKey) setSwitch(n - 1);
+  else if (e.key === 'Enter') go(sw.items[sw.index].dataset.href);
+  else return;
+  e.preventDefault();
+});
+// Klick auf den abgedunkelten Hintergrund schließt
+$('#switcher').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#switch-open').addEventListener('click', openSwitcher);
+$('#switch-icon').innerHTML = svg(SHELL_ICONS.grid);
+$('#switch-search-icon').innerHTML = svg(SHELL_ICONS.search);
+
+/** Strg+K öffnet den Wechsler, auch wenn gerade ein Addon (iframe, gleiche Herkunft) den Fokus hat */
+function shortcut(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openSwitcher();
+  }
+}
+document.addEventListener('keydown', shortcut);
+$('#addon-frame').addEventListener('load', (e) => {
+  try {
+    e.target.contentWindow.addEventListener('keydown', shortcut);
+  } catch { /* fremde Herkunft: kein Kürzel im Addon */ }
+});
 
 // ---------------------------------------------------------------- Twitch-Verbindung
 
@@ -174,15 +437,17 @@ function renderTwitchCard(force = false) {
   }
 }
 
+/** Kurzstatus oben rechts, führt zu den Einstellungen */
 function renderSidebarStatus() {
   const { auth, eventsub } = state.status;
   const loggedIn = auth.state === 'logged-in';
-  $('#sidebar-status').replaceChildren(...[
-    h('div', {}, h('span', { class: `dot ${loggedIn ? 'ok' : 'err'}` }), loggedIn ? `Twitch: ${auth.user.displayName}` : 'Twitch: nicht verbunden'),
-    loggedIn ? h('div', {}, h('span', { class: `dot ${eventsub === 'connected' ? 'ok' : 'warn'}` }), eventsub === 'connected' ? 'Events: live' : 'Events: verbinde…') : null,
-    state.status.bot ? h('div', {}, '🤖', `Bot: ${state.status.bot.displayName}`) : null,
-    h('div', {}, `v${state.status.version}`),
-  ].filter(Boolean));
+  const [cls, text] = !loggedIn ? ['err', 'Twitch: nicht verbunden']
+    : eventsub !== 'connected' ? ['warn', 'Events: verbinde…']
+      : state.live ? ['ok', 'Live'] : ['ok', `Twitch: ${auth.user.displayName}`];
+  if (state.topKey === cls + text) return;
+  state.topKey = cls + text;
+  $('#sidebar-status').replaceChildren(
+    h('a', { href: '#/settings', title: 'Einstellungen' }, h('span', { class: `dot ${cls}` }), h('span', {}, text)));
 }
 
 // ---------------------------------------------------------------- Bot-Account
@@ -381,6 +646,7 @@ async function refreshStatus() {
   renderTwitchCard();
   renderBotCard();
   renderSidebarStatus();
+  renderHomeStatus();
 }
 
 // ---------------------------------------------------------------- Log
@@ -415,7 +681,7 @@ async function loadAddons() {
 }
 
 function renderStore() {
-  const installed = state.addons.installed.map((addon) =>
+  const card = (addon) =>
     h('div', { class: 'card addon-card' },
       h('div', { class: 'top' },
         addonIcon(addon, 'addon-icon'),
@@ -427,7 +693,7 @@ function renderStore() {
           const ok = await call('core/addons/toggle', { id: addon.id, enabled });
           if (ok) toast(`${addon.name} ${enabled ? 'aktiviert' : 'deaktiviert'}`, 'ok');
           await loadAddons();
-        }, `${addon.name} aktivieren`))));
+        }, `${addon.name} aktivieren`)));
 
   const upcoming = state.addons.upcoming.map((addon) =>
     h('div', { class: 'card addon-card upcoming' },
@@ -437,7 +703,11 @@ function renderStore() {
       h('p', { class: 'muted' }, addon.description),
       h('div', { class: 'bottom' }, h('span', { class: 'badge accent' }, 'Bald verfügbar'))));
 
-  $('#store-grid').replaceChildren(...installed, ...upcoming);
+  const section = (name, i, cards) => h('section', { class: 'tile-group', 'aria-labelledby': `store-group-${i}` },
+    h('h2', { id: `store-group-${i}` }, name), h('div', { class: 'store-grid' }, cards));
+  $('#store-grid').replaceChildren(
+    ...grouped(state.addons.installed).map(([name, list], i) => section(name, i, list.map(card))),
+    upcoming.length ? section('Bald verfügbar', 'soon', upcoming) : null);
   renderPluginBar();
 }
 
@@ -473,6 +743,7 @@ window.addEventListener('hashchange', route);
   refreshLogs();
   setInterval(refreshStatus, 2000);
   setInterval(refreshLogs, 2000);
+  setInterval(refreshDetails, 4000);
   setInterval(async () => {
     const before = JSON.stringify(state.update);
     state.update = await api('core/update').catch(() => state.update);

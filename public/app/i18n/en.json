@@ -2212,7 +2212,37 @@
     "Der Server leitet um – bitte die genaue Adresse eintragen (z.B. mit https://)": "The server redirects – please enter the exact address (e.g. with https://)",
     "Keine Server-Adresse eingetragen": "No server address entered",
     "Kein Schlüssel eingetragen": "No key entered",
-    "Server nicht erreichbar": "Server unreachable"
+    "Server nicht erreichbar": "Server unreachable",
+    "Brotkrumen": "Breadcrumbs",
+    "Wechseln": "Switch",
+    "Strg K": "Ctrl K",
+    "Addon suchen …": "Search addons …",
+    "Addon suchen": "Search addons",
+    "Addons und Bereiche": "Addons and areas",
+    "Hallo!": "Hello!",
+    "Schalte Addons an oder aus. Aktive Addons erscheinen als Kacheln auf dem Startbildschirm.": "Turn addons on or off. Active addons show up as tiles on the home screen.",
+    "Twitch-Konto, Bot-Account, App-Verhalten und Sicherung.": "Twitch account, bot account, app behavior and backup.",
+    "Zuschauer-Interaktion": "Viewer interaction",
+    "Overlays & Show": "Overlays & show",
+    "Stream-Steuerung": "Stream control",
+    "Weitere Addons": "More addons",
+    "Twitch, Bot-Account, App und Sicherung": "Twitch, bot account, app and backup",
+    "Test-Events senden und sehen, was passiert": "Send test events and see what happens",
+    "Keine aktiven Addons. Im Addon-Store kannst du welche einschalten.": "No active addons. You can turn some on in the addon store.",
+    "Warteschlange ist leer": "Queue is empty",
+    "Nicht mit OBS verbunden": "Not connected to OBS",
+    "Mit OBS verbunden": "Connected to OBS",
+    "Die Suite braucht noch eine Twitch-Client-ID.": "The suite still needs a Twitch client ID.",
+    "Einrichten": "Set up",
+    "Noch nicht mit Twitch verbunden. Ohne Verbindung kommen keine Events an.": "Not connected to Twitch yet. Without a connection, no events come in.",
+    "Du bist live und alle Events kommen an.": "You are live and all events are coming in.",
+    "Mit Twitch verbunden, Events kommen an.": "Connected to Twitch, events are coming in.",
+    "Test-Event senden": "Send test event",
+    "Mit Twitch verbunden, die Events verbinden sich gerade …": "Connected to Twitch, events are connecting …",
+    "Mit Twitch verbunden, aber gerade kommen keine Events an.": "Connected to Twitch, but no events are coming in right now.",
+    "Verbindung prüfen": "Check connection",
+    "Test & Log": "Test & log",
+    "Addon wechseln": "Switch addon"
   },
   "patterns": [
     [
@@ -4390,6 +4420,34 @@
     [
       "^Server nicht erreichbar \\((.+)\\)$",
       "Server unreachable ($1)"
+    ],
+    [
+      "^(.+) in der Warteschlange$",
+      "$1 in the queue"
+    ],
+    [
+      "^(.+) im Lurk$",
+      "$1 lurking"
+    ],
+    [
+      "^Läuft: (.+)$",
+      "Running: $1"
+    ],
+    [
+      "^Szene: (.+)$",
+      "Scene: $1"
+    ],
+    [
+      "^Pausiert, (.+) warten$",
+      "Paused, $1 waiting"
+    ],
+    [
+      "^Hallo, (.+)!$",
+      "Hello, $1!"
+    ],
+    [
+      "^(.+) von (.+) Addons aktiv$",
+      "$1 of $2 addons active"
     ]
   ]
 }
