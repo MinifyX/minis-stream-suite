@@ -4,10 +4,10 @@ import { buildReport, enqueue, INTERVAL_MINUTES, linkCode, normalizeUrl } from '
 
 describe('Watchtime', () => {
   test('erkennt nur gültige Codes', () => {
-    assert.equal(linkCode('!discord 123456'), '123456');
-    assert.equal(linkCode('  !DISCORD   123456 '), '123456');
-    assert.equal(linkCode('!discord 12345'), null);
-    assert.equal(linkCode('hallo !discord 123456'), null);
+    assert.equal(linkCode('!verknuepfen 123456'), '123456');
+    assert.equal(linkCode('  !VERKNUEPFEN   123456 '), '123456');
+    assert.equal(linkCode('!verknuepfen 12345'), null);
+    assert.equal(linkCode('hallo !verknuepfen 123456'), null);
   });
 
   test('zählt jeden Login einmal', () => {

@@ -103,7 +103,7 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 **⏱️ Watchtime:** Meldet während des Streams alle 5 Minuten, wer im Chat verbunden ist, an einen Server wie den Discord-Bot Mello. Twitch kennt keine echte Watchtime, das ist ein guter Näherungswert. Standardmäßig aus.
 
 - **Einrichten:** Im Addon-Store einschalten, Server-Adresse und Token auf der Watchtime-Seite eintragen. Danach einmal neu bei Twitch anmelden, damit die Suite die Chat-Liste lesen darf.
-- **Verknüpfen:** Wer etwas dafür bekommen möchte, verknüpft sein Konto freiwillig mit `!discord CODE` im Twitch-Chat. Alle anderen bekommen dort nichts.
+- **Verknüpfen:** Wer etwas dafür bekommen möchte, verknüpft sein Konto freiwillig mit `!verknuepfen CODE` im Twitch-Chat. Alle anderen bekommen dort nichts.
 
 **🎛️ Streamdeck:** Intro und Musik lassen sich per HTTP steuern (`/api/intro/…`, `/api/music/…`), geschützt mit einem Schlüssel im Header `X-Suite-Token`.
 

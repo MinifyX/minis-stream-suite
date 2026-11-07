@@ -9,9 +9,9 @@ export interface Report {
   links: { login: string; code: string }[];
 }
 
-/** `!discord 123456` im Chat verknüpft das Twitch-Konto mit Discord. */
+/** `!verknuepfen 123456` im Chat verknüpft das Twitch-Konto mit Discord. */
 export function linkCode(message: string): string | null {
-  return message.trim().match(/^!discord\s+(\d{6})$/i)?.[1] ?? null;
+  return message.trim().match(/^!verknuepfen\s+(\d{6})$/i)?.[1] ?? null;
 }
 
 export function buildReport(id: string, logins: string[], links: Report['links']): Report {

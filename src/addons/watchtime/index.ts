@@ -25,7 +25,7 @@ export const watchtimeAddon: Addon = {
   icon: '⏱️',
   version: '0.1.0',
   author: 'Mini',
-  description: 'Meldet während des Streams, wer im Chat verbunden ist, und verknüpft Twitch-Konten mit !discord. Für XP im Discord-Bot.',
+  description: 'Meldet während des Streams, wer im Chat verbunden ist, und verknüpft Twitch-Konten mit !verknuepfen. Für XP im Discord-Bot.',
   settingsPage: 'index.html',
 
   activate(ctx) {
