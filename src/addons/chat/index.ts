@@ -39,6 +39,8 @@ type ChatItem =
     highlighted: boolean;
     replyTo: string | null;
     own: boolean;
+    /** Nur für den Twitch-Chat gedacht, nicht fürs Overlay */
+    quiet: boolean;
     test: boolean;
   }
   | {
@@ -255,6 +257,7 @@ export const chatAddon: Addon = {
             highlighted: event.messageType === 'channel_points_highlighted',
             replyTo: event.replyTo,
             own: ctx.chat.isOwnMessage(event.messageId) || ctx.chat.isBot(event.user.id),
+            quiet: (event.user.id === ctx.getUser()?.id || ctx.chat.isBot(event.user.id)) && ctx.chat.isQuiet(event.message),
             test: !!event.test,
           });
           return;

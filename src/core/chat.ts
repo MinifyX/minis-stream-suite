@@ -24,6 +24,8 @@ export interface SendOptions {
   replyTo?: string;
   /** "auto" = Bot, wenn verknüpft (Standard). "broadcaster" = immer dein Account (z.B. Chat-Fenster). */
   as?: 'auto' | 'broadcaster';
+  /** false = nur im Twitch-Chat, nicht im OBS-Overlay (z.B. Bestätigungen) */
+  overlay?: boolean;
 }
 
 type SendResult = { data: { message_id: string; is_sent: boolean; drop_reason?: { message: string } | null }[] };
@@ -34,6 +36,8 @@ export class ChatService {
   private lastSend = 0;
   /** IDs unserer eigenen Nachrichten – die kommen als Chat-Event zurück und dürfen nichts auslösen */
   private sentIds = new Set<string>();
+  /** Texte, die nicht ins Overlay sollen, mit Ablaufzeit. Per Text, weil das Chat-Event vor der Antwort von Twitch kommen kann. */
+  private quiet = new Map<string, number>();
   /** Ist der Bot Mod im Kanal? (wird von der Bot-Verwaltung gesetzt, Mods dürfen schneller schreiben) */
   botIsMod = false;
 
@@ -55,9 +59,10 @@ export class ChatService {
    * Zweiter Parameter: Nachrichten-ID für eine Antwort (Kurzform) oder Optionen.
    */
   send(message: string, options: string | SendOptions = {}): Promise<void> {
-    const { replyTo, as = 'auto' } = typeof options === 'string' ? { replyTo: options } : options;
+    const { replyTo, as = 'auto', overlay = true } = typeof options === 'string' ? { replyTo: options } : options;
     const text = message.replace(/\s*\r?\n\s*/g, ' ').trim().slice(0, 500);
     if (!text) return Promise.resolve();
+    if (!overlay) this.quiet.set(text, Date.now() + 60_000);
     if (this.queued >= MAX_QUEUE) {
       log.warn('Zu viele Nachrichten auf einmal – eine wird übersprungen');
       return Promise.resolve();
@@ -104,6 +109,13 @@ export class ChatService {
       });
     this.queue = job.catch(() => {});
     return job;
+  }
+
+  /** Soll diese eigene Nachricht im Overlay fehlen? Gilt einmal pro gesendetem Text. */
+  isQuiet(text: string): boolean {
+    const now = Date.now();
+    for (const [t, until] of this.quiet) if (until < now) this.quiet.delete(t);
+    return this.quiet.delete(text.trim());
   }
 
   /** Stammt diese Chat-Nachricht von der Suite selbst? */

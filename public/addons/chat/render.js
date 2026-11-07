@@ -304,7 +304,7 @@ window.ChatRender = (() => {
 
   /** Soll ein Eintrag im OBS-Overlay erscheinen? */
   function overlayVisible(item, o) {
-    if (item.deleted || (item.hiddenReward && o.respectAlertFilter)) return false;
+    if (item.deleted || item.quiet || (item.hiddenReward && o.respectAlertFilter)) return false;
     if (item.kind === 'event') return !!o.events[item.event];
     if (o.hiddenUsers.includes((item.user.login || '').toLowerCase())) return false;
     if (o.hideCommands && plainText(item).trim().startsWith('!')) return false;

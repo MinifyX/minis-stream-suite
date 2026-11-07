@@ -64,6 +64,11 @@ export const watchtimeAddon: Addon = {
         signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) throw new Error(`Server antwortet ${res.status}`);
+      const body = (await res.json().catch(() => ({}))) as { linked?: unknown };
+      for (const login of Array.isArray(body.linked) ? body.linked : []) {
+        if (typeof login !== 'string' || !/^\w{1,25}$/.test(login)) continue;
+        ctx.chat.send(`@${login} ✅ Dein Twitch ist jetzt mit Discord verknüpft.`, { overlay: false }).catch((err) => ctx.log.warn('Bestätigung nicht gesendet:', err));
+      }
     };
 
     const flush = async () => {
