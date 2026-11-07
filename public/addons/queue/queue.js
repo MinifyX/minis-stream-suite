@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/queue';
 /** Als kleines Fenster geöffnet (oder als OBS-Dock)? */
 const COMPACT = new URLSearchParams(location.search).has('window');
@@ -40,25 +40,27 @@ function entryRow(e, index) {
       h('div', { class: 'q-line' },
         h('strong', { class: 'no-i18n' }, e.user.name),
         h('span', { class: 'q-reward no-i18n' }, e.rewardTitle),
-        e.test ? h('span', { class: 'badge accent' }, '🧪 Test') : null,
-        locked ? h('span', { class: 'badge', title: 'Fremde Belohnung: Abhaken nur hier in der Liste, bei Twitch bleibt sie offen.' }, '🔒') : null),
+        e.test ? h('span', { class: 'badge accent' }, icon('flask-conical'), ' Test') : null,
+        locked ? h('span', { class: 'badge', title: 'Fremde Belohnung: Abhaken nur hier in der Liste, bei Twitch bleibt sie offen.' }, icon('lock')) : null),
       e.input ? h('div', { class: 'q-input', title: e.input }, `„${e.input}“`) : null,
       h('div', { class: 'q-time' }, `vor ${ago(e.at)}`)),
     h('div', { class: 'q-actions' },
       h('button', {
         class: 'icon-btn q-done',
         title: locked ? 'Abhaken (nur in der Liste)' : 'Erledigt (auch bei Twitch)',
+        'aria-label': locked ? 'Abhaken (nur in der Liste)' : 'Erledigt (auch bei Twitch)',
         onclick: () => call('/done', { id: e.id }),
-      }, '✓'),
+      }, icon('check')),
       locked
-        ? h('button', { class: 'icon-btn', title: 'Aus der Liste entfernen', onclick: () => call('/remove', { id: e.id }) }, '✕')
+        ? h('button', { class: 'icon-btn', title: 'Aus der Liste entfernen', 'aria-label': 'Aus der Liste entfernen', onclick: () => call('/remove', { id: e.id }) }, icon('x'))
         : h('button', {
           class: 'icon-btn',
           title: `Zurückerstatten: ${e.user.name} bekommt ${e.cost.toLocaleString('de-DE')} Punkte zurück`,
+          'aria-label': 'Zurückerstatten',
           onclick: () => {
             if (confirm(`${e.user.name} die ${e.cost.toLocaleString('de-DE')} Punkte für „${e.rewardTitle}“ zurückgeben?`)) call('/refund', { id: e.id });
           },
-        }, '↩')));
+        }, icon('undo-2'))));
 }
 
 function renderList(box, emptyText) {
@@ -93,14 +95,14 @@ function render() {
   const n = state.data.entries.length;
   if (COMPACT) {
     $('#qw-count').textContent = n ? `${n} offen` : 'Warteschlange';
-    renderList($('#qw-list'), state.data.enabled ? 'Nichts offen 🎉' : 'Warteschlange ist aus.');
+    renderList($('#qw-list'), state.data.enabled ? 'Nichts offen' : 'Warteschlange ist aus.');
     return;
   }
   renderToggle();
   $('#count-title').textContent = n ? `Offen (${n})` : 'Offen';
   $('#done-all').disabled = !n;
   renderList($('#list'), state.data.enabled
-    ? 'Nichts offen 🎉 Neue Einlösungen erscheinen hier automatisch.'
+    ? 'Nichts offen. Neue Einlösungen erscheinen hier automatisch.'
     : 'Die Warteschlange ist aus. Schalte sie oben rechts ein.');
 }
 
@@ -158,7 +160,7 @@ function renderRewards() {
       h('option', { value: 'never', selected: r.mode === 'never' }, 'Nie in Liste'));
     return h('div', { class: `q-reward-row${r.inQueue ? '' : ' off'}` },
       h('span', { class: 'q-dot', style: { background: r.color } }, r.image ? h('img', { src: r.image, alt: '' }) : null),
-      h('span', { class: 'q-reward-name', title: r.title }, r.title, r.manageable ? null : h('span', { class: 'q-lock', title: 'Fremde Belohnung: nur lokal abhakbar' }, ' 🔒')),
+      h('span', { class: 'q-reward-name', title: r.title }, r.title, r.manageable ? null : h('span', { class: 'q-lock', title: 'Fremde Belohnung: nur lokal abhakbar' }, ' ', icon('lock'))),
       select);
   }));
 }
@@ -189,7 +191,7 @@ function initPage() {
   $('#done-all').onclick = doneAll;
   $('#sync').onclick = async () => {
     const result = await call('/sync', {});
-    if (result) toast(result.added || result.removed ? `Abgeglichen: ${result.added} neu, ${result.removed} entfernt` : 'Alles aktuell ✓', 'ok');
+    if (result) toast(result.added || result.removed ? `Abgeglichen: ${result.added} neu, ${result.removed} entfernt` : 'Alles aktuell', 'ok');
   };
   $('#reward-search').oninput = (e) => {
     state.rewardSearch = e.target.value;

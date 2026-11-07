@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/streaminfo';
 
 const MAX_TITLE = 140;
@@ -93,7 +93,7 @@ function modal(title, body, footer) {
   const close = () => host.replaceChildren();
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' }, ...body.filter(Boolean)),
       footer ? h('div', { class: 'modal-foot' }, ...footer) : null)));
   return close;
@@ -102,7 +102,7 @@ function modal(title, body, footer) {
 const field = (label, ...controls) => h('div', { class: 'field' }, h('label', {}, label), ...controls);
 const art = (category, cls) => (category?.image
   ? h('img', { class: cls, src: category.image, alt: '' })
-  : h('div', { class: cls }, '🎮'));
+  : h('div', { class: cls }, icon('gamepad-2')));
 
 function languageSelect(value, withKeep) {
   const options = [...LANGUAGES];
@@ -132,7 +132,7 @@ function tagEditor(initial, onChange) {
   const renderChips = () => {
     box.replaceChildren(
       ...tags.map((tag) => h('span', { class: 'tag-chip no-i18n' }, tag,
-        h('button', { title: 'Entfernen', onclick: () => { tags = tags.filter((t) => t !== tag); changed(); } }, '✕'))),
+        h('button', { title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => { tags = tags.filter((t) => t !== tag); changed(); } }, icon('x')))),
       input);
     input.hidden = tags.length >= MAX_TAGS;
   };
@@ -204,7 +204,7 @@ function gamePicker(title, onPick) {
     onPick({ id: game.id, name: game.name, image: game.image ?? '' });
   };
   const row = (game) => h('button', { class: 'game-result', onclick: () => pick(game) },
-    game.image ? h('img', { src: game.image, alt: '' }) : h('span', { class: 'game-ph' }, '🎮'),
+    game.image ? h('img', { src: game.image, alt: '' }) : h('span', { class: 'game-ph' }, icon('gamepad-2')),
     h('span', {}, game.name));
 
   const showRecent = () => {
@@ -244,13 +244,13 @@ let tags = null;
 function renderStatus() {
   const d = state.data;
   let text = '';
-  if (!d.loggedIn) text = '⚠ Du bist nicht bei Twitch eingeloggt. Verbinde dich zuerst in der Übersicht – dann kannst du hier Titel und Kategorie ändern.';
-  else if (d.error) text = `⚠ ${d.error}`;
-  $('#status').replaceChildren(...(text ? [h('div', { class: 'status' }, text)] : []));
+  if (!d.loggedIn) text = 'Du bist nicht bei Twitch eingeloggt. Verbinde dich zuerst in der Übersicht – dann kannst du hier Titel und Kategorie ändern.';
+  else if (d.error) text = d.error;
+  $('#status').replaceChildren(...(text ? [h('div', { class: 'status' }, icon('triangle-alert'), ` ${text}`)] : []));
   $('#counter-now').textContent = `als Nächstes: ${d.counter + 1}`;
-  $('#cp-note').textContent = d.channelPointsActive
-    ? '🎯 Spiel-Regeln aus dem Kanalpunkte-Addon schalten sich automatisch um, sobald du hier die Kategorie wechselst.'
-    : '🎯 Tipp: Mit den Spiel-Regeln im Kanalpunkte-Addon schalten sich Belohnungen automatisch um, sobald du hier die Kategorie wechselst.';
+  $('#cp-note').replaceChildren(icon('target'), d.channelPointsActive
+    ? ' Spiel-Regeln aus dem Kanalpunkte-Addon schalten sich automatisch um, sobald du hier die Kategorie wechselst.'
+    : ' Tipp: Mit den Spiel-Regeln im Kanalpunkte-Addon schalten sich Belohnungen automatisch um, sobald du hier die Kategorie wechselst.');
 }
 
 function renderNow() {
@@ -328,7 +328,7 @@ function renderRecentCats() {
       class: `quick-cat${state.draft.category?.id === c.id ? ' on' : ''}`,
       title: c.name,
       onclick: () => setCategory(c),
-    }, c.image ? h('img', { src: c.image, alt: '' }) : h('span', { class: 'ph' }, '🎮'), h('span', {}, c.name))));
+    }, c.image ? h('img', { src: c.image, alt: '' }) : h('span', { class: 'ph' }, icon('gamepad-2')), h('span', {}, c.name))));
 }
 
 function renderRecentTitles() {
@@ -347,7 +347,7 @@ function renderRecentTitles() {
         renderDirty();
       },
     }, t),
-    h('button', { class: 'icon-btn', title: 'Aus der Liste entfernen', onclick: () => call('/recent/remove', { kind: 'title', value: t }) }, '✕'))));
+    h('button', { class: 'icon-btn', title: 'Aus der Liste entfernen', 'aria-label': 'Aus der Liste entfernen', onclick: () => call('/recent/remove', { kind: 'title', value: t }) }, icon('x')))));
 }
 
 function setCategory(category) {
@@ -369,7 +369,7 @@ async function save() {
     const data = await api(`${BASE}/save`, changes);
     state.draft = null; // Gespeichertes übernehmen
     applyState(data);
-    toast('Bei Twitch gespeichert ✔', 'ok');
+    toast('Bei Twitch gespeichert', 'ok');
   } catch (err) {
     toast(err.message, 'err');
   } finally {
@@ -412,15 +412,15 @@ function renderPresets() {
         h('div', { class: `p-title${p.title ? '' : ' muted'}`, title: p.title }, p.title || 'Titel bleibt'),
         h('div', { class: 'p-meta', title: presetMeta(p) }, presetMeta(p))),
       h('div', { class: 'p-actions' },
-        h('button', { class: 'icon-btn', title: 'Nach oben', disabled: index === 0, onclick: () => move(index, -1) }, '↑'),
-        h('button', { class: 'icon-btn', title: 'Nach unten', disabled: index === list.length - 1, onclick: () => move(index, 1) }, '↓'),
-        h('button', { class: 'icon-btn', title: 'Bearbeiten', onclick: () => openPresetEditor(p) }, '✎'),
-        h('button', { class: 'icon-btn', title: 'Duplizieren', onclick: () => call('/presets/duplicate', { id: p.id }) }, '⧉'),
+        h('button', { class: 'icon-btn', title: 'Nach oben', 'aria-label': 'Nach oben', disabled: index === 0, onclick: () => move(index, -1) }, icon('arrow-up')),
+        h('button', { class: 'icon-btn', title: 'Nach unten', 'aria-label': 'Nach unten', disabled: index === list.length - 1, onclick: () => move(index, 1) }, icon('arrow-down')),
+        h('button', { class: 'icon-btn', title: 'Bearbeiten', 'aria-label': 'Bearbeiten', onclick: () => openPresetEditor(p) }, icon('pencil')),
+        h('button', { class: 'icon-btn', title: 'Duplizieren', 'aria-label': 'Duplizieren', onclick: () => call('/presets/duplicate', { id: p.id }) }, icon('copy')),
         h('button', {
-          class: 'icon-btn', title: 'Löschen',
+          class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen',
           onclick: () => { if (confirm(`Vorlage „${p.name}“ löschen?`)) call('/presets/delete', { id: p.id }); },
-        }, '🗑')),
-      h('button', { class: 'btn primary small', disabled: !canApply, onclick: (e) => applyPreset(p, e.currentTarget) }, '▶ Anwenden')))));
+        }, icon('trash-2'))),
+      h('button', { class: 'btn primary small', disabled: !canApply, onclick: (e) => applyPreset(p, e.currentTarget) }, icon('play'), ' Anwenden')))));
 }
 
 function move(index, dir) {
@@ -437,7 +437,7 @@ async function applyPreset(preset, button) {
     const data = await api(`${BASE}/presets/apply`, { id: preset.id });
     state.draft = null;
     applyState(data);
-    toast(`Vorlage „${preset.name}“ angewendet ✔`, 'ok');
+    toast(`Vorlage „${preset.name}“ angewendet`, 'ok');
   } catch (err) {
     toast(err.message, 'err');
     button.disabled = false;
@@ -498,7 +498,7 @@ function openPresetEditor(preset, prefill) {
         class: 'btn small',
         onclick: () => gamePicker('Kategorie für die Vorlage', (c) => { p.category = c; renderCat(); updatePreview(); }),
       }, 'Auswählen…'),
-      p.category ? h('button', { class: 'icon-btn', title: 'Kategorie nicht ändern', onclick: () => { p.category = null; renderCat(); updatePreview(); } }, '✕') : '');
+      p.category ? h('button', { class: 'icon-btn', title: 'Kategorie nicht ändern', 'aria-label': 'Kategorie nicht ändern', onclick: () => { p.category = null; renderCat(); updatePreview(); } }, icon('x')) : '');
   };
 
   const renderTags = () => {
@@ -519,7 +519,7 @@ function openPresetEditor(preset, prefill) {
     }
   };
 
-  const close = modal(isNew ? '＋ Neue Vorlage' : `✎ ${p.name}`, [
+  const close = modal(isNew ? [icon('plus'), ' Neue Vorlage'] : [icon('pencil'), ` ${p.name}`], [
     field('Name', name),
     h('div', { class: 'field' },
       h('div', { class: 'title-foot' }, h('label', { style: { flex: 1, fontWeight: 600 } }, 'Titel'), count),
@@ -549,7 +549,7 @@ function renderHelp() {
   if (box.dataset.key === key) return;
   box.dataset.key = key;
   if (!c.enabled || (!c.titleCmd && !c.gameCmd)) {
-    box.replaceChildren(h('div', { class: 'note' }, 'Chat-Commands sind aus. Einschalten unter ⚙ Einstellungen.'));
+    box.replaceChildren(h('div', { class: 'note' }, 'Chat-Commands sind aus. Einschalten unter ', icon('settings'), ' Einstellungen.'));
   } else {
     box.replaceChildren(...[
       c.titleCmd ? h('div', {}, h('code', {}, `!${c.titleCmd} <Text>`), ' – setzt den Titel') : null,
@@ -579,7 +579,7 @@ async function checkConflicts() {
     }
   }
   $('#conflict').replaceChildren(...(clash.length
-    ? [h('div', { class: 'conflict' }, `⚠ Im Chat-Commands-Addon gibt es auch ${clash.join(', ')}. Dann antworten beide. Schalte den Command dort aus oder benenne ihn hier um.`)]
+    ? [h('div', { class: 'conflict' }, icon('triangle-alert'), ` Im Chat-Commands-Addon gibt es auch ${clash.join(', ')}. Dann antworten beide. Schalte den Command dort aus oder benenne ihn hier um.`)]
     : []));
 }
 
@@ -602,7 +602,7 @@ function openSettings() {
     }
   };
 
-  const close = modal('⚙ Stream-Info-Einstellungen', [
+  const close = modal([icon('settings'), ' Stream-Info-Einstellungen'], [
     h('div', { class: 'sub' }, 'CHAT-COMMANDS'),
     h('div', { class: 'opt-row' }, toggle(c.enabled, (on) => { c.enabled = on; }, 'Chat-Commands an/aus'), h('span', {}, 'Titel und Kategorie per Chat ändern')),
     h('div', { class: 'f-row' }, field('Titel-Command (ohne !)', titleCmd), field('Kategorie-Command (ohne !)', gameCmd)),

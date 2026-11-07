@@ -1,28 +1,30 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/goals';
 const { fmt } = GoalRender;
 
 /** Art des Ziels → [Name, Erklärung] */
 const TYPES = {
-  followers: ['👥 Follower gesamt',
+  followers: ['Follower gesamt',
     'Alle Follower deines Kanals. Der Stand kommt von Twitch und zählt live mit jedem Follow hoch. Alle 5 Minuten gleicht die Suite mit Twitch ab (z.B. wegen Entfolgungen).'],
-  followersSince: ['👋 Neue Follower seit Reset',
+  followersSince: ['Neue Follower seit Reset',
     'Follower seit dem Zurücksetzen: Twitch-Gesamtzahl minus Startwert, dazwischen live gezählt. Mit „bei Stream-Start zurücksetzen“ ein schönes Tagesziel.'],
-  subs: ['⭐ Abos gesamt',
+  subs: ['Abos gesamt',
     'Anzahl deiner Abonnenten laut Twitch. Gezählt werden Personen, nicht Abo-Punkte: ein Tier-3-Abo zählt 1 (bei Punkten wären es 6). So verstehen es Zuschauer am besten. Neue und verschenkte Abos zählen live mit, abgelaufene merkt die Suite beim nächsten Abgleich mit Twitch.'],
-  subsSince: ['🎉 Abos seit Reset',
+  subsSince: ['Abos seit Reset',
     'Neue und verschenkte Abos seit dem Zurücksetzen, auf Wunsch auch Verlängerungen (Resubs). Gezählt wird live, solange die Suite läuft.'],
-  bits: ['💎 Bits seit Reset',
+  bits: ['Bits seit Reset',
     'Alle gecheerten Bits seit dem Zurücksetzen. Gezählt wird live, solange die Suite läuft.'],
-  redemptions: ['✨ Kanalpunkte-Einlösungen',
+  redemptions: ['Kanalpunkte-Einlösungen',
     'Wie oft eine bestimmte Belohnung eingelöst wurde. Zurückerstattete Einlösungen werden wieder abgezogen.'],
-  custom: ['✏️ Eigener Zähler',
+  custom: ['Eigener Zähler',
     'Zählt nur, wenn du auf + oder − klickst. Z.B. für Siege, Tode, Liegestütze, Spenden …'],
 };
+const TYPE_ICON = { followers: () => icon('users'), followersSince: () => icon('user-plus'), subs: () => icon('star'), subsSince: () => icon('party-popper'), bits: () => icon('gem'), redemptions: () => icon('sparkles'), custom: () => icon('pencil') };
+const KIND_ICON = { follow: () => icon('heart'), sub: () => icon('star'), giftsub: () => icon('gift'), cheer: () => icon('gem'), raid: () => icon('rocket'), topcheer: () => icon('crown') };
 const TWITCH_TOTALS = ['followers', 'subs'];
 
-const LAYOUTS = [['bar', '▬ Balken'], ['slim', '▭ Schmal'], ['ring', '◯ Kreis']];
-const RECENT_LAYOUTS = [['bar', '↔ Leiste'], ['list', '↕ Liste'], ['ticker', '🔁 Laufband']];
+const LAYOUTS = [['bar', 'Balken'], ['slim', 'Schmal'], ['ring', 'Kreis']];
+const RECENT_LAYOUTS = [['bar', 'Leiste'], ['list', 'Liste'], ['ticker', 'Laufband']];
 const PREVIEW_BGS = [['checker', 'Transparent'], ['game', 'Spiel-Szene'], ['black', 'Schwarz'], ['white', 'Weiß'], ['green', 'Greenscreen']];
 const KIND_NAMES = {
   follow: 'Letzter Follower',
@@ -103,7 +105,7 @@ async function save() {
       applyServer(g, await api(`${BASE}/goals/save`, { goal: editable(g) }));
     }
     if (recent) await api(`${BASE}/recent/style`, { style: state.recentStyle });
-    $('#save-state').textContent = 'Gespeichert ✓';
+    $('#save-state').replaceChildren('Gespeichert ', icon('check'));
     updateValues();
   } catch (err) {
     $('#save-state').textContent = 'Fehler beim Speichern';
@@ -218,18 +220,18 @@ function renderGoalList() {
     return h('div', { class: `goal-row${g.id === selectedId ? ' selected' : ''}`, onclick: () => selectGoal(g.id) },
       h('div', {},
         h('div', { class: 'g-name no-i18n' }, g.title || '(ohne Titel)'),
-        h('div', { class: 'g-type' }, TYPES[g.type][0], g.type === 'redemptions' && g.rewardTitle ? h('span', { class: 'no-i18n' }, `: ${g.rewardTitle}`) : null)),
+        h('div', { class: 'g-type' }, TYPE_ICON[g.type]?.(), ' ', TYPES[g.type][0], g.type === 'redemptions' && g.rewardTitle ? h('span', { class: 'no-i18n' }, `: ${g.rewardTitle}`) : null)),
       h('div', { class: 'mini-bar' }, h('div', { style: { width: `${pct}%` } })),
       h('span', { class: 'g-num' }, `${fmt(g.value)} / ${fmt(g.target)}`),
       h('div', { class: 'row-btns' },
-        h('button', { class: 'icon-btn', title: 'Nach oben', disabled: i === 0, onclick: move('up') }, '▲'),
-        h('button', { class: 'icon-btn', title: 'Nach unten', disabled: i === goals.length - 1, onclick: move('down') }, '▼')));
+        h('button', { class: 'icon-btn', title: 'Nach oben', 'aria-label': 'Nach oben', disabled: i === 0, onclick: move('up') }, icon('chevron-up')),
+        h('button', { class: 'icon-btn', title: 'Nach unten', 'aria-label': 'Nach unten', disabled: i === goals.length - 1, onclick: move('down') }, icon('chevron-down'))));
   }));
 }
 
 function renderTypePicker() {
   $('#type-picker').replaceChildren(...Object.entries(TYPES).map(([type, [label]]) =>
-    h('button', { onclick: () => createGoal(type) }, label)));
+    h('button', { onclick: () => createGoal(type) }, TYPE_ICON[type](), ' ', label)));
 }
 
 async function createGoal(type) {
@@ -270,7 +272,7 @@ function rewardField(g, F) {
     return field('Belohnung',
       note(`Belohnungen konnten nicht geladen werden: ${rewards}`),
       g.rewardTitle ? note(`Gewählt: ${g.rewardTitle}`) : null,
-      h('div', {}, h('button', { class: 'btn small', onclick: () => { rewards = null; renderGoalForm(); } }, '↻ Nochmal versuchen')));
+      h('div', {}, h('button', { class: 'btn small', onclick: () => { rewards = null; renderGoalForm(); } }, icon('rotate-cw'), ' Nochmal versuchen')));
   }
   const options = [['', '– Belohnung wählen –'], ...rewards.map((r) => [r.id, `${r.title} (${fmt(r.cost)})`])];
   if (g.rewardId && !rewards.some((r) => r.id === g.rewardId)) options.push([g.rewardId, `${g.rewardTitle || g.rewardId} (nicht mehr vorhanden)`]);
@@ -298,7 +300,7 @@ function renderGoalForm() {
     renderGoalForm();
   });
 
-  const goalGroup = group('📝 Ziel',
+  const goalGroup = group([icon('pencil'), ' Ziel'],
     h('div', { class: 'row2' }, field('Titel (steht über dem Balken)', titleInput), field('Was wird gezählt?', typeSelect)),
     h('p', { class: 'type-info' }, TYPES[g.type][1]),
     g.type === 'redemptions' ? rewardField(g, F) : null,
@@ -319,7 +321,7 @@ function renderGoalForm() {
   };
   setInput.onkeydown = (e) => { if (e.key === 'Enter') doSet(); };
 
-  const valueGroup = group('🔢 Stand',
+  const valueGroup = group([icon('hash'), ' Stand'],
     h('div', { class: 'value-box' },
       h('div', { class: 'big-value', id: 'big-value' }),
       h('div', { class: 'btn-row' },
@@ -328,9 +330,9 @@ function renderGoalForm() {
     h('div', { class: 'set-row' }, setInput, h('button', { class: 'btn small', onclick: doSet }, 'Wert setzen')),
     h('p', { class: 'note', id: 'value-info' }),
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn small', onclick: () => resetGoal(g) }, isTotal ? '↻ Korrektur löschen & neu von Twitch laden' : '⟲ Zurücksetzen (auf 0)'),
+      h('button', { class: 'btn small', onclick: () => resetGoal(g) }, icon(isTotal ? 'rotate-cw' : 'undo-2'), isTotal ? ' Korrektur löschen & neu von Twitch laden' : ' Zurücksetzen (auf 0)'),
       h('span', { class: 'spacer' }),
-      h('button', { class: 'btn small', onclick: () => deleteGoal(g) }, '🗑 Ziel löschen')));
+      h('button', { class: 'btn small', onclick: () => deleteGoal(g) }, icon('trash-2'), ' Ziel löschen')));
 
   // ------------------------------------------------ Aussehen
   const layoutChanged = () => {
@@ -339,7 +341,7 @@ function renderGoalForm() {
     if (s.layout !== 'ring' && s.width < 300) s.width = 600;
     renderGoalForm();
   };
-  const styleGroup = group('🎨 Aussehen',
+  const styleGroup = group([icon('palette'), ' Aussehen'],
     F.seg(s, 'layout', LAYOUTS, layoutChanged),
     h('div', { class: 'row3' },
       field('Schriftart', F.select(s, 'font', fontOptions())),
@@ -363,11 +365,11 @@ function renderGoalForm() {
         F.check('Textschatten', s, 'textShadow'))),
     F.check('Feier mit Konfetti, wenn das Ziel erreicht ist', s, 'celebrate', renderGoalForm),
     s.celebrate ? field('Text bei der Feier (ersetzt kurz den Titel)', F.text(s, 'celebrateText', 80, 'Ziel erreicht! 🎉')) : null,
-    goals.length > 1 ? h('div', {}, h('button', { class: 'btn small', onclick: () => copyStyle(g) }, '🎨 Dieses Aussehen für alle Ziele übernehmen')) : null);
+    goals.length > 1 ? h('div', {}, h('button', { class: 'btn small', onclick: () => copyStyle(g) }, icon('palette'), ' Dieses Aussehen für alle Ziele übernehmen')) : null);
 
   $('#goal-form').replaceChildren(goalGroup, valueGroup, styleGroup);
   $('#goal-url').value = goalUrl(g.id);
-  $('#goal-test-step').textContent = `🧪 +${step}${g.type === 'bits' ? ' Bits' : ''} testen`;
+  $('#goal-test-step').replaceChildren(icon('flask-conical'), ` +${step}${g.type === 'bits' ? ' Bits' : ''} testen`);
   updateValues();
   renderGoalPreview();
 }
@@ -488,17 +490,17 @@ function renderRecentForm() {
     const label = F.text(st.labels, k, 40, 'keine Überschrift');
     label.classList.add('no-i18n');
     return h('div', { class: 'kind-row' },
-      h('span', { class: 'k-icon' }, GoalRender.ICONS[k]),
+      h('span', { class: 'k-icon' }, KIND_ICON[k]?.()),
       toggle(st.items[k], (on) => { st.items[k] = on; changed('recent'); }, KIND_NAMES[k]),
       field(KIND_NAMES[k], label));
   });
 
   $('#recent-form').replaceChildren(
-    group('📋 Was angezeigt wird',
+    group([icon('clipboard-list'), ' Was angezeigt wird'],
       note('Einschalten, was in der Leiste stehen soll. Die Überschrift kannst du frei ändern (leer = keine).'),
       ...kindRows,
       note('Top-Cheerer: wer im aktuellen Stream insgesamt die meisten Bits gecheert hat. Wird beim Stream-Start automatisch zurückgesetzt. Die letzten Werte bleiben auch nach einem Neustart der Suite erhalten.')),
-    group('🎨 Aussehen',
+    group([icon('palette'), ' Aussehen'],
       F.seg(st, 'layout', RECENT_LAYOUTS, renderRecentForm),
       st.layout === 'ticker' ? field('Laufband: Sekunden pro Eintrag', F.number(st, 'tickerSeconds', 2, 60)) : null,
       h('div', { class: 'row3' },
@@ -514,9 +516,9 @@ function renderRecentForm() {
       F.check('Icons anzeigen', st, 'showIcons'),
       F.check('Abgerundete Ecken', st, 'rounded'),
       F.check('Textschatten', st, 'textShadow')),
-    group('🕘 Aktuelle Werte',
+    group([icon('history'), ' Aktuelle Werte'],
       h('div', { id: 'current-values', class: 'form' }),
-      h('div', { class: 'btn-row' }, h('button', { class: 'btn small', onclick: () => clearRecent() }, '🧹 Alle leeren'))),
+      h('div', { class: 'btn-row' }, h('button', { class: 'btn small', onclick: () => clearRecent() }, icon('eraser'), ' Alle leeren'))),
   );
   renderCurrentValues();
   renderRecentPreview();
@@ -529,10 +531,10 @@ function renderCurrentValues() {
     const entry = state.recent[k];
     const { name, detail } = GoalRender.recentText(k, entry);
     return h('div', { class: 'current-row' },
-      h('span', { class: 'k-icon' }, GoalRender.ICONS[k]),
+      h('span', { class: 'k-icon' }, KIND_ICON[k]?.()),
       h('span', { class: 'k-label' }, KIND_NAMES[k].replace(/ \(.*\)$/, '')),
       h('span', { class: 'k-value no-i18n' }, detail ? `${name} · ${detail}` : name),
-      h('button', { class: 'icon-btn', title: 'Leeren', disabled: !entry, onclick: () => clearRecent(k) }, '✕'));
+      h('button', { class: 'icon-btn', title: 'Leeren', 'aria-label': 'Leeren', disabled: !entry, onclick: () => clearRecent(k) }, icon('x')));
   }));
 }
 

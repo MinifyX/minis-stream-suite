@@ -10,10 +10,10 @@
 <body>
   <div class="page">
     <header class="title-row">
-      <h1>📝 Stream-Info</h1>
+      <h1><span data-icon="notebook-pen"></span> Stream-Info</h1>
       <span class="spacer"></span>
-      <button class="btn" id="refresh" title="Stand neu von Twitch holen">↻ Neu laden</button>
-      <button class="btn" id="open-settings">⚙ Einstellungen</button>
+      <button class="btn" id="refresh" title="Stand neu von Twitch holen"><span data-icon="rotate-cw"></span> Neu laden</button>
+      <button class="btn" id="open-settings"><span data-icon="settings"></span> Einstellungen</button>
     </header>
     <p class="note">Titel, Kategorie, Tags und Sprache deines Kanals – direkt hier ändern oder mit einer Vorlage auf einen Klick. Änderungen im Twitch-Dashboard tauchen hier automatisch auf.</p>
     <div id="status"></div>
@@ -23,7 +23,7 @@
       <main>
         <section class="card" id="now-card">
           <div class="card-head">
-            <h2>🔴 Jetzt</h2>
+            <h2><span data-icon="radio-tower"></span> Jetzt</h2>
             <span class="spacer"></span>
             <span class="dirty-note" id="dirty-note" hidden>Nicht gespeichert</span>
           </div>
@@ -38,7 +38,7 @@
                 <div class="cat-row">
                   <div class="cat-name" id="cat-name"></div>
                   <button class="btn small" id="cat-change">Ändern…</button>
-                  <button class="icon-btn" id="cat-clear" title="Keine Kategorie">✕</button>
+                  <button class="icon-btn" id="cat-clear" title="Keine Kategorie" aria-label="Keine Kategorie"><span data-icon="x"></span></button>
                 </div>
                 <div class="quick" id="recent-cats"></div>
               </div>
@@ -47,7 +47,7 @@
                 <label for="title">Titel</label>
                 <div class="copy-row">
                   <input type="text" id="title" placeholder="Worum geht's heute?" autocomplete="off">
-                  <button class="btn" id="recent-toggle" title="Zuletzt benutzte Titel">🕘</button>
+                  <button class="btn" id="recent-toggle" title="Zuletzt benutzte Titel" aria-label="Zuletzt benutzte Titel"><span data-icon="history"></span></button>
                 </div>
                 <div class="title-foot">
                   <span class="note" id="title-hint"></span>
@@ -80,7 +80,7 @@
 
         <section class="card">
           <div class="card-head">
-            <h2>📋 Vorlagen</h2>
+            <h2><span data-icon="clipboard-list"></span> Vorlagen</h2>
             <span class="spacer"></span>
             <button class="btn small" id="new-preset">＋ Neue Vorlage</button>
           </div>
@@ -90,11 +90,11 @@
 
       <aside>
         <section class="card">
-          <h2>💬 Im Chat</h2>
+          <h2><span data-icon="message-circle"></span> Im Chat</h2>
           <div id="chat-help" class="help"></div>
         </section>
         <section class="card">
-          <h2>🔣 Variablen in Vorlagen</h2>
+          <h2><span data-icon="keyboard"></span> Variablen in Vorlagen</h2>
           <div class="help">
             <div><code>{datum}</code> – heutiges Datum, z.B. 23.09.2026</div>
             <div><code>{wochentag}</code> – z.B. Freitag</div>

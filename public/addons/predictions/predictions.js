@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/predictions';
 
 const ROLES = [
@@ -126,9 +126,9 @@ function renderForm() {
       input,
       c,
       h('button', {
-        class: 'icon-btn', title: 'Entfernen', disabled: f.outcomes.length <= 2,
+        class: 'icon-btn', title: 'Entfernen', 'aria-label': 'Entfernen', disabled: f.outcomes.length <= 2,
         onclick: () => { f.outcomes.splice(i, 1); renderForm(); },
-      }, '✕'));
+      }, icon('x')));
   });
 
   const custom = h('input', { type: 'number', min: limits.minSeconds, max: limits.maxSeconds, value: f.windowSeconds, title: 'Sekunden' });
@@ -159,7 +159,7 @@ function renderForm() {
           h('button', { class: `btn small${f.windowSeconds === s ? ' on' : ''}`, onclick: () => { f.windowSeconds = s; renderForm(); } }, l)),
         custom, h('span', { class: 'note' }, 'Sekunden'))),
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn primary', disabled: !canPredict(), onclick: startPrediction }, '🔮 Vorhersage starten'),
+      h('button', { class: 'btn primary', disabled: !canPredict(), onclick: startPrediction }, icon('eye'), ' Vorhersage starten'),
       h('button', { class: 'btn', onclick: () => { resetForm(); renderForm(); } }, 'Leeren')),
   ].filter(Boolean));
 }
@@ -193,7 +193,7 @@ function renderLive() {
 
   box.replaceChildren(...[
     h('div', { class: 'live-head' },
-      locked ? h('span', { class: 'badge warn' }, '🔒 GESPERRT') : h('span', { class: 'badge ok' }, '● LÄUFT'),
+      locked ? h('span', { class: 'badge warn' }, icon('lock'), ' GESPERRT') : h('span', { class: 'badge ok' }, h('span', { class: 'dot ok' }), ' LÄUFT'),
       p.test ? h('span', { class: 'badge accent', title: 'Nur in der Suite und im Overlay – nicht bei Twitch' }, 'Test') : null,
       p.external ? h('span', { class: 'badge accent', title: 'Direkt bei Twitch gestartet' }, 'von Twitch') : null,
       p.startedBy && !p.external && !p.test && p.startedBy !== 'Dashboard' ? h('span', { class: 'badge' }, `gestartet von ${p.startedBy}`) : null,
@@ -208,20 +208,20 @@ function renderLive() {
           h('span', { class: 'outcome-num' }, `${i + 1}`),
           h('span', { class: 'bar-label no-i18n' }, o.title),
           h('span', { class: 'bar-stats' },
-            h('span', { title: 'Tipper' }, `👥 ${num(o.users)}`),
-            h('span', { title: 'Gesetzte Kanalpunkte' }, `🪙 ${num(o.channelPoints)}`),
+            h('span', { title: 'Tipper' }, icon('users'), ` ${num(o.users)}`),
+            h('span', { title: 'Gesetzte Kanalpunkte' }, icon('coins'), ` ${num(o.channelPoints)}`),
             h('span', { title: 'Auszahlung' }, ratio(o.channelPoints, p.totalPoints))),
           h('span', { class: 'bar-pct' }, `${pct(o.channelPoints, p.totalPoints)}%`),
-          h('button', { class: 'btn small', title: 'Diese Antwort gewinnt – Punkte werden verteilt', onclick: () => resolvePrediction(i) }, '🏆 Gewinner'))))),
+          h('button', { class: 'btn small', title: 'Diese Antwort gewinnt – Punkte werden verteilt', onclick: () => resolvePrediction(i) }, icon('trophy'), ' Gewinner'))))),
     h('div', { class: 'totals' },
       h('span', {}, h('b', {}, num(p.totalUsers)), ' Tipper'),
       h('span', {}, h('b', {}, num(p.totalPoints)), ' Kanalpunkte gesetzt')),
     locked
-      ? h('p', { class: 'note' }, 'Keine Tipps mehr möglich. Sobald das Ergebnis feststeht: bei der richtigen Antwort auf „🏆 Gewinner“ klicken.')
+      ? h('p', { class: 'note' }, 'Keine Tipps mehr möglich. Sobald das Ergebnis feststeht: bei der richtigen Antwort auf „Gewinner“ klicken.')
       : h('p', { class: 'note' }, 'Nach Ablauf der Zeit sperrt Twitch automatisch. Du kannst auch früher sperren oder direkt den Gewinner wählen.'),
     h('div', { class: 'btn-row' },
-      locked ? null : h('button', { class: 'btn primary', onclick: lockPrediction }, '🔒 Jetzt sperren'),
-      h('button', { class: 'btn', onclick: cancelPrediction }, '✕ Abbrechen (Punkte zurück)')),
+      locked ? null : h('button', { class: 'btn primary', onclick: lockPrediction }, icon('lock'), ' Jetzt sperren'),
+      h('button', { class: 'btn', onclick: cancelPrediction }, icon('x'), ' Abbrechen (Punkte zurück)')),
   ].filter(Boolean));
 }
 
@@ -245,7 +245,7 @@ const lockPrediction = () => action('lock', {}, 'Gesperrt – jetzt kann niemand
 function resolvePrediction(index) {
   const o = state.data.active.outcomes[index];
   if (!confirm(`„${o.title}“ gewinnt?\n\nDie Kanalpunkte werden an alle verteilt, die darauf getippt haben. Das lässt sich nicht rückgängig machen.`)) return;
-  return action('resolve', { index }, `🏆 „${o.title}“ gewinnt!`);
+  return action('resolve', { index }, `„${o.title}“ gewinnt!`);
 }
 
 function cancelPrediction() {
@@ -274,16 +274,16 @@ function renderHistory() {
             h('span', {}, new Date(r.startedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })),
             r.status === 'canceled'
               ? h('span', { class: 'badge warn' }, 'abgebrochen')
-              : h('span', { class: 'badge ok no-i18n' }, `🏆 ${r.outcomes[r.winner]?.title ?? '?'}`),
+              : h('span', { class: 'badge ok no-i18n' }, icon('trophy'), ` ${r.outcomes[r.winner]?.title ?? '?'}`),
             h('span', {}, `${num(r.totalUsers)} Tipper · ${num(r.totalPoints)} Kanalpunkte`)),
           h('div', { class: 'mini-bars' }, ...r.outcomes.map((o, i) =>
             h('div', { class: `mini ${colorClass(o)}${r.winner === i ? ' win' : ''}` },
-              h('span', { class: 'no-i18n' }, `${r.winner === i ? '🏆 ' : ''}${o.title}`),
+              h('span', { class: 'no-i18n' }, r.winner === i ? icon('trophy') : null, `${r.winner === i ? ' ' : ''}${o.title}`),
               h('div', { class: 'track' }, h('div', { style: { width: `${pct(o.channelPoints, r.totalPoints)}%` } })),
               h('span', {}, `${pct(o.channelPoints, r.totalPoints)}%`))))),
         h('div', { class: 'h-actions' },
           h('button', {
-            class: 'icon-btn', title: 'Nochmal (ins Formular übernehmen)',
+            class: 'icon-btn', title: 'Nochmal (ins Formular übernehmen)', 'aria-label': 'Nochmal (ins Formular übernehmen)',
             onclick: () => {
               if (state.data.active && !state.data.active.test) return toast('Es läuft gerade eine Vorhersage.', 'err');
               resetForm(r);
@@ -291,14 +291,14 @@ function renderHistory() {
               render();
               window.scrollTo({ top: 0, behavior: 'smooth' });
             },
-          }, '↻'),
+          }, icon('rotate-cw')),
           h('button', {
-            class: 'icon-btn', title: 'Löschen',
+            class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen',
             onclick: async () => {
               await api(`${BASE}/history/delete`, { id: r.id }).catch((err) => toast(err.message, 'err'));
               await load();
             },
-          }, '🗑')))),
+          }, icon('trash-2'))))),
     ),
     h('button', {
       class: 'btn small', style: { alignSelf: 'flex-start' },
@@ -348,7 +348,7 @@ function modal(title, tabs, footer) {
   show(0);
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       tabBar,
       body,
       h('div', { class: 'modal-foot' }, ...footer(close)))));
@@ -443,16 +443,16 @@ function openSettings() {
 
   const opt = (checked, onchange, text) => h('div', { class: 'opt-row' }, toggle(checked, onchange, text), h('span', {}, text));
 
-  modal('⚙ Vorhersagen-Einstellungen', [
+  modal([icon('settings'), ' Vorhersagen-Einstellungen'], [
     {
-      title: '💬 Nachrichten',
+      title: [icon('message-circle'), ' Nachrichten'],
       content: [
         h('p', { class: 'note' }, 'Die Nachrichten schreibt dein Bot (falls verknüpft). Jede lässt sich einzeln ausschalten. Test-Vorhersagen schreiben nie in den Chat.'),
         ...messageBlocks,
       ],
     },
     {
-      title: '🛡 Mod-Commands',
+      title: [icon('shield'), ' Mod-Commands'],
       content: [
         opt(m.enabled, (on) => { m.enabled = on; }, 'Vorhersagen per Chat steuern'),
         h('div', { class: 'f-row' }, field('Starten', startCmd), field('Sperren', lockCmd)),
@@ -462,7 +462,7 @@ function openSettings() {
       ],
     },
     {
-      title: '🎥 Overlay',
+      title: [icon('video'), ' Overlay'],
       content: [
         h('div', { class: 'f-row' }, field('Farbe Antwort 1 (Twitch: blau)', blue), field('Farbe Antwort 2 (Twitch: pink)', pink)),
         h('p', { class: 'note' }, 'Bei mehr als zwei Antworten nimmt Twitch für alle die erste Farbe.'),
@@ -474,7 +474,7 @@ function openSettings() {
       ],
     },
   ], (close) => [
-    h('button', { class: 'btn', onclick: () => save(close, true) }, '▶ Speichern & Overlay testen'),
+    h('button', { class: 'btn', onclick: () => save(close, true) }, icon('play'), ' Speichern & Overlay testen'),
     h('span', { class: 'spacer' }),
     h('button', { class: 'btn', onclick: close }, 'Abbrechen'),
     h('button', { class: 'btn primary', onclick: () => save(close, false) }, 'Speichern'),

@@ -1,6 +1,6 @@
 // Reiter „Musik-Sets“: Sets anlegen (verknüpft oder eigene Liste), Spielen zuordnen, Spielwechsel.
 (() => {
-  const { $, h, api, toast, toggle } = window.UI;
+  const { $, h, api, toast, toggle, icon } = window.UI;
   const BASE = 'addons/music';
 
   const st = {
@@ -49,11 +49,11 @@
   }
 
   function sourceLabel(set) {
-    if (set.type === 'custom') return `Eigene Liste · ${set.tracks.length} Titel`;
+    if (set.type === 'custom') return [`Eigene Liste · ${set.tracks.length} Titel`];
     const all = [...(st.lists?.spotify ?? []), ...(st.lists?.local ?? [])];
     const found = all.find((p) => p.id === set.source);
-    if (found) return `${found.provider === 'local' ? '📁' : '🟢'} ${found.name}`;
-    return set.source.startsWith('local:') ? `📁 ${set.source.slice(6) || 'Hauptordner'}` : `🟢 ${set.source}`;
+    if (found) return [found.provider === 'local' ? icon('folder-open') : icon('music'), ` ${found.name}`];
+    return set.source.startsWith('local:') ? [icon('folder-open'), ` ${set.source.slice(6) || 'Hauptordner'}`] : [icon('music'), ` ${set.source}`];
   }
 
   // ============================================================ Liste
@@ -68,16 +68,16 @@
             set.id === activeSetId ? h('span', { class: 'badge ok' }, 'läuft') : null,
             set.id === defaultSetId ? h('span', { class: 'badge' }, 'Standard') : null,
             set.id === gameSet && set.id !== activeSetId ? h('span', { class: 'badge accent' }, 'passt zum Spiel') : null),
-          h('div', { class: 'note no-i18n' }, sourceLabel(set)),
+          h('div', { class: 'note no-i18n' }, ...sourceLabel(set)),
           h('div', { class: 'chips' }, set.games.length
-            ? set.games.map((g) => h('span', { class: 'chip no-i18n' }, `🎮 ${g.name}`))
+            ? set.games.map((g) => h('span', { class: 'chip no-i18n' }, icon('gamepad-2'), ` ${g.name}`))
             : h('span', { class: 'note' }, 'keinem Spiel zugeordnet'))),
         h('div', { class: 'set-actions' },
-          h('button', { class: 'btn small', onclick: () => post('sets/play', { id: set.id }, `„${set.name}“ läuft`) }, '▶'),
-          h('button', { class: 'btn small', onclick: () => openEditor(set) }, '✏️'),
-          h('button', { class: 'btn small', onclick: () => {
+          h('button', { class: 'btn small', title: 'Abspielen', 'aria-label': 'Abspielen', onclick: () => post('sets/play', { id: set.id }, `„${set.name}“ läuft`) }, icon('play')),
+          h('button', { class: 'btn small', title: 'Bearbeiten', 'aria-label': 'Bearbeiten', onclick: () => openEditor(set) }, icon('pencil')),
+          h('button', { class: 'btn small', title: 'Löschen', 'aria-label': 'Löschen', onclick: () => {
             if (confirm(`Set „${set.name}“ löschen?`)) post('sets/delete', { id: set.id }, 'Gelöscht');
-          } }, '🗑'))))
+          } }, icon('trash-2')))))
       : h('div', { class: 'empty' }, 'Noch keine Sets. Leg eins an – z.B. „Chill“ für Just Chatting und „Hype“ für Shooter.'));
 
     const game = st.data.currentGame;
@@ -110,7 +110,7 @@
 
     const renderBody = async () => {
       const typeRow = h('div', { class: 'seg-toggle' },
-        ...[['linked', '🔗 Verknüpft'], ['custom', '📝 Eigene Liste']].map(([v, l]) => h('button', {
+        ...[['linked', icon('link'), ' Verknüpft'], ['custom', icon('notebook-pen'), ' Eigene Liste']].map(([v, ...l]) => h('button', {
           class: draft.type === v ? 'on' : '',
           onclick: () => {
             draft.type = v;
@@ -155,21 +155,21 @@
       const renderList = () => fill(list, draft.tracks.length
         ? draft.tracks.map((t, i) => h('div', { class: 'track' },
           h('span', { class: 'track-no' }, i + 1),
-          t.image ? h('img', { src: t.image, alt: '' }) : h('span', { class: 'track-icon' }, t.kind === 'local' ? '📁' : '🟢'),
+          t.image ? h('img', { src: t.image, alt: '' }) : h('span', { class: 'track-icon' }, t.kind === 'local' ? icon('folder-open') : icon('music')),
           h('div', { class: 'track-main no-i18n' }, h('b', {}, t.title), h('span', {}, t.artists.join(', '))),
           h('span', { class: 'note' }, fmt(t.durationMs)),
-          h('button', { class: 'icon-btn', title: 'Nach oben', disabled: i === 0, onclick: () => {
+          h('button', { class: 'icon-btn', title: 'Nach oben', 'aria-label': 'Nach oben', disabled: i === 0, onclick: () => {
             [draft.tracks[i - 1], draft.tracks[i]] = [draft.tracks[i], draft.tracks[i - 1]];
             renderList();
-          } }, '↑'),
-          h('button', { class: 'icon-btn', title: 'Nach unten', disabled: i === draft.tracks.length - 1, onclick: () => {
+          } }, icon('arrow-up')),
+          h('button', { class: 'icon-btn', title: 'Nach unten', 'aria-label': 'Nach unten', disabled: i === draft.tracks.length - 1, onclick: () => {
             [draft.tracks[i + 1], draft.tracks[i]] = [draft.tracks[i], draft.tracks[i + 1]];
             renderList();
-          } }, '↓'),
-          h('button', { class: 'icon-btn', title: 'Entfernen', onclick: () => {
+          } }, icon('arrow-down')),
+          h('button', { class: 'icon-btn', title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => {
             draft.tracks.splice(i, 1);
             renderList();
-          } }, '✕')))
+          } }, icon('x'))))
         : h('div', { class: 'empty' }, 'Noch keine Titel – oben suchen und mit ＋ hinzufügen.'));
 
       let timer = null;
@@ -180,7 +180,7 @@
           const items = await api(`${BASE}/search?where=${where}&q=${encodeURIComponent(text)}`);
           fill(results, items.length
             ? items.map((t) => h('div', { class: 'track' },
-              t.image ? h('img', { src: t.image, alt: '' }) : h('span', { class: 'track-icon' }, t.kind === 'local' ? '📁' : '🟢'),
+              t.image ? h('img', { src: t.image, alt: '' }) : h('span', { class: 'track-icon' }, t.kind === 'local' ? icon('folder-open') : icon('music')),
               h('div', { class: 'track-main no-i18n' }, h('b', {}, t.title), h('span', {}, t.artists.join(', '))),
               h('span', { class: 'note' }, fmt(t.durationMs)),
               h('button', { class: 'btn small', onclick: () => {
@@ -198,7 +198,7 @@
         timer = setTimeout(search, 350);
       };
       const whereRow = h('div', { class: 'seg-toggle small' },
-        ...[['spotify', '🟢 Spotify'], ['local', '📁 Eigene Musik']].map(([v, l]) => {
+        ...[['spotify', icon('music'), ' Spotify'], ['local', icon('folder-open'), ' Eigene Musik']].map(([v, ...l]) => {
           const b = h('button', { class: where === v ? 'on' : '', onclick: () => {
             where = v;
             [...whereRow.children].forEach((c) => c.classList.toggle('on', c === b));
@@ -215,10 +215,10 @@
     const gamesEditor = () => {
       const chips = h('div', { class: 'chips' });
       const renderChips = () => fill(chips, draft.games.length
-        ? draft.games.map((g, i) => h('span', { class: 'chip no-i18n' }, `🎮 ${g.name}`, h('button', { onclick: () => {
+        ? draft.games.map((g, i) => h('span', { class: 'chip no-i18n' }, icon('gamepad-2'), ` ${g.name}`, h('button', { 'aria-label': 'Entfernen', onclick: () => {
           draft.games.splice(i, 1);
           renderChips();
-        } }, '✕')))
+        } }, icon('x'))))
         : h('span', { class: 'note' }, 'Noch keinem Spiel zugeordnet.'));
       const q = h('input', { type: 'search', placeholder: 'Spiel/Kategorie suchen, z.B. Minecraft' });
       const results = h('div', { class: 'game-results' });
@@ -244,7 +244,7 @@
       const current = st.data.currentGame;
       renderChips();
       return h('div', { class: 'box' },
-        h('label', {}, '🎮 Läuft automatisch bei diesen Spielen'),
+        h('label', {}, icon('gamepad-2'), ' Läuft automatisch bei diesen Spielen'),
         chips,
         q,
         current && !draft.games.some((g) => g.id === current.id)
@@ -274,7 +274,7 @@
       if (e.target === e.currentTarget) close();
     } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, existing ? 'Set bearbeiten' : 'Neues Set'), h('button', { class: 'icon-btn', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, existing ? 'Set bearbeiten' : 'Neues Set'), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       body,
       h('div', { class: 'modal-foot' }, h('span', { class: 'spacer' }), h('button', { class: 'btn', onclick: close }, 'Abbrechen'), h('button', { class: 'btn primary', onclick: save }, 'Speichern')))));
     renderBody();

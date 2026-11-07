@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/polls';
 
 const ROLES = [
@@ -121,9 +121,9 @@ function renderForm() {
       input,
       c,
       h('button', {
-        class: 'icon-btn', title: 'Entfernen', disabled: f.choices.length <= 2,
+        class: 'icon-btn', title: 'Entfernen', 'aria-label': 'Entfernen', disabled: f.choices.length <= 2,
         onclick: () => { f.choices.splice(i, 1); renderForm(); },
-      }, '✕'));
+      }, icon('x')));
   });
 
   const custom = h('input', { type: 'number', min: limits.minSeconds, max: limits.maxSeconds, value: f.durationSeconds, title: 'Sekunden' });
@@ -138,7 +138,7 @@ function renderForm() {
   const tooMany = f.choices.length > limits.choices;
   box.replaceChildren(...[
     h('h2', {}, '＋ Neue Umfrage'),
-    h('div', { class: 'seg' }, modeBtn('chat', '💬 Chat-Umfrage'), modeBtn('twitch', '🟣 Twitch-Umfrage')),
+    h('div', { class: 'seg' }, modeBtn('chat', [icon('message-circle'), ' Chat-Umfrage']), modeBtn('twitch', [icon('tv'), ' Twitch-Umfrage'])),
     f.mode === 'chat'
       ? h('p', { class: 'note' }, `Zuschauer stimmen im Chat ab (!${state.data.settings.chat.voteCommand} 2${state.data.settings.chat.numberVotes ? ' oder einfach 2' : ''}). Bis zu 10 Antworten, geht in jedem Kanal.`)
       : h('p', { class: 'note' }, 'Die echte Twitch-Umfrage oben im Chat, optional mit Kanalpunkten für Zusatzstimmen. Max. 5 Antworten, 25 Zeichen pro Antwort, 30 Minuten.'),
@@ -165,7 +165,7 @@ function renderForm() {
         h('div', { class: 'opt-row' }, toggle(f.channelPoints, (on) => { f.channelPoints = on; renderForm(); }, 'Kanalpunkte'), h('span', {}, 'Zusatzstimmen mit Kanalpunkten')),
         f.channelPoints ? h('div', { class: 'field' }, h('label', {}, 'Kanalpunkte pro Zusatzstimme'), cpInput) : h('span')),
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn primary', onclick: startPoll }, '▶ Umfrage starten'),
+      h('button', { class: 'btn primary', onclick: startPoll }, icon('play'), ' Umfrage starten'),
       h('button', { class: 'btn', onclick: () => { resetForm(); renderForm(); } }, 'Leeren')),
   ].filter(Boolean));
 }
@@ -197,8 +197,8 @@ function renderLive() {
 
   box.replaceChildren(
     h('div', { class: 'live-head' },
-      h('span', { class: 'badge live-badge ok' }, '● LÄUFT'),
-      h('span', { class: 'badge' }, p.mode === 'chat' ? '💬 Chat' : '🟣 Twitch'),
+      h('span', { class: 'badge live-badge ok' }, h('span', { class: 'dot ok' }), ' LÄUFT'),
+      h('span', { class: 'badge' }, p.mode === 'chat' ? [icon('message-circle'), ' Chat'] : [icon('tv'), ' Twitch']),
       p.external ? h('span', { class: 'badge accent', title: 'Direkt bei Twitch gestartet' }, 'von Twitch') : null,
       p.startedBy && !p.external && p.startedBy !== 'Dashboard' ? h('span', { class: 'badge' }, `gestartet von ${p.startedBy}`) : null,
       h('span', { class: 'spacer' }),
@@ -218,8 +218,8 @@ function renderLive() {
       `${total} ${total === 1 ? 'Stimme' : 'Stimmen'}`,
       p.mode === 'chat' ? ` · abstimmen: ${roleLabel(p.permission)} · ${p.allowChange ? 'Stimme änderbar' : 'Stimme fest'}` : ''),
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn primary', onclick: () => endPoll(false) }, '🏁 Jetzt beenden'),
-      h('button', { class: 'btn', onclick: () => endPoll(true) }, '✕ Abbrechen (ohne Ergebnis)')),
+      h('button', { class: 'btn primary', onclick: () => endPoll(false) }, icon('flag'), ' Jetzt beenden'),
+      h('button', { class: 'btn', onclick: () => endPoll(true) }, icon('x'), ' Abbrechen (ohne Ergebnis)')),
   );
 }
 
@@ -261,17 +261,17 @@ function renderHistory() {
         h('div', { class: 'h-title no-i18n' }, r.title),
         h('div', { class: 'h-meta' },
           h('span', {}, new Date(r.startedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })),
-          h('span', { class: 'badge' }, r.mode === 'chat' ? '💬 Chat' : '🟣 Twitch'),
+          h('span', { class: 'badge' }, r.mode === 'chat' ? [icon('message-circle'), ' Chat'] : [icon('tv'), ' Twitch']),
           h('span', {}, `${r.total} ${r.total === 1 ? 'Stimme' : 'Stimmen'}`),
           r.completed ? null : h('span', { class: 'badge warn' }, 'abgebrochen')),
         h('div', { class: 'mini-bars' }, ...r.choices.map((c, i) =>
           h('div', { class: `mini${r.winners.includes(i) ? ' win' : ''}` },
-            h('span', { class: 'no-i18n' }, `${r.winners.includes(i) ? '🏆 ' : ''}${c.title}`),
+            h('span', { class: 'no-i18n' }, r.winners.includes(i) ? icon('trophy') : null, `${r.winners.includes(i) ? ' ' : ''}${c.title}`),
             h('div', { class: 'track' }, h('div', { style: { width: `${pct(c.votes, r.total)}%` } })),
             h('span', {}, `${pct(c.votes, r.total)}%`))))),
       h('div', { class: 'h-actions' },
         h('button', {
-          class: 'icon-btn', title: 'Nochmal (ins Formular übernehmen)',
+          class: 'icon-btn', title: 'Nochmal (ins Formular übernehmen)', 'aria-label': 'Nochmal (ins Formular übernehmen)',
           onclick: () => {
             if (state.data.active) return toast('Es läuft gerade eine Umfrage.', 'err');
             resetForm(r);
@@ -279,14 +279,14 @@ function renderHistory() {
             render();
             window.scrollTo({ top: 0, behavior: 'smooth' });
           },
-        }, '↻'),
+        }, icon('rotate-cw')),
         h('button', {
-          class: 'icon-btn', title: 'Löschen',
+          class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen',
           onclick: async () => {
             await api(`${BASE}/history/delete`, { id: r.id }).catch((err) => toast(err.message, 'err'));
             await load();
           },
-        }, '🗑'))))));
+        }, icon('trash-2')))))));
 }
 
 // ============================================================ Hilfe
@@ -323,7 +323,7 @@ function modal(title, tabs, footer) {
   show(0);
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       tabBar,
       body,
       h('div', { class: 'modal-foot' }, ...footer(close)))));
@@ -408,9 +408,9 @@ function openSettings() {
 
   const opt = (checked, onchange, text) => h('div', { class: 'opt-row' }, toggle(checked, onchange, text), h('span', {}, text));
 
-  modal('⚙ Umfragen-Einstellungen', [
+  modal([icon('settings'), ' Umfragen-Einstellungen'], [
     {
-      title: '💬 Abstimmen & Nachrichten',
+      title: [icon('message-circle'), ' Abstimmen & Nachrichten'],
       content: [
         h('div', { class: 'f-row' },
           field('Abstimm-Command', voteCmd),
@@ -425,7 +425,7 @@ function openSettings() {
       ],
     },
     {
-      title: '🛡 Mod-Commands',
+      title: [icon('shield'), ' Mod-Commands'],
       content: [
         opt(m.enabled, (on) => { m.enabled = on; }, 'Umfragen per Chat starten und beenden'),
         h('div', { class: 'f-row3' }, field('Starten', pollCmd), field('Beenden', endCmd), field('Wer darf das?', modRole)),
@@ -433,7 +433,7 @@ function openSettings() {
       ],
     },
     {
-      title: '🎥 Overlay',
+      title: [icon('video'), ' Overlay'],
       content: [
         h('div', { class: 'f-row3' }, field('Akzentfarbe', accent), field('Textfarbe', textColor), field('Hintergrund', bg)),
         h('div', { class: 'f-row3' }, field('Deckkraft Hintergrund (%)', bgOpacity), field('Schriftgröße (px)', fontSize), field('Breite (px)', width)),
@@ -444,7 +444,7 @@ function openSettings() {
       ],
     },
   ], (close) => [
-    h('button', { class: 'btn', onclick: () => save(close, true) }, '▶ Speichern & Overlay testen'),
+    h('button', { class: 'btn', onclick: () => save(close, true) }, icon('play'), ' Speichern & Overlay testen'),
     h('span', { class: 'spacer' }),
     h('button', { class: 'btn', onclick: close }, 'Abbrechen'),
     h('button', { class: 'btn primary', onclick: () => save(close, false) }, 'Speichern'),

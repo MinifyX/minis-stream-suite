@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/channelpoints';
 const GROUP_ICONS = ['📁', '👻', '😱', '🎮', '🎵', '💧', '🍕', '🎲', '🔥', '⭐', '🎁', '🗣️', '🎨', '⚡', '🧪', '💀'];
 const GROUP_COLORS = ['#9146FF', '#FF3B6B', '#FF8A3D', '#FFE14D', '#4DFF88', '#35D0FF', '#2F6BFF', '#B0B0C0'];
@@ -77,8 +77,8 @@ function renderNav() {
       h('span', { class: 'count' }, count));
 
   nav.replaceChildren(...[
-    item('all', '📋', 'Alle Belohnungen', rewards.length),
-    item('none', '📂', 'Ohne Gruppe', rewards.filter((r) => !inAnyGroup.has(r.id)).length),
+    item('all', icon('clipboard-list'), 'Alle Belohnungen', rewards.length),
+    item('none', icon('folder-open'), 'Ohne Gruppe', rewards.filter((r) => !inAnyGroup.has(r.id)).length),
     groups.length ? h('div', { class: 'g-sep' }) : null,
     ...groups.map((g) => item(g.id, g.icon, g.name, rewards.filter((r) => g.rewardIds.includes(r.id)).length, g.color)),
   ].filter(Boolean));
@@ -89,7 +89,7 @@ function renderNav() {
 function renderHead() {
   const head = $('#head');
   if (!state.data) {
-    head.replaceChildren(h('div', { class: 'cp-title' }, h('h1', {}, '🎯 Kanalpunkte')));
+    head.replaceChildren(h('div', { class: 'cp-title' }, h('h1', {}, icon('target'), ' Kanalpunkte')));
     return;
   }
   const { rewards, max } = state.data;
@@ -97,18 +97,18 @@ function renderHead() {
   const hasRules = state.data.groups.some((g) => g.gameRule?.games.length) || Object.keys(state.data.rewardRules ?? {}).length > 0;
   const stats = h('div', { class: 'stat-row' },
     state.game?.current
-      ? h('span', { class: 'badge accent', title: 'Aktuelle Kategorie deines Kanals' }, `🎮 ${state.game.current.name || 'Keine Kategorie'}`)
+      ? h('span', { class: 'badge accent', title: 'Aktuelle Kategorie deines Kanals' }, icon('gamepad-2'), ` ${state.game.current.name || 'Keine Kategorie'}`)
       : null,
-    hasRules ? h('button', { class: 'btn small', title: 'Spiel-Regeln mit dem aktuellen Spiel neu anwenden', onclick: applyRulesNow }, '🎮 Regeln anwenden') : null,
+    hasRules ? h('button', { class: 'btn small', title: 'Spiel-Regeln mit dem aktuellen Spiel neu anwenden', onclick: applyRulesNow }, icon('gamepad-2'), ' Regeln anwenden') : null,
     keybindSwitch(),
     satelliteButton(),
     h('span', { class: `badge${rewards.length >= max ? ' err' : ''}` }, `${rewards.length} / ${max} Belohnungen`),
-    h('span', { class: 'badge ok' }, `✎ ${manageable} von der Suite verwaltet`),
-    rewards.length - manageable ? h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App (z.B. HudFX) angelegt' }, `🔒 ${rewards.length - manageable} nur lesen`) : null);
+    h('span', { class: 'badge ok' }, icon('pencil'), ` ${manageable} von der Suite verwaltet`),
+    rewards.length - manageable ? h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App (z.B. HudFX) angelegt' }, icon('lock'), ` ${rewards.length - manageable} nur lesen`) : null);
 
   const group = groupById(state.selected);
   if (!group) {
-    const title = state.selected === 'none' ? '📂 Ohne Gruppe' : '🎯 Alle Belohnungen';
+    const title = state.selected === 'none' ? [icon('folder-open'), ' Ohne Gruppe'] : [icon('target'), ' Alle Belohnungen'];
     head.replaceChildren(h('div', { class: 'cp-title' }, h('h1', {}, title)), stats);
     return;
   }
@@ -117,7 +117,7 @@ function renderHead() {
   const controllable = members.filter((r) => r.manageable).length;
   const alertsRow = state.mutedGroups
     ? h('div', { class: 'row' },
-      h('span', { class: 'label' }, '🔔 Alerts'),
+      h('span', { class: 'label' }, icon('bell'), ' Alerts'),
       toggle(!state.mutedGroups.includes(group.id), (on) => setGroupMuted(group.id, !on), `Alerts für ${group.name}`),
       h('span', { class: 'muted' }, state.mutedGroups.includes(group.id)
         ? 'Aus: Belohnungen dieser Gruppe lösen nie einen Alert aus.'
@@ -130,27 +130,27 @@ function renderHead() {
       h('h1', { class: 'no-i18n' }, `${group.icon} ${group.name}`),
       h('span', { class: 'spacer' }),
       h('button', { class: 'btn small', onclick: () => openMembers(group) }, '＋ Belohnungen zuordnen'),
-      h('button', { class: 'btn small', onclick: () => openGroupEditor(group) }, '✎ Bearbeiten'),
-      h('button', { class: 'btn small', onclick: () => deleteGroup(group) }, '🗑')),
+      h('button', { class: 'btn small', onclick: () => openGroupEditor(group) }, icon('pencil'), ' Bearbeiten'),
+      h('button', { class: 'btn small', title: 'Gruppe löschen', 'aria-label': 'Gruppe löschen', onclick: () => deleteGroup(group) }, icon('trash-2'))),
     h('div', { class: 'group-panel' },
       alertsRow,
       gameRuleRow(group, members),
       h('div', { class: 'row' },
-        h('span', { class: 'label' }, '🛡 Andere App'),
+        h('span', { class: 'label' }, icon('shield'), ' Andere App'),
         toggle(!!group.foreign, (on) => setGroupForeign(group, on), 'Belohnungen gehören einer anderen App'),
         h('span', { class: 'muted' }, group.foreign
           ? 'An: Diese Belohnungen gehören einer anderen App (z.B. HudFX) und werden nie übernommen.'
           : 'Aus: Belohnungen können übernommen werden.'),
-        group.foreign ? dashboardButton('↗ Im Dashboard bearbeiten') : null),
+        group.foreign ? dashboardButton(icon('external-link'), ' Im Dashboard bearbeiten') : null),
       h('div', { class: 'row' },
-        h('span', { class: 'label' }, '⚡ Ganze Gruppe'),
-        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'pause') }, '⏸ Pausieren'),
-        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'resume') }, '▶ Fortsetzen'),
-        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'disable') }, '🚫 Ausblenden'),
-        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'enable') }, '👁 Einblenden')),
+        h('span', { class: 'label' }, icon('zap'), ' Ganze Gruppe'),
+        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'pause') }, icon('pause'), ' Pausieren'),
+        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'resume') }, icon('play'), ' Fortsetzen'),
+        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'disable') }, icon('ban'), ' Ausblenden'),
+        h('button', { class: 'btn small', disabled: !controllable, onclick: () => groupAction(group, 'enable') }, icon('eye'), ' Einblenden')),
       h('div', { class: 'note' }, controllable === members.length
         ? `Alle ${members.length} Belohnungen dieser Gruppe kann die Suite steuern.`
-        : `${controllable} von ${members.length} Belohnungen kann die Suite steuern. Die anderen (🔒) wurden im Twitch-Dashboard oder von einer anderen App wie HudFX angelegt und werden übersprungen.`)),
+        : [`${controllable} von ${members.length} Belohnungen kann die Suite steuern. Die anderen (`, icon('lock'), `) wurden im Twitch-Dashboard oder von einer anderen App wie HudFX angelegt und werden übersprungen.`])),
     stats);
 }
 
@@ -172,9 +172,9 @@ function gameRuleRow(group, members) {
 
   return h('div', { class: 'game-rule' },
     h('div', { class: 'row' },
-      h('span', { class: 'label' }, '🎮 Nur bei Spiel'),
+      h('span', { class: 'label' }, icon('gamepad-2'), ' Nur bei Spiel'),
       ...games.map((g) => h('span', { class: 'game-chip' }, g.name,
-        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => saveGameRule(group, games.filter((x) => x.id !== g.id), rule.mode) }, '✕'))),
+        h('button', { class: 'chip-x', title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => saveGameRule(group, games.filter((x) => x.id !== g.id), rule.mode) }, icon('x')))),
       h('button', { class: 'btn small', onclick: () => openGamePicker(group) }, '＋ Spiel'),
       games.length
         ? h('select', {
@@ -186,7 +186,7 @@ function gameRuleRow(group, members) {
         : null,
       status),
     games.length && locked
-      ? h('div', { class: 'warn-note' }, `⚠ ${locked} Belohnung(en) dieser Gruppe sind 🔒 und werden nicht automatisch geschaltet. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet.`)
+      ? h('div', { class: 'warn-note' }, icon('triangle-alert'), ` ${locked} Belohnung(en) dieser Gruppe sind `, icon('lock'), ' und werden nicht automatisch geschaltet. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet.')
       : null);
 }
 
@@ -199,7 +199,7 @@ async function saveGameRule(group, games, mode = 'hide') {
 
 function reportApply(result) {
   let message = result.changed ? `${result.changed} Belohnung(en) umgeschaltet` : 'Alles schon passend geschaltet';
-  if (result.skipped?.length) message += ` · ${result.skipped.length} 🔒 übersprungen`;
+  if (result.skipped?.length) message += ` · ${result.skipped.length} übersprungen`;
   toast(message, result.failed?.length ? 'err' : 'ok');
   if (result.failed?.length) toast(result.failed.join('\n'), 'err');
 }
@@ -232,7 +232,7 @@ function openRewardGameRule(reward) {
     const missingFromBind = bindGames.filter((g) => !rule.games.some((x) => x.id === g.id));
     gamesBox.replaceChildren(
       ...rule.games.map((g) => h('span', { class: 'game-chip' }, g.name,
-        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => { rule.games = rule.games.filter((x) => x.id !== g.id); renderGames(); } }, '✕'))),
+        h('button', { class: 'chip-x', title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => { rule.games = rule.games.filter((x) => x.id !== g.id); renderGames(); } }, icon('x')))),
       h('button', {
         class: 'btn small',
         onclick: () => gamePicker(`Spiel für „${reward.title}“`, 'Die Belohnung ist nur bei den gewählten Spielen aktiv. Bei jedem Kategoriewechsel schaltet die Suite sie automatisch um.', (game) => {
@@ -241,7 +241,7 @@ function openRewardGameRule(reward) {
         }),
       }, '＋ Spiel'),
       missingFromBind.length
-        ? h('button', { class: 'btn small', title: 'Die Spiele aus dem Keybind dieser Belohnung übernehmen', onclick: () => { rule.games.push(...missingFromBind); renderGames(); } }, '⌨ Spiele vom Keybind übernehmen')
+        ? h('button', { class: 'btn small', title: 'Die Spiele aus dem Keybind dieser Belohnung übernehmen', onclick: () => { rule.games.push(...missingFromBind); renderGames(); } }, icon('keyboard'), ' Spiele vom Keybind übernehmen')
         : null,
       rule.games.length ? null : h('span', { class: 'note' }, 'Kein Spiel gewählt: immer aktiv.'));
   }
@@ -255,7 +255,7 @@ function openRewardGameRule(reward) {
   };
 
   renderGames();
-  const close = modal(`🎮 ${reward.title}`, [
+  const close = modal([icon('gamepad-2'), ` ${reward.title}`], [
     h('div', { class: 'sub' }, 'NUR AKTIV BEI SPIEL'),
     gamesBox,
     h('div', { class: 'sub' }, 'BEI ANDEREN SPIELEN'),
@@ -268,9 +268,9 @@ function openRewardGameRule(reward) {
       : null,
     reward.manageable
       ? null
-      : h('div', { class: 'warn-note' }, '⚠ Diese Belohnung ist 🔒 und kann nicht automatisch geschaltet werden. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet (⇪ Übernehmen).'),
+      : h('div', { class: 'warn-note' }, icon('triangle-alert'), ' Diese Belohnung ist ', icon('lock'), ' und kann nicht automatisch geschaltet werden. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet (', icon('upload'), ' Übernehmen).'),
   ], [
-    existing ? h('button', { class: 'btn', onclick: () => save([]) }, '🗑 Regel entfernen') : null,
+    existing ? h('button', { class: 'btn', onclick: () => save([]) }, icon('trash-2'), ' Regel entfernen') : null,
     h('span', { class: 'spacer' }),
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
     h('button', { class: 'btn primary', onclick: () => save(rule.games) }, 'Speichern'),
@@ -292,7 +292,7 @@ function gamePicker(title, hint, onPick) {
     await onPick({ id: game.id, name: game.name });
   };
   const row = (game) => h('button', { class: 'game-result', onclick: () => pick(game) },
-    game.image ? h('img', { src: game.image, alt: '' }) : h('span', { class: 'game-ph' }, '🎮'),
+    game.image ? h('img', { src: game.image, alt: '' }) : h('span', { class: 'game-ph' }, icon('gamepad-2')),
     h('span', {}, game.name));
 
   let timer = null;
@@ -338,7 +338,7 @@ async function groupAction(group, action) {
   const result = await call('groups/action', { id: group.id, action });
   if (!result) return;
   let message = `${result.changed} Belohnung(en) ${labels[action]}`;
-  if (result.skipped.length) message += ` · ${result.skipped.length} übersprungen (🔒)`;
+  if (result.skipped.length) message += ` · ${result.skipped.length} übersprungen`;
   toast(message, result.failed.length ? 'err' : 'ok');
   if (result.failed.length) toast(result.failed.join('\n'), 'err');
   await load();
@@ -365,16 +365,16 @@ function renderImports() {
   const box = $('#imports');
   const imports = state.data?.imports ?? [];
   box.replaceChildren(...imports.map((imp) => h('div', { class: 'import-banner' },
-    h('strong', {}, `⏳ „${imp.data.title}“ wird übernommen`),
+    h('strong', {}, icon('hourglass'), ` „${imp.data.title}“ wird übernommen`),
     h('ol', {},
       h('li', {}, imp.originalExists
         ? h('span', {}, 'Lösche die Original-Belohnung im ', h('a', { href: '#', onclick: (e) => { e.preventDefault(); openDashboard(); } }, 'Twitch-Dashboard'), '.')
-        : h('span', {}, '✓ Original ist gelöscht.')),
+        : h('span', {}, icon('check'), ' Original ist gelöscht.')),
       h('li', {}, 'Klick auf „Jetzt neu anlegen“. Die Suite legt sie mit denselben Einstellungen neu an und übernimmt Gruppen und Alert-Einstellungen.')),
     h('div', { class: 'row' },
       h('button', { class: 'btn primary small', onclick: () => finishImport(imp) }, 'Jetzt neu anlegen'),
       h('button', { class: 'btn small', onclick: () => cancelImport(imp) }, 'Abbrechen'),
-      imp.originalExists ? h('span', { class: 'note' }, 'Nach dem Löschen: ↻ Neu laden') : null))));
+      imp.originalExists ? h('span', { class: 'note' }, 'Nach dem Löschen: ', icon('rotate-cw'), ' Neu laden') : null))));
 }
 
 async function finishImport(imp) {
@@ -399,8 +399,8 @@ function openImport(reward) {
       h('li', {}, 'Die Suite merkt sich alle Einstellungen (Name, Kosten, Beschreibung, Farbe, Limits, Abklingzeit).'),
       h('li', {}, 'Du löschst das Original im Twitch-Dashboard.'),
       h('li', {}, 'Die Suite legt sie neu an. Gruppen und Alert-Einstellungen wandern mit.')),
-    h('div', { class: 'warn-note' }, '⚠ Nicht übernehmen, wenn die Belohnung von einer anderen App stammt (z.B. HudFX, Sound Alerts, Spiele-Integrationen)! Die andere App erkennt die neue Belohnung sonst nicht mehr.'),
-    reward.customImage ? h('div', { class: 'warn-note' }, '⚠ Das eigene Bild kann Twitch nicht per App setzen. Lade es danach im Dashboard wieder hoch.') : null,
+    h('div', { class: 'warn-note' }, icon('triangle-alert'), ' Nicht übernehmen, wenn die Belohnung von einer anderen App stammt (z.B. HudFX, Sound Alerts, Spiele-Integrationen)! Die andere App erkennt die neue Belohnung sonst nicht mehr.'),
+    reward.customImage ? h('div', { class: 'warn-note' }, icon('triangle-alert'), ' Das eigene Bild kann Twitch nicht per App setzen. Lade es danach im Dashboard wieder hoch.') : null,
     h('div', { class: 'note' }, 'Die Einlöse-Statistik der alten Belohnung geht dabei verloren.'),
   ], [
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
@@ -459,7 +459,7 @@ function rewardRow(r) {
     status.push(h('span', {
       class: `badge${bind.enabled && state.keybinds.enabled ? ' accent' : ''}`,
       title: bind.enabled ? (state.keybinds.enabled ? 'Keybind aktiv' : 'Alle Keybinds sind per Not-Aus aus') : 'Keybind ausgeschaltet',
-    }, `${bind.target === 'satellite' ? '🛰' : '⌨'} ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}${bind.games.length ? ` (nur bei ${bind.games.map((g) => g.name).join(', ')})` : ''}`));
+    }, bind.target === 'satellite' ? icon('satellite') : icon('keyboard'), ` ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}${bind.games.length ? ` (nur bei ${bind.games.map((g) => g.name).join(', ')})` : ''}`));
   }
   if (!r.enabled) status.push(h('span', { class: 'badge' }, 'ausgeblendet'));
   if (r.paused) status.push(h('span', { class: 'badge warn' }, 'pausiert'));
@@ -467,24 +467,25 @@ function rewardRow(r) {
   if (r.manageable) {
     actions.push(
       h('button', {
-        class: 'icon-btn', title: r.paused ? 'Fortsetzen' : 'Pausieren',
+        class: 'icon-btn', title: r.paused ? 'Fortsetzen' : 'Pausieren', 'aria-label': r.paused ? 'Fortsetzen' : 'Pausieren',
         onclick: async () => { if (await call('rewards/toggle', { id: r.id, paused: !r.paused })) await load(); },
-      }, r.paused ? '▶' : '⏸'),
-      h('button', { class: 'icon-btn', title: 'Bearbeiten', onclick: () => openRewardEditor(r) }, '✎'),
-      h('button', { class: 'icon-btn', title: 'Löschen', onclick: () => deleteReward(r) }, '🗑'),
+      }, r.paused ? icon('play') : icon('pause')),
+      h('button', { class: 'icon-btn', title: 'Bearbeiten', 'aria-label': 'Bearbeiten', onclick: () => openRewardEditor(r) }, icon('pencil')),
+      h('button', { class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen', onclick: () => deleteReward(r) }, icon('trash-2')),
       toggle(r.enabled, async (on) => { if (await call('rewards/toggle', { id: r.id, enabled: on })) await load(); }, `${r.title} sichtbar`));
   } else {
     actions.push(dashboardButton());
     if (r.foreign === null || r.foreign === 'self') {
       actions.push(h('button', {
         class: `icon-btn${r.foreign ? ' on' : ''}`,
+        'aria-label': 'Andere App',
         title: r.foreign
           ? 'Markiert als „von einer anderen App“. Klicken zum Aufheben.'
           : 'Als „von einer anderen App“ (z.B. HudFX) markieren. Dann kann sie nicht versehentlich übernommen werden.',
         onclick: () => setRewardForeign(r, !r.foreign),
-      }, '🛡'));
+      }, icon('shield')));
     }
-    if (!r.foreign) actions.push(h('button', { class: 'btn small', title: 'Von der Suite verwalten lassen', onclick: () => openImport(r) }, '⇪ Übernehmen'));
+    if (!r.foreign) actions.push(h('button', { class: 'btn small', title: 'Von der Suite verwalten lassen', onclick: () => openImport(r) }, icon('upload'), ' Übernehmen'));
   }
 
   return h('div', { class: `reward${!r.enabled || r.paused ? ' off' : ''}` },
@@ -497,36 +498,38 @@ function rewardRow(r) {
         r.redeemedThisStream ? h('span', { class: 'muted' }, `· ${r.redeemedThisStream}× in diesem Stream`) : null,
         ...status,
         r.manageable
-          ? h('span', { class: 'badge ok', title: 'Von der Suite angelegt – kann bearbeitet und pausiert werden' }, '✎ verwaltet')
-          : h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App angelegt – nur lesen' }, '🔒 nur lesen'),
+          ? h('span', { class: 'badge ok', title: 'Von der Suite angelegt – kann bearbeitet und pausiert werden' }, icon('pencil'), ' verwaltet')
+          : h('span', { class: 'badge', title: 'Im Twitch-Dashboard oder von einer anderen App angelegt – nur lesen' }, icon('lock'), ' nur lesen'),
         r.foreign
           ? h('span', { class: 'badge warn', title: 'Wird nicht übernommen. Bearbeiten nur im Twitch-Dashboard oder in der anderen App.' },
-            r.foreign === 'self' ? '🛡 andere App' : `🛡 andere App (Gruppe ${r.foreign})`)
+            icon('shield'), r.foreign === 'self' ? ' andere App' : ` andere App (Gruppe ${r.foreign})`)
           : null,
         ...groupsOf(r.id).map((g) => h('span', { class: 'group-chip no-i18n', style: { background: `${g.color}55` } }, `${g.icon} ${g.name}`)),
         ownRule
-          ? h('span', { class: 'badge accent', title: `Eigene Spiel-Regel: sonst ${ownRule.mode === 'hide' ? 'ausgeblendet' : 'pausiert'}` }, `🎮 nur bei ${ownRule.games.map((x) => x.name).join(', ')}`)
+          ? h('span', { class: 'badge accent', title: `Eigene Spiel-Regel: sonst ${ownRule.mode === 'hide' ? 'ausgeblendet' : 'pausiert'}` }, icon('gamepad-2'), ` nur bei ${ownRule.games.map((x) => x.name).join(', ')}`)
           : null,
         ...groupsOf(r.id).filter((g) => g.gameRule?.games.length).map((g) =>
           h('span', {
             class: `badge${ownRule ? '' : ' accent'}`,
             title: ownRule ? `Regel der Gruppe ${g.name} – gilt nicht, weil die Belohnung eine eigene Regel hat` : `Über Gruppe ${g.name}`,
             style: ownRule ? { textDecoration: 'line-through' } : undefined,
-          }, `🎮 nur bei ${g.gameRule.games.map((x) => x.name).join(', ')}`)))),
+          }, icon('gamepad-2'), ` nur bei ${g.gameRule.games.map((x) => x.name).join(', ')}`)))),
     h('div', { class: 'r-actions' },
       h('button', {
         class: `icon-btn${ownRule ? ' on-accent' : ''}`,
         title: ownRule
           ? `Nur bei: ${ownRule.games.map((g) => g.name).join(', ')}`
           : 'Nur bei bestimmten Spielen anzeigen (sonst ausblenden oder pausieren)',
+        'aria-label': 'Nur bei bestimmten Spielen',
         onclick: () => openRewardGameRule(r),
-      }, '🎮'),
+      }, icon('gamepad-2')),
       h('button', {
         class: `icon-btn${bind?.enabled ? ' on-accent' : ''}`,
         title: bind ? `Keybind: ${bind.steps.map((s) => comboLabel(s.keys)).join(' → ')}` : 'Keybind hinzufügen: Tastendruck beim Einlösen',
+        'aria-label': 'Keybind',
         onclick: () => openKeybindEditor(r),
-      }, '⌨'),
-      h('button', { class: 'icon-btn', title: 'Gruppen', onclick: () => openRewardGroups(r) }, '🏷'),
+      }, icon('keyboard')),
+      h('button', { class: 'icon-btn', title: 'Gruppen', 'aria-label': 'Gruppen', onclick: () => openRewardGroups(r) }, icon('tag')),
       ...actions));
 }
 
@@ -540,12 +543,12 @@ async function openDashboard() {
   }
 }
 
-function dashboardButton(label = '↗ Dashboard') {
+function dashboardButton(...label) {
   return h('button', {
     class: 'btn small',
     title: 'Öffnet die Belohnungsverwaltung von Twitch in einem Fenster der Suite. Dort kannst du Bild, Farbe & Co. ändern. Die Belohnung bleibt dieselbe, also funktioniert sie in HudFX weiter.',
     onclick: openDashboard,
-  }, label);
+  }, ...(label.length ? label : [icon('external-link'), ' Dashboard']));
 }
 
 async function setRewardForeign(r, foreign) {
@@ -582,7 +585,7 @@ function keybindSwitch() {
       }
       render();
     }, 'Keybinds an/aus'),
-    kb.enabled ? `⌨ ${count} Keybind(s) aktiv` : '⌨ Keybinds aus');
+    icon('keyboard'), kb.enabled ? ` ${count} Keybind(s) aktiv` : ' Keybinds aus');
 }
 
 // ============================================================ Satellite
@@ -590,8 +593,8 @@ function keybindSwitch() {
 function satelliteButton() {
   const sat = state.satellite;
   if (!sat) return null;
-  const [cls, text] = !sat.enabled ? ['', '🛰 Satellite: aus'] : sat.connected ? ['ok', `🛰 ${sat.name} verbunden`] : ['warn', '🛰 Satellite: wartet…'];
-  return h('button', { class: `badge-btn ${cls}`, title: 'Keybinds auf einem anderen PC (z.B. Gaming-PC) ausführen', onclick: openSatellite }, text);
+  const [cls, text] = !sat.enabled ? ['', ' Satellite: aus'] : sat.connected ? ['ok', ` ${sat.name} verbunden`] : ['warn', ' Satellite: wartet…'];
+  return h('button', { class: `badge-btn ${cls}`, title: 'Keybinds auf einem anderen PC (z.B. Gaming-PC) ausführen', onclick: openSatellite }, icon('satellite'), text);
 }
 
 function download(filename, content) {
@@ -664,7 +667,7 @@ function openSatellite() {
           : h('div', { class: 'sat-status warn' }, h('span', { class: 'dot warn' }), `Wartet auf den Satellite (Port ${sat.port})…`);
 
     body.replaceChildren(
-      h('p', { class: 'note' }, 'Der Satellite ist eine kleine Datei für deinen Gaming-PC. Keybinds mit Ziel „🛰 Satellite“ werden dann dort gedrückt statt auf diesem PC.'),
+      h('p', { class: 'note' }, 'Der Satellite ist eine kleine Datei für deinen Gaming-PC. Keybinds mit Ziel „Satellite“ werden dann dort gedrückt statt auf diesem PC.'),
       h('div', { class: 'opt-row' }, toggle(sat.enabled, setEnabled, 'Satellite-Zugang'), h('span', {}, 'Satellite-Zugang erlauben')),
       status,
       sat.enabled ? h('div', { class: 'sub' }, 'EINRICHTEN') : null,
@@ -676,23 +679,23 @@ function openSatellite() {
                 ...sat.addresses.map((a) => h('option', { value: a, selected: a === address }, a)))
               : h('code', {}, address),
             sat.addresses.length ? null : h('span', { class: 'warn-note' }, ' (keine Netzwerkadresse gefunden – ist der PC im Netzwerk?)')),
-          h('li', {}, h('button', { class: 'btn primary small', onclick: downloadScript }, '⬇ Satellite-Datei herunterladen')),
+          h('li', {}, h('button', { class: 'btn primary small', onclick: downloadScript }, icon('download'), ' Satellite-Datei herunterladen')),
           h('li', {}, 'Die Datei auf den Gaming-PC kopieren, z.B. per USB-Stick oder Netzwerkordner.'),
           h('li', {}, 'Auf dem Gaming-PC doppelklicken. Ein Fenster zeigt „Verbunden!“, das Fenster offen lassen.'),
-          h('li', {}, 'Im Keybind-Editor bei „Ausführen auf“ den ', h('b', {}, '🛰 Satellite'), ' wählen.'))
+          h('li', {}, 'Im Keybind-Editor bei „Ausführen auf“ den ', h('b', {}, icon('satellite'), ' Satellite'), ' wählen.'))
         : null,
       sat.enabled
         ? h('div', { class: 'kb-tips' },
-          h('div', {}, '🔥 Beim ersten Einschalten fragt Windows auf diesem PC evtl., ob die Suite im Netzwerk erreichbar sein darf: „Private Netzwerke“ erlauben. Sonst kommt der Satellite nicht durch.'),
-          h('div', {}, '🔑 Die Datei enthält einen geheimen Schlüssel. Nicht öffentlich teilen (z.B. nicht in Discord posten).'),
-          h('div', {}, '⚠ Läuft das Spiel als Administrator, muss auch der Satellite als Administrator laufen (Rechtsklick → Als Administrator ausführen).'))
+          h('div', {}, icon('flame'), ' Beim ersten Einschalten fragt Windows auf diesem PC evtl., ob die Suite im Netzwerk erreichbar sein darf: „Private Netzwerke“ erlauben. Sonst kommt der Satellite nicht durch.'),
+          h('div', {}, icon('key-round'), ' Die Datei enthält einen geheimen Schlüssel. Nicht öffentlich teilen (z.B. nicht in Discord posten).'),
+          h('div', {}, icon('triangle-alert'), ' Läuft das Spiel als Administrator, muss auch der Satellite als Administrator laufen (Rechtsklick → Als Administrator ausführen).'))
         : null,
-      sat.enabled ? h('button', { class: 'btn small', onclick: regenerate }, '🔑 Neuen Schlüssel erzeugen') : null,
+      sat.enabled ? h('button', { class: 'btn small', onclick: regenerate }, icon('key-round'), ' Neuen Schlüssel erzeugen') : null,
     );
   }
 
   renderBody();
-  modal('🛰 Satellite', [body], [h('button', { class: 'btn', onclick: () => { $('#modal-host').replaceChildren(); load(); } }, 'Schließen')]);
+  modal([icon('satellite'), ' Satellite'], [body], [h('button', { class: 'btn', onclick: () => { $('#modal-host').replaceChildren(); load(); } }, 'Schließen')]);
   poll = setInterval(refresh, 2000);
 }
 
@@ -706,7 +709,7 @@ function openKeybindEditor(reward) {
   function renderGames() {
     gamesBox.replaceChildren(
       ...bind.games.map((g) => h('span', { class: 'game-chip' }, g.name,
-        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => { bind.games = bind.games.filter((x) => x.id !== g.id); renderGames(); } }, '✕'))),
+        h('button', { class: 'chip-x', title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => { bind.games = bind.games.filter((x) => x.id !== g.id); renderGames(); } }, icon('x')))),
       h('button', {
         class: 'btn small',
         onclick: () => gamePicker('Spiel für diesen Keybind', 'Der Keybind wird nur ausgeführt, wenn du eines dieser Spiele spielst.', (game) => {
@@ -746,7 +749,7 @@ function openKeybindEditor(reward) {
   };
 
   renderGames();
-  const close = modal(`⌨ Keybind: ${reward.title}`, [
+  const close = modal([icon('keyboard'), ` Keybind: ${reward.title}`], [
     h('div', { class: 'opt-row' }, toggle(bind.enabled, (on) => { bind.enabled = on; }, 'Aktiv'), h('span', {}, 'Beim Einlösen Tasten drücken')),
     h('div', { class: 'sub' }, 'AUSFÜHREN AUF'),
     window.KeyUI.targetPicker(bind, state.satellite, openSatellite),
@@ -756,9 +759,9 @@ function openKeybindEditor(reward) {
     gamesBox,
     window.KeyUI.tips(),
   ], [
-    existing ? h('button', { class: 'btn', onclick: () => save(true) }, '🗑 Entfernen') : null,
+    existing ? h('button', { class: 'btn', onclick: () => save(true) }, icon('trash-2'), ' Entfernen') : null,
     h('span', { class: 'spacer' }),
-    h('button', { class: 'btn', onclick: test }, '▶ Testen (3 s)'),
+    h('button', { class: 'btn', onclick: test }, icon('play'), ' Testen (3 s)'),
     h('button', { class: 'btn', onclick: () => { editor.stop(); close(); } }, 'Abbrechen'),
     h('button', { class: 'btn primary', onclick: () => save(false) }, 'Speichern'),
   ].filter(Boolean));
@@ -772,7 +775,7 @@ function modal(title, body, footer) {
   const content = typeof body === 'function' ? body(close) : body;
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' }, ...content.filter(Boolean)),
       footer ? h('div', { class: 'modal-foot' }, ...footer) : null)));
   return close;
@@ -802,7 +805,7 @@ function openGroupEditor(group) {
     field('Symbol', iconRow),
     field('Farbe', colorRow),
     foreignRow,
-    h('div', { class: 'note' }, 'Belohnungen einer anderen App kann die Suite sortieren und für Alerts stummschalten, aber nicht übernehmen. Bearbeiten geht über „↗ Dashboard“.'),
+    h('div', { class: 'note' }, 'Belohnungen einer anderen App kann die Suite sortieren und für Alerts stummschalten, aber nicht übernehmen. Bearbeiten geht über „Dashboard“.'),
   ], [
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
     h('button', {
@@ -833,14 +836,14 @@ function checkList(items, checkedIds) {
 function openMembers(group) {
   const search = h('input', { type: 'search', placeholder: 'Suchen…' });
   const { list, checked } = checkList(
-    state.data.rewards.map((r) => ({ id: r.id, label: `${r.manageable ? '' : '🔒 '}${r.title}`, extra: r.cost.toLocaleString('de-DE') })),
+    state.data.rewards.map((r) => ({ id: r.id, label: [r.manageable ? null : icon('lock'), r.manageable ? '' : ' ', r.title], extra: r.cost.toLocaleString('de-DE') })),
     group.rewardIds);
   search.oninput = () => {
     const q = search.value.toLowerCase();
     [...list.children].forEach((label) => { label.hidden = !label.textContent.toLowerCase().includes(q); });
   };
   const close = modal(`${group.icon} ${group.name}: Belohnungen`, [
-    h('div', { class: 'note' }, 'Hake alle Belohnungen an, die zu dieser Gruppe gehören. 🔒 = kann die Suite nicht pausieren, aber für Alerts stummschalten.'),
+    h('div', { class: 'note' }, 'Hake alle Belohnungen an, die zu dieser Gruppe gehören. ', icon('lock'), ' = kann die Suite nicht pausieren, aber für Alerts stummschalten.'),
     search,
     list,
   ], [

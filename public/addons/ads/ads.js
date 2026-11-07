@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/ads';
 
 const WARNING_VARS = [
@@ -78,21 +78,21 @@ function renderStatus() {
   const badge = $('#live-badge');
   if (!d.loggedIn) {
     badge.className = 'badge warn';
-    badge.textContent = '🔒 Nicht eingeloggt';
+    badge.replaceChildren(icon('lock'), ' Nicht eingeloggt');
   } else if (d.live === null) {
     badge.className = 'badge';
-    badge.textContent = '⏳ Live-Status wird geladen…';
+    badge.replaceChildren(icon('hourglass'), ' Live-Status wird geladen…');
   } else if (d.live) {
     badge.className = 'badge live';
-    badge.textContent = '🔴 Live';
+    badge.replaceChildren(h('span', { class: 'dot err' }), ' Live');
   } else {
     badge.className = 'badge';
-    badge.textContent = '⚫ Offline';
+    badge.replaceChildren(h('span', { class: 'dot' }), ' Offline');
   }
   const typeBadge = $('#type-badge');
   show(typeBadge, d.broadcasterType === 'affiliate' || d.broadcasterType === 'partner');
   typeBadge.className = 'badge accent';
-  typeBadge.textContent = d.broadcasterType === 'partner' ? '✔ Partner' : '✔ Affiliate';
+  typeBadge.replaceChildren(icon('check'), d.broadcasterType === 'partner' ? ' Partner' : ' Affiliate');
 
   // Hinweise
   let note = '';
@@ -109,7 +109,7 @@ function renderStatus() {
   box.classList.remove('soon', 'running', 'off');
   if (running) {
     box.classList.add('running');
-    $('#next-label').textContent = '📺 Werbung läuft – noch';
+    $('#next-label').replaceChildren(icon('tv'), ' Werbung läuft – noch');
     $('#next-time').textContent = fmtTime(running.endsAt - t);
     $('#next-at').textContent = `${running.durationSeconds} Sekunden, ${running.automatic ? 'automatisch' : 'von Hand gestartet'}${running.test ? ' (Test)' : ''}`;
   } else if (d.live && s?.nextAdAt) {
@@ -214,7 +214,7 @@ function templateEditor(value, vars, onchange) {
           toast(err.message, 'err');
         }
       },
-    }, '👁 Vorschau'));
+    }, icon('eye'), ' Vorschau'));
   return [textarea, chips];
 }
 
@@ -242,12 +242,12 @@ function renderWarnings() {
         amount, unit, h('b', {}, 'vor der Werbung'),
         h('span', { class: 'spacer' }),
         h('button', {
-          class: 'icon-btn', title: 'Vorwarnung entfernen', type: 'button',
+          class: 'icon-btn', title: 'Vorwarnung entfernen', 'aria-label': 'Vorwarnung entfernen', type: 'button',
           onclick: () => {
             state.form.warnings = state.form.warnings.filter((x) => x !== w);
             renderWarnings();
           },
-        }, '🗑')),
+        }, icon('trash-2'))),
       h('div', { class: 'w-opts' },
         opt(w.chat, (on) => { w.chat = on; }, 'Nachricht im Chat'),
         opt(w.overlay, (on) => { w.overlay = on; }, 'Banner im Overlay')),
@@ -259,13 +259,13 @@ function renderAnnouncements() {
   const { start, end } = state.form;
   $('#announcements').replaceChildren(
     h('div', { class: 'a-item' },
-      h('b', {}, '📺 Wenn die Werbung startet'),
+      h('b', {}, icon('tv'), ' Wenn die Werbung startet'),
       h('div', { class: 'w-opts' },
         opt(start.chat, (on) => { start.chat = on; }, 'Nachricht im Chat'),
         opt(start.overlay, (on) => { start.overlay = on; }, 'Countdown im Overlay')),
       ...templateEditor(start.message, START_VARS, (v) => { start.message = v; })),
     h('div', { class: 'a-item' },
-      h('b', {}, '👋 Wenn die Werbung vorbei ist'),
+      h('b', {}, icon('smile'), ' Wenn die Werbung vorbei ist'),
       h('div', { class: 'w-opts' },
         opt(end.chat, (on) => { end.chat = on; }, 'Nachricht im Chat'),
         opt(end.overlay, (on) => { end.overlay = on; }, '„Zurück“ im Overlay')),

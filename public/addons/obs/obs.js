@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/obs';
 
 const ROLES = [
@@ -11,21 +11,22 @@ const ROLES = [
 const roleLabel = (r) => ROLES.find(([v]) => v === r)?.[1] ?? r;
 
 const TRIGGERS = [
-  ['reward', '🎯 Kanalpunkte-Belohnung'],
-  ['command', '💬 Chat-Command'],
-  ['follow', '💜 Follow'],
-  ['sub', '⭐ Sub (neu, Resub, Geschenk)'],
-  ['cheer', '💎 Cheer (Bits)'],
-  ['raid', '🚀 Raid'],
-  ['manual', '🖐 Nur per Test-Knopf'],
+  ['reward', 'Kanalpunkte-Belohnung'],
+  ['command', 'Chat-Command'],
+  ['follow', 'Follow'],
+  ['sub', 'Sub (neu, Resub, Geschenk)'],
+  ['cheer', 'Cheer (Bits)'],
+  ['raid', 'Raid'],
+  ['manual', 'Nur per Test-Knopf'],
 ];
 
 const STEP_TYPES = {
-  scene: '🎬 Szene wechseln',
-  source: '👁 Quelle ein/aus',
-  filter: '✨ Filter ein/aus',
-  wait: '⏱ Warten',
+  scene: 'Szene wechseln',
+  source: 'Quelle ein/aus',
+  filter: 'Filter ein/aus',
+  wait: 'Warten',
 };
+const stepIcon = (type) => ({ scene: icon('clapperboard'), source: icon('eye'), filter: icon('wand-sparkles'), wait: icon('timer') }[type]);
 
 const state = {
   /** Antwort von /state */
@@ -96,7 +97,7 @@ function renderHead() {
       }
       render();
     }, 'Aktionen an/aus (Not-Aus)'),
-    actionsEnabled ? '🎬 Aktionen an' : '⛔ Not-Aus – alles aus'));
+    actionsEnabled ? [icon('clapperboard'), ' Aktionen an'] : [icon('ban'), ' Not-Aus – alles aus']));
 
   $('#stop-all').hidden = !Object.keys(running).length;
 
@@ -181,37 +182,37 @@ function renderConnForm() {
 function triggerBadges(t) {
   switch (t.type) {
     case 'reward':
-      return [h('span', { class: 'badge accent' }, `🎯 ${t.rewardTitle || 'Belohnung'}`)];
+      return [h('span', { class: 'badge accent' }, icon('target'), ` ${t.rewardTitle || 'Belohnung'}`)];
     case 'command':
       return [
-        h('span', { class: 'badge accent' }, `💬 ${t.command}`),
-        t.role !== 'everyone' ? h('span', { class: 'badge warn' }, `🔒 ${roleLabel(t.role)}`) : null,
-        t.cooldown ? h('span', { class: 'badge', title: 'Cooldown' }, `⏱ ${t.cooldown} s`) : null,
+        h('span', { class: 'badge accent' }, icon('message-circle'), ` ${t.command}`),
+        t.role !== 'everyone' ? h('span', { class: 'badge warn' }, icon('lock'), ` ${roleLabel(t.role)}`) : null,
+        t.cooldown ? h('span', { class: 'badge', title: 'Cooldown' }, icon('timer'), ` ${t.cooldown} s`) : null,
       ];
     case 'follow':
-      return [h('span', { class: 'badge accent' }, '💜 Follow')];
+      return [h('span', { class: 'badge accent' }, icon('heart'), ' Follow')];
     case 'sub':
-      return [h('span', { class: 'badge accent' }, '⭐ Sub')];
+      return [h('span', { class: 'badge accent' }, icon('star'), ' Sub')];
     case 'cheer':
-      return [h('span', { class: 'badge accent' }, `💎 ab ${t.minBits} Bits`)];
+      return [h('span', { class: 'badge accent' }, icon('gem'), ` ab ${t.minBits} Bits`)];
     case 'raid':
-      return [h('span', { class: 'badge accent' }, `🚀 Raid ab ${t.minViewers} Zuschauern`)];
+      return [h('span', { class: 'badge accent' }, icon('rocket'), ` Raid ab ${t.minViewers} Zuschauern`)];
     default:
-      return [h('span', { class: 'badge' }, '🖐 Nur per Test')];
+      return [h('span', { class: 'badge' }, icon('hand'), ' Nur per Test')];
   }
 }
 
 function stepLabel(step) {
-  const back = step.revertAfter ? ` (↩ ${step.revertAfter} s)` : '';
+  const back = step.revertAfter ? ` (zurück nach ${step.revertAfter} s)` : '';
   switch (step.type) {
     case 'scene':
-      return `🎬 ${step.scene}${back}`;
+      return `${step.scene}${back}`;
     case 'source':
-      return `👁 ${step.source} ${{ show: 'an', hide: 'aus', toggle: 'umschalten' }[step.mode]}${back}`;
+      return `${step.source} ${{ show: 'an', hide: 'aus', toggle: 'umschalten' }[step.mode]}${back}`;
     case 'filter':
-      return `✨ ${step.filter} ${{ on: 'an', off: 'aus', toggle: 'umschalten' }[step.mode]}${back}`;
+      return `${step.filter} ${{ on: 'an', off: 'aus', toggle: 'umschalten' }[step.mode]}${back}`;
     case 'wait':
-      return `⏱ ${step.ms / 1000} s`;
+      return `${step.ms / 1000} s`;
     default:
       return '?';
   }
@@ -241,14 +242,14 @@ function renderActions() {
         h('div', { class: 'act-name no-i18n' }, a.name),
         h('div', { class: 'act-meta' },
           ...triggerBadges(a.trigger),
-          a.overlap === 'skip' ? h('span', { class: 'badge', title: 'Wird übersprungen, solange die Aktion noch läuft' }, '⏭ überspringen') : null,
-          runs ? h('span', { class: 'badge ok' }, runs > 1 ? `▶ läuft (+${runs - 1} wartend)` : '▶ läuft') : null),
+          a.overlap === 'skip' ? h('span', { class: 'badge', title: 'Wird übersprungen, solange die Aktion noch läuft' }, icon('skip-forward'), ' überspringen') : null,
+          runs ? h('span', { class: 'badge ok' }, icon('play'), runs > 1 ? ` läuft (+${runs - 1} wartend)` : ' läuft') : null),
         h('div', { class: 'act-steps no-i18n', title: a.steps.map(stepLabel).join('\n') }, a.steps.map(stepLabel).join('  →  '))),
       h('div', { class: 'act-actions' },
-        h('button', { class: 'btn small', title: 'Jetzt ausführen', onclick: () => testAction({ id: a.id }) }, '▶ Test'),
-        h('button', { class: 'icon-btn', title: 'Bearbeiten', onclick: () => openEditor(a) }, '✎'),
-        h('button', { class: 'icon-btn', title: 'Duplizieren', onclick: () => openEditor({ ...structuredClone(a), id: null, name: `${a.name} (Kopie)` }) }, '⧉'),
-        h('button', { class: 'icon-btn', title: 'Löschen', onclick: () => deleteAction(a) }, '🗑')));
+        h('button', { class: 'btn small', title: 'Jetzt ausführen', onclick: () => testAction({ id: a.id }) }, icon('play'), ' Test'),
+        h('button', { class: 'icon-btn', title: 'Bearbeiten', 'aria-label': 'Bearbeiten', onclick: () => openEditor(a) }, icon('pencil')),
+        h('button', { class: 'icon-btn', title: 'Duplizieren', 'aria-label': 'Duplizieren', onclick: () => openEditor({ ...structuredClone(a), id: null, name: `${a.name} (Kopie)` }) }, icon('copy')),
+        h('button', { class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen', onclick: () => deleteAction(a) }, icon('trash-2'))));
   })));
 }
 
@@ -275,7 +276,7 @@ async function deleteAction(a) {
 
 // ============================================================ Verlauf
 
-const LOG_ICONS = { ok: '✅', info: 'ℹ️', warn: '⚠️', err: '❌' };
+const LOG_ICONS = { ok: () => icon('circle-check'), info: () => icon('info'), warn: () => icon('triangle-alert'), err: () => icon('circle-x') };
 
 function renderLog() {
   const box = $('#log');
@@ -287,7 +288,7 @@ function renderLog() {
   box.replaceChildren(...log.slice(0, 60).map((e) =>
     h('div', { class: `l-row ${e.level}` },
       h('span', { class: 'l-time' }, new Date(e.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })),
-      h('span', {}, LOG_ICONS[e.level] ?? '•'),
+      h('span', {}, LOG_ICONS[e.level]?.() ?? '•'),
       h('span', { class: 'l-text' }, e.action ? h('b', { class: 'no-i18n' }, `${e.action}: `) : null, e.message))));
 }
 
@@ -298,7 +299,7 @@ function modal(title, body, footer) {
   const close = () => host.replaceChildren();
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' }, ...body.filter(Boolean)),
       footer ? h('div', { class: 'modal-foot' }, ...footer.filter(Boolean)) : null)));
   return close;
@@ -385,7 +386,7 @@ function openEditor(action) {
         });
       parts.push(
         field('Belohnung', h('div', { class: 'pick-row' }, select,
-          h('button', { class: 'btn small', title: 'Liste neu laden', onclick: async () => { await loadRewards(); renderTrigger(); } }, '↻'))),
+          h('button', { class: 'btn small', title: 'Liste neu laden', 'aria-label': 'Liste neu laden', onclick: async () => { await loadRewards(); renderTrigger(); } }, icon('rotate-cw')))),
         h('p', { class: 'note' }, 'Es gehen alle Belohnungen deines Kanals, auch welche, die du im Twitch-Dashboard oder mit einer anderen App angelegt hast.'));
     } else if (t.type === 'command') {
       const cmd = h('input', { type: 'text', value: t.command, maxlength: 32, placeholder: '!kamera' });
@@ -407,7 +408,7 @@ function openEditor(action) {
     } else if (t.type === 'follow') {
       parts.push(h('p', { class: 'note' }, 'Reagiert auf jeden neuen Follow. Tipp: Bei Follow-Bots lieber „Überspringen“ wählen.'));
     } else {
-      parts.push(h('p', { class: 'note' }, 'Die Aktion läuft nur, wenn du auf „▶ Test“ klickst.'));
+      parts.push(h('p', { class: 'note' }, 'Die Aktion läuft nur, wenn du auf „Test“ klickst.'));
     }
     triggerBox.hidden = !parts.length;
     triggerBox.replaceChildren(...parts);
@@ -426,7 +427,7 @@ function openEditor(action) {
   const scenes = () => (state.obs?.scenes ?? []).map((s) => ({ value: s.name, label: s.name }));
 
   const revertRow = (step) => h('label', { class: 'revert-row' },
-    '↩ Nach', numberInput(step.revertAfter, { min: 0, max: 3600 }, (v) => { step.revertAfter = v; }), 'Sekunden zurücksetzen (0 = nie)');
+    icon('undo-2'), ' Nach', numberInput(step.revertAfter, { min: 0, max: 3600 }, (v) => { step.revertAfter = v; }), 'Sekunden zurücksetzen (0 = nie)');
 
   const stepFields = (step) => {
     if (step.type === 'scene') {
@@ -508,17 +509,17 @@ function openEditor(action) {
     stepsBox.replaceChildren(...steps.map((step, i) =>
       h('div', { class: 'step' },
         h('span', { class: 'step-no' }, i + 1),
-        h('div', { class: 'step-body' }, h('div', { class: 'step-title' }, STEP_TYPES[step.type]), ...stepFields(step).filter(Boolean)),
+        h('div', { class: 'step-body' }, h('div', { class: 'step-title' }, stepIcon(step.type), ` ${STEP_TYPES[step.type]}`), ...stepFields(step).filter(Boolean)),
         h('div', { class: 'step-tools' },
-          h('button', { class: 'icon-btn', title: 'Nach oben', disabled: i === 0, onclick: () => move(i, -1) }, '▲'),
-          h('button', { class: 'icon-btn', title: 'Nach unten', disabled: i === steps.length - 1, onclick: () => move(i, 1) }, '▼'),
-          h('button', { class: 'icon-btn', title: 'Entfernen', onclick: () => { steps.splice(i, 1); renderSteps(); } }, '🗑')))));
+          h('button', { class: 'icon-btn', title: 'Nach oben', 'aria-label': 'Nach oben', disabled: i === 0, onclick: () => move(i, -1) }, icon('chevron-up')),
+          h('button', { class: 'icon-btn', title: 'Nach unten', 'aria-label': 'Nach unten', disabled: i === steps.length - 1, onclick: () => move(i, 1) }, icon('chevron-down')),
+          h('button', { class: 'icon-btn', title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => { steps.splice(i, 1); renderSteps(); } }, icon('trash-2'))))));
   }
   renderSteps();
 
   const addRow = h('div', { class: 'add-row' },
     ...Object.entries(STEP_TYPES).map(([type, label]) =>
-      h('button', { class: 'btn small', onclick: () => { steps.push(newStep(type)); renderSteps(); } }, `＋ ${label}`)),
+      h('button', { class: 'btn small', onclick: () => { steps.push(newStep(type)); renderSteps(); } }, icon('plus'), ` ${label}`)),
     h('span', { class: 'spacer' }),
     h('button', {
       class: 'btn small',
@@ -529,7 +530,7 @@ function openEditor(action) {
           renderSteps();
         }
       },
-    }, '↻ Liste aus OBS laden'));
+    }, icon('rotate-cw'), ' Liste aus OBS laden'));
 
   // -------------------------------------------------- Speichern / Testen
   const collect = () => {
@@ -563,7 +564,7 @@ function openEditor(action) {
     addRow,
     field('Wenn die Aktion ausgelöst wird, während sie noch läuft', overlap),
   ], [
-    h('button', { class: 'btn', title: 'Führt die Schritte jetzt in OBS aus (ohne zu speichern)', onclick: () => testAction({ action: collect() }) }, '▶ Jetzt testen'),
+    h('button', { class: 'btn', title: 'Führt die Schritte jetzt in OBS aus (ohne zu speichern)', onclick: () => testAction({ action: collect() }) }, icon('play'), ' Jetzt testen'),
     h('span', { class: 'spacer' }),
     h('button', { class: 'btn', onclick: () => close() }, 'Abbrechen'),
     h('button', { class: 'btn primary', onclick: save }, isNew ? 'Anlegen' : 'Speichern'),

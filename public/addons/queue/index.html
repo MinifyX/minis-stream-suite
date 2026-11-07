@@ -11,10 +11,10 @@
   <!-- Große Ansicht (Addon-Seite) -->
   <div class="page" id="page">
     <header class="title-row">
-      <h1>📋 Warteschlange</h1>
+      <h1><span data-icon="clipboard-list"></span> Warteschlange</h1>
       <span class="spacer"></span>
       <label class="head-toggle" id="enabled-toggle"></label>
-      <button class="btn" id="open-window" title="Kleines Fenster, das über dem Spiel bleibt. Die Adresse geht auch als OBS-Dock.">🗗 Als Fenster</button>
+      <button class="btn" id="open-window" title="Kleines Fenster, das über dem Spiel bleibt. Die Adresse geht auch als OBS-Dock."><span data-icon="app-window"></span> Als Fenster</button>
     </header>
     <p class="note">Einlösungen, die du noch erledigen musst, der Reihe nach. <b>✓</b> hakt sie ab (auch bei Twitch), <b>↩</b> gibt dem Zuschauer die Punkte zurück.</p>
 
@@ -24,8 +24,8 @@
           <div class="card-head">
             <h2 id="count-title">Offen</h2>
             <span class="spacer"></span>
-            <button class="btn small" id="sync" title="Offene Einlösungen von Twitch holen (z.B. was während die Suite aus war dazukam)">↻ Mit Twitch abgleichen</button>
-            <button class="btn small" id="done-all">✓ Alle erledigt</button>
+            <button class="btn small" id="sync" title="Offene Einlösungen von Twitch holen (z.B. was während die Suite aus war dazukam)"><span data-icon="rotate-cw"></span> Mit Twitch abgleichen</button>
+            <button class="btn small" id="done-all"><span data-icon="check"></span> Alle erledigt</button>
           </div>
           <div id="list"></div>
         </section>
@@ -40,7 +40,7 @@
           <div id="rewards"></div>
         </section>
         <section class="card">
-          <h2>🔒 Fremde Belohnungen</h2>
+          <h2><span data-icon="lock"></span> Fremde Belohnungen</h2>
           <p class="note">Twitch erlaubt Abhaken und Zurückerstatten nur bei Belohnungen, die die Suite angelegt hat. Einlösungen anderer Belohnungen (Dashboard, andere Apps) kannst du hier trotzdem sammeln und abhaken, bei Twitch bleiben sie aber offen.</p>
           <p class="note">Tipp: Im Addon „Kanalpunkte“ kannst du Dashboard-Belohnungen mit ⇪ Übernehmen zur Suite holen.</p>
         </section>
@@ -51,10 +51,10 @@
   <!-- Kleines Fenster (?window=1) -->
   <div class="qw" id="compact" hidden>
     <header class="qw-head">
-      <span class="qw-title">📋 <span id="qw-count">Warteschlange</span></span>
+      <span class="qw-title"><span data-icon="clipboard-list"></span> <span id="qw-count">Warteschlange</span></span>
       <span class="spacer"></span>
-      <button class="icon-btn" id="qw-done-all" title="Alle erledigt">✓✓</button>
-      <button class="icon-btn" id="pin" title="Immer im Vordergrund">📌</button>
+      <button class="icon-btn" id="qw-done-all" title="Alle erledigt" aria-label="Alle erledigt"><span data-icon="check-check"></span></button>
+      <button class="icon-btn" id="pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund"><span data-icon="pin"></span></button>
     </header>
     <div class="qw-list" id="qw-list"></div>
   </div>

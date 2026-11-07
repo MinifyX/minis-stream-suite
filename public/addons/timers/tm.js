@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/timers';
 
 const VARIABLES = [
@@ -46,9 +46,9 @@ function renderInfo() {
   };
   $('#info-row').replaceChildren(...[
     live === null
-      ? h('span', { class: 'badge' }, '⏳ Live-Status wird geladen…')
-      : live ? h('span', { class: 'badge live' }, '🔴 Live') : h('span', { class: 'badge' }, '⚫ Offline'),
-    game?.name ? h('span', { class: 'badge accent' }, `🎮 ${game.name}`) : null,
+      ? h('span', { class: 'badge' }, icon('hourglass'), ' Live-Status wird geladen…')
+      : live ? h('span', { class: 'badge live' }, h('span', { class: 'dot err' }), ' Live') : h('span', { class: 'badge' }, h('span', { class: 'dot' }), ' Offline'),
+    game?.name ? h('span', { class: 'badge accent' }, icon('gamepad-2'), ` ${game.name}`) : null,
     h('label', {}, 'Mindestabstand zwischen Timern', gap, 's'),
     h('span', { class: 'note' }, 'Nachrichten schreibt dein Bot-Account (falls verknüpft), sonst dein eigener Account.'),
   ].filter(Boolean));
@@ -61,12 +61,12 @@ function statusLine(t, s) {
   const minutes = (ms) => Math.max(1, Math.ceil(ms / 60_000));
   switch (s.waiting) {
     case 'disabled': return h('span', { class: 't-status off' }, 'Ausgeschaltet');
-    case 'offline': return h('span', { class: 't-status off' }, '⚫ Wartet auf Stream-Start');
-    case 'game': return h('span', { class: 't-status off' }, `🎮 Wartet auf ${t.games.map((g) => g.name).join(' / ')}`);
-    case 'time': return h('span', { class: 't-status ok' }, `⏱ Nächste in ca. ${minutes(s.nextAt - Date.now())} Min.`);
-    case 'lines': return h('span', { class: 't-status wait' }, `💬 Wartet auf Chat (${s.linesSince}/${t.minChatLines} Nachrichten)`);
-    case 'gap': return h('span', { class: 't-status wait' }, '⏳ Gleich (Mindestabstand zu anderem Timer)');
-    case 'ready': return h('span', { class: 't-status ok' }, '📤 Wird gleich gesendet');
+    case 'offline': return h('span', { class: 't-status off' }, h('span', { class: 'dot' }), ' Wartet auf Stream-Start');
+    case 'game': return h('span', { class: 't-status off' }, icon('gamepad-2'), ` Wartet auf ${t.games.map((g) => g.name).join(' / ')}`);
+    case 'time': return h('span', { class: 't-status ok' }, icon('timer'), ` Nächste in ca. ${minutes(s.nextAt - Date.now())} Min.`);
+    case 'lines': return h('span', { class: 't-status wait' }, icon('message-circle'), ` Wartet auf Chat (${s.linesSince}/${t.minChatLines} Nachrichten)`);
+    case 'gap': return h('span', { class: 't-status wait' }, icon('hourglass'), ' Gleich (Mindestabstand zu anderem Timer)');
+    case 'ready': return h('span', { class: 't-status ok' }, icon('send'), ' Wird gleich gesendet');
   }
   return null;
 }
@@ -78,7 +78,7 @@ function renderTimers() {
     box.replaceChildren(h('div', { class: 'tm-empty' },
       h('p', {}, 'Noch keine Timer.'),
       h('div', { class: 'btn-row', style: { justifyContent: 'center' } },
-        h('button', { class: 'btn', onclick: openTemplates }, '📋 Aus Vorlage'),
+        h('button', { class: 'btn', onclick: openTemplates }, icon('clipboard-list'), ' Aus Vorlage'),
         h('button', { class: 'btn primary', onclick: () => openEditor(null) }, '＋ Neuer Timer'))));
     return;
   }
@@ -96,16 +96,16 @@ function renderTimers() {
         h('div', { class: 't-name no-i18n' }, t.name),
         h('div', { class: 't-msg', title: t.messages.join('\n') }, t.messages[0], t.messages.length > 1 ? `  (+${t.messages.length - 1} weitere)` : ''),
         h('div', { class: 't-meta' },
-          h('span', { class: 'badge' }, `⏱ alle ${t.intervalMinutes} Min.`),
-          t.minChatLines ? h('span', { class: 'badge' }, `💬 ab ${t.minChatLines} Chat-Nachrichten`) : null,
-          t.onlyLive ? h('span', { class: 'badge' }, '🔴 nur live') : h('span', { class: 'badge warn' }, 'auch offline'),
-          t.messages.length > 1 ? h('span', { class: 'badge' }, t.order === 'random' ? '🔀 zufällig' : '🔁 der Reihe nach') : null,
-          t.games.length ? h('span', { class: 'badge accent' }, `🎮 nur bei ${t.games.map((g) => g.name).join(', ')}`) : null),
+          h('span', { class: 'badge' }, icon('timer'), ` alle ${t.intervalMinutes} Min.`),
+          t.minChatLines ? h('span', { class: 'badge' }, icon('message-circle'), ` ab ${t.minChatLines} Chat-Nachrichten`) : null,
+          t.onlyLive ? h('span', { class: 'badge' }, h('span', { class: 'dot err' }), ' nur live') : h('span', { class: 'badge warn' }, 'auch offline'),
+          t.messages.length > 1 ? h('span', { class: 'badge' }, t.order === 'random' ? [icon('shuffle'), ' zufällig'] : [icon('repeat'), ' der Reihe nach']) : null,
+          t.games.length ? h('span', { class: 'badge accent' }, icon('gamepad-2'), ` nur bei ${t.games.map((g) => g.name).join(', ')}`) : null),
         statusLine(t, state.data.status[t.id])),
       h('div', { class: 't-actions' },
-        h('button', { class: 'btn small', title: 'Nächste Nachricht sofort in den Chat schicken', onclick: () => sendNow(t) }, '📤 Jetzt senden'),
-        h('button', { class: 'icon-btn', title: 'Bearbeiten', onclick: () => openEditor(t) }, '✎'),
-        h('button', { class: 'icon-btn', title: 'Löschen', onclick: () => deleteTimer(t) }, '🗑'))))));
+        h('button', { class: 'btn small', title: 'Nächste Nachricht sofort in den Chat schicken', onclick: () => sendNow(t) }, icon('send'), ' Jetzt senden'),
+        h('button', { class: 'icon-btn', title: 'Bearbeiten', 'aria-label': 'Bearbeiten', onclick: () => openEditor(t) }, icon('pencil')),
+        h('button', { class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen', onclick: () => deleteTimer(t) }, icon('trash-2')))))));
 }
 
 async function sendNow(t) {
@@ -136,7 +136,7 @@ function modal(title, body, footer) {
   const close = () => host.replaceChildren();
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' }, ...body.filter(Boolean)),
       footer ? h('div', { class: 'modal-foot' }, ...footer.filter(Boolean)) : null)));
   return close;
@@ -165,7 +165,7 @@ function openEditor(timer) {
       return h('div', { class: 'msg-row' },
         h('span', { class: 'num' }, i + 1),
         area,
-        t.messages.length > 1 ? h('button', { class: 'icon-btn', title: 'Nachricht entfernen', onclick: () => { t.messages.splice(i, 1); renderMessages(); } }, '✕') : null);
+        t.messages.length > 1 ? h('button', { class: 'icon-btn', title: 'Nachricht entfernen', 'aria-label': 'Nachricht entfernen', onclick: () => { t.messages.splice(i, 1); renderMessages(); } }, icon('x')) : null);
     }));
   };
   renderMessages();
@@ -180,8 +180,8 @@ function openEditor(timer) {
   };
 
   const order = h('select', {},
-    h('option', { value: 'sequence', selected: t.order === 'sequence' }, '🔁 Der Reihe nach'),
-    h('option', { value: 'random', selected: t.order === 'random' }, '🔀 Zufällig'));
+    h('option', { value: 'sequence', selected: t.order === 'sequence' }, 'Der Reihe nach'),
+    h('option', { value: 'random', selected: t.order === 'random' }, 'Zufällig'));
   const interval = h('input', { type: 'number', min: 1, max: 720, value: t.intervalMinutes });
   const lines = h('input', { type: 'number', min: 0, max: 500, value: t.minChatLines });
 
@@ -190,7 +190,7 @@ function openEditor(timer) {
   const renderGames = () => {
     gameRow.replaceChildren(...[
       ...t.games.map((g) => h('span', { class: 'game-chip' }, g.name,
-        h('button', { class: 'chip-x', title: 'Entfernen', onclick: () => { t.games = t.games.filter((x) => x.id !== g.id); renderGames(); } }, '✕'))),
+        h('button', { class: 'chip-x', title: 'Entfernen', 'aria-label': 'Entfernen', onclick: () => { t.games = t.games.filter((x) => x.id !== g.id); renderGames(); } }, icon('x')))),
       h('button', { class: 'btn small', onclick: () => { gameSearch.hidden = !gameSearch.hidden; gameSearch.querySelector('input')?.focus(); } }, '＋ Spiel'),
       t.games.length ? null : h('span', { class: 'note' }, 'Kein Spiel gewählt: läuft bei jedem Spiel.'),
     ].filter(Boolean));
@@ -262,7 +262,7 @@ function openEditor(timer) {
     msgList,
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn small', onclick: () => { t.messages.push(''); renderMessages(); } }, '＋ Nachricht'),
-      h('button', { class: 'btn small', onclick: showPreview }, '👁 Vorschau')),
+      h('button', { class: 'btn small', onclick: showPreview }, icon('eye'), ' Vorschau')),
     h('div', { class: 'chips' }, ...VARIABLES.map(([token, desc]) => h('button', { class: 'chip', title: desc, onclick: () => insert(token) }, token))),
     preview,
     h('div', { class: 'sub' }, 'WANN'),
@@ -285,7 +285,7 @@ function openEditor(timer) {
 
 function openTemplates() {
   const existing = new Set(state.data.settings.timers.map((t) => t.name.toLowerCase()));
-  modal('📋 Vorlagen', [
+  modal([icon('clipboard-list'), ' Vorlagen'], [
     h('p', { class: 'note' }, 'Beliebte Timer zum Übernehmen. Danach kannst du sie frei anpassen.'),
     h('div', { class: 'tpl-list' }, ...TEMPLATES.map((t) =>
       h('div', { class: 'tpl' },
@@ -295,7 +295,7 @@ function openTemplates() {
             t.note ? h('span', { class: 'badge accent', style: { marginLeft: '6px' } }, t.note) : null),
           h('div', { class: 't-msg no-i18n' }, t.messages[0])),
         existing.has(t.name.toLowerCase())
-          ? h('span', { class: 'badge ok' }, '✓ vorhanden')
+          ? h('span', { class: 'badge ok' }, icon('check'), ' vorhanden')
           : h('button', {
             class: 'btn small',
             onclick: () => openEditor({ enabled: true, order: 'sequence', onlyLive: true, games: [], ...structuredClone(t), note: undefined }),

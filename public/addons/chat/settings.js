@@ -1,10 +1,10 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/chat';
 
 const EVENT_LABELS = {
-  follow: '💜 Follows', sub: '⭐ Neue Abos', resub: '⭐ Abo-Verlängerungen', giftsub: '🎁 Verschenkte Abos',
-  cheer: '💎 Bits', raid: '🚀 Raids', redemption: '✨ Kanalpunkte-Einlösungen', stream: '🔴 Stream-Start/-Ende',
-  hypetrain: '🚂 Hype Train', prediction: '🔮 Vorhersagen', shoutout: '📣 Shoutouts', ads: '📺 Werbepausen',
+  follow: () => [icon('heart'), ' Follows'], sub: () => [icon('star'), ' Neue Abos'], resub: () => [icon('star'), ' Abo-Verlängerungen'], giftsub: () => [icon('gift'), ' Verschenkte Abos'],
+  cheer: () => [icon('gem'), ' Bits'], raid: () => [icon('rocket'), ' Raids'], redemption: () => [icon('sparkles'), ' Kanalpunkte-Einlösungen'], stream: () => [icon('radio-tower'), ' Stream-Start/-Ende'],
+  hypetrain: () => [icon('train-front'), ' Hype Train'], prediction: () => [icon('target'), ' Vorhersagen'], shoutout: () => [icon('megaphone'), ' Shoutouts'], ads: () => [icon('tv'), ' Werbepausen'],
 };
 const ROLES = [['everyone', 'Alle'], ['subscriber', 'Subs'], ['vip', 'VIPs'], ['moderator', 'Mods'], ['broadcaster', 'Nur du']];
 const PREVIEW_BGS = [['checker', 'Transparent'], ['game', 'Spiel-Szene'], ['black', 'Schwarz'], ['white', 'Weiß'], ['green', 'Greenscreen']];
@@ -89,7 +89,7 @@ window.addEventListener('pagehide', () => {
 
 const field = (label, ...controls) => h('div', { class: 'f' }, h('label', {}, label), ...controls);
 const group = (title, ...children) => h('div', { class: 'group' }, h('h2', {}, title), ...children.filter(Boolean));
-const note = (text) => h('p', { class: 'note' }, text);
+const note = (...text) => h('p', { class: 'note' }, ...text);
 
 function check(label, path, after) {
   return h('div', { class: 'check' }, toggle(get(path), (on) => { set(path, on); after?.(); }, label), h('span', {}, label));
@@ -143,7 +143,7 @@ function listInput(path, placeholder) {
 function eventChips(path) {
   const box = h('div', { class: 'chips' });
   const render = () => box.replaceChildren(...Object.entries(EVENT_LABELS).map(([kind, label]) =>
-    h('button', { class: `chip-toggle${get(path)[kind] ? ' on' : ''}`, onclick: () => { set(`${path}.${kind}`, !get(path)[kind]); render(); } }, label)));
+    h('button', { class: `chip-toggle${get(path)[kind] ? ' on' : ''}`, onclick: () => { set(`${path}.${kind}`, !get(path)[kind]); render(); } }, ...label())));
   render();
   return box;
 }
@@ -156,7 +156,7 @@ function rulesGroup(section, title, intro) {
       h('div', { class: 'f' }, check('Markdown erlauben', `${section}.markdown.enabled`), field('für', select(`${section}.markdown.minRole`, ROLES))),
       h('div', { class: 'f' }, check('Farben erlauben', `${section}.colors.enabled`), field('für', select(`${section}.colors.minRole`, ROLES)))),
     check('Emotes von 7TV, BTTV und FFZ anzeigen', `${section}.thirdPartyEmotes`),
-    note('Wie man Markdown und Farben schreibt, steht im Tab „😀 Emotes & Hilfe“.'));
+    note('Wie man Markdown und Farben schreibt, steht im Tab „Emotes & Hilfe“.'));
 }
 
 /** Knopf: nur diesen Bereich (Overlay oder Fenster) auf Standard zurücksetzen */
@@ -169,7 +169,7 @@ function resetButton(section, question) {
       renderForms();
       toast('Auf Standard zurückgesetzt', 'ok');
     },
-  }, '↺ Auf Standard zurücksetzen'));
+  }, icon('rotate-ccw'), ' Auf Standard zurücksetzen'));
 }
 
 // ============================================================ Vorschau
@@ -222,7 +222,7 @@ function renderWindowPreview() {
       const node = ChatRender.event(item);
       if (item.hiddenReward) {
         node.classList.add('cr-muted');
-        node.querySelector('.cr-ev-line').append(h('span', { class: 'cr-mute-note' }, settings.overlay.respectAlertFilter ? '🔕 nicht im Overlay' : '🔕 stumm'));
+        node.querySelector('.cr-ev-line').append(h('span', { class: 'cr-mute-note' }, icon('bell-off'), settings.overlay.respectAlertFilter ? ' nicht im Overlay' : ' stumm'));
       }
       return node;
     }
@@ -253,8 +253,8 @@ function renderOverlayForm() {
   renderNameColor();
 
   $('#overlay-form').replaceChildren(
-    h('p', { class: 'scope' }, '🎨 Alles hier gilt nur für das OBS-Overlay, das deine Zuschauer sehen. Das Chat-Fenster stellst du im Tab „🪟 Chat-Fenster“ ein.'),
-    group('🔤 Schrift',
+    h('p', { class: 'scope' }, icon('palette'), ' Alles hier gilt nur für das OBS-Overlay, das deine Zuschauer sehen. Das Chat-Fenster stellst du im Tab „Chat-Fenster“ ein.'),
+    group([icon('type'), ' Schrift'],
       h('div', { class: 'row3' },
         field('Schriftart', select('overlay.font', Object.keys(ChatRender.FONTS).map((f) => [f, f]))),
         field('Größe (px)', number('overlay.fontSize', 10, 80)),
@@ -264,7 +264,7 @@ function renderOverlayForm() {
         field('Namensfarbe', select('overlay.nameColorMode', [['twitch', 'Twitch-Farbe der Leute'], ['fixed', 'Feste Farbe']], renderNameColor))),
       nameColorField,
       check('Textschatten (besser lesbar auf hellem Hintergrund)', 'overlay.textShadow')),
-    group('🔲 Aussehen',
+    group([icon('layout-grid'), ' Aussehen'],
       h('div', { class: 'row2' },
         field('Hintergrund der Nachrichten', color('overlay.background')),
         field('Deckkraft (%)', number('overlay.backgroundOpacity', 0, 100))),
@@ -273,20 +273,20 @@ function renderOverlayForm() {
       h('div', { class: 'row2' },
         field('Anordnung', select('overlay.layout', [['inline', 'Name: Nachricht (eine Zeile)'], ['stacked', 'Name über der Nachricht']])),
         field('Ausrichtung', select('overlay.align', [['left', 'Links'], ['right', 'Rechts']])))),
-    group('🎬 Verhalten',
+    group([icon('clapperboard'), ' Verhalten'],
       h('div', { class: 'row3' },
         field('Neue Nachrichten', select('overlay.direction', [['bottom', 'Unten (wie Twitch)'], ['top', 'Oben']])),
         field('Animation', select('overlay.animation', [['slide', 'Reinrutschen'], ['fade', 'Einblenden'], ['pop', 'Aufploppen'], ['none', 'Keine']])),
         field('Max. Nachrichten', number('overlay.maxMessages', 1, 100))),
       field('Ausblenden nach … Sekunden (0 = nie)', number('overlay.fadeOutSeconds', 0, 3600))),
-    rulesGroup('overlay', '✍️ Markdown, Farben & Emotes im Overlay',
+    rulesGroup('overlay', [icon('pen-line'), ' Markdown, Farben & Emotes im Overlay'],
       'Zuschauer können im Overlay fett, kursiv oder farbig schreiben. In Twitch selbst sieht man die Zeichen ganz normal.'),
-    group('🙈 Ausblenden',
+    group([icon('eye-off'), ' Ausblenden'],
       check('!Commands ausblenden', 'overlay.hideCommands'),
       field('Diese Nutzer ausblenden (z.B. Bots)', listInput('overlay.hiddenUsers', 'nightbot, streamelements')),
       check('Kanalpunkte-Einlösungen verstecken, die im Alert-Filter stumm sind', 'overlay.respectAlertFilter'),
       note('Damit verrät auch der Chat keinen HudFX-Jumpscare.')),
-    group('🔔 Events im Overlay',
+    group([icon('bell'), ' Events im Overlay'],
       note('Welche Events zwischen den Chat-Nachrichten erscheinen.'),
       eventChips('overlay.events')),
     resetButton('overlay', 'Alle Overlay-Einstellungen auf Standard zurücksetzen?'),
@@ -295,8 +295,8 @@ function renderOverlayForm() {
 
 function renderWindowForm() {
   $('#window-form').replaceChildren(
-    h('p', { class: 'scope' }, '🪟 Alles hier gilt nur für dein Chat-Fenster (wie Chatterino). Das sieht nur du, am OBS-Overlay ändert sich nichts.'),
-    group('👀 Darstellung',
+    h('p', { class: 'scope' }, icon('app-window'), ' Alles hier gilt nur für dein Chat-Fenster (wie Chatterino). Das sieht nur du, am OBS-Overlay ändert sich nichts.'),
+    group([icon('eye'), ' Darstellung'],
       h('div', { class: 'row2' },
         field('Schriftart', select('window.font', WINDOW_FONTS.map((f) => [f, f]))),
         field('Schriftgröße (px)', number('window.fontSize', 10, 30))),
@@ -304,19 +304,19 @@ function renderWindowForm() {
       check('Uhrzeit mit Sekunden', 'window.timestampSeconds'),
       check('Abzeichen anzeigen', 'window.showBadges'),
       check('Zeilen abwechselnd leicht einfärben', 'window.alternateBackground')),
-    rulesGroup('window', '✍️ Markdown, Farben & Emotes im Fenster',
+    rulesGroup('window', [icon('pen-line'), ' Markdown, Farben & Emotes im Fenster'],
       'Unabhängig vom Overlay: Du kannst z.B. im Fenster alles als reinen Text sehen, während das Overlay Farben zeigt.'),
-    group('🙈 Ausblenden',
+    group([icon('eye-off'), ' Ausblenden'],
       check('!Commands ausblenden', 'window.hideCommands'),
       field('Diese Nutzer ausblenden', listInput('window.hiddenUsers', 'z.B. nightbot, streamelements')),
       h('div', { class: 'row2' },
-        field('Stumme Kanalpunkte-Einlösungen (Alert-Filter)', select('window.mutedRewards', [['mark', 'Anzeigen, mit 🔕 markiert'], ['hide', 'Ausblenden']])),
+        field('Stumme Kanalpunkte-Einlösungen (Alert-Filter)', select('window.mutedRewards', [['mark', 'Anzeigen, markiert'], ['hide', 'Ausblenden']])),
         field('Gelöschte Nachrichten', select('window.deletedMessages', [['strike', 'Durchgestrichen anzeigen'], ['hide', 'Ausblenden']])))),
-    group('🔴 Hervorheben',
+    group([icon('flag'), ' Hervorheben'],
       check('Nachrichten hervorheben, in denen du erwähnt wirst', 'window.highlightMentions'),
       field('Diese Stichwörter hervorheben', listInput('window.highlightWords', 'z.B. giveaway, frage, hilfe'))),
-    group('🔔 Events im Fenster',
-      note('Lässt sich auch direkt im Fenster über 🔔 umschalten.'),
+    group([icon('bell'), ' Events im Fenster'],
+      note('Lässt sich auch direkt im Fenster über ', icon('bell'), ' umschalten.'),
       eventChips('window.events')),
     resetButton('window', 'Alle Einstellungen des Chat-Fensters auf Standard zurücksetzen?'),
   );
@@ -331,15 +331,15 @@ function renderHelpForm() {
   };
 
   $('#help-form').replaceChildren(
-    group('😀 Emotes von Drittanbietern',
+    group([icon('smile'), ' Emotes von Drittanbietern'],
       note('Emotes von 7TV, BTTV und FFZ werden automatisch geladen, deine eigenen Kanal-Emotes dort inklusive. Ob sie angezeigt werden, stellst du für Overlay und Fenster getrennt ein.'),
       check('7TV', 'emotes.seventv'),
       check('BTTV', 'emotes.bttv'),
       check('FFZ', 'emotes.ffz'),
       h('div', { class: 'btn-row' },
-        h('button', { class: 'btn small', onclick: reloadEmotes }, '↻ Emotes neu laden'),
+        h('button', { class: 'btn small', onclick: reloadEmotes }, icon('rotate-cw'), ' Emotes neu laden'),
         h('span', { class: 'note', id: 'emote-count' }, `${emoteCount} Emotes geladen`))),
-    group('✍️ So schreibt man Markdown und Farben',
+    group([icon('pen-line'), ' So schreibt man Markdown und Farben'],
       note('Wer das darf, stellst du für Overlay und Chat-Fenster getrennt ein.'),
       h('div', { class: 'syntax' },
         ...example('**fett**', '**fett**'),

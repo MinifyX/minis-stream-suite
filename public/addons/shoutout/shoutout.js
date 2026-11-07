@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/shoutout';
 
 const ROLES = [
@@ -8,13 +8,18 @@ const ROLES = [
   ['moderator', 'Mods'],
   ['broadcaster', 'Nur du'],
 ];
-const SOURCES = { command: '💬 Command', raid: '🚀 Raid', manual: '🖱 Dashboard', twitch: '🟣 bei Twitch' };
+const SOURCES = {
+  command: () => [icon('message-circle'), ' Command'],
+  raid: () => [icon('rocket'), ' Raid'],
+  manual: () => [icon('mouse-pointer-click'), ' Dashboard'],
+  twitch: () => [icon('tv'), ' bei Twitch'],
+};
 const API_BADGE = {
-  sent: ['ok', '✓ Twitch-Shoutout'],
-  queued: ['warn', '⏳ wartet'],
-  failed: ['err', '✕ Twitch-Shoutout'],
-  skipped: ['', '– Twitch-Shoutout'],
-  off: ['', 'ohne Twitch-Shoutout'],
+  sent: ['ok', () => [icon('check'), ' Twitch-Shoutout']],
+  queued: ['warn', () => [icon('hourglass'), ' wartet']],
+  failed: ['err', () => [icon('x'), ' Twitch-Shoutout']],
+  skipped: ['', () => '– Twitch-Shoutout'],
+  off: ['', () => 'ohne Twitch-Shoutout'],
 };
 
 const state = {
@@ -97,7 +102,7 @@ function renderWarnings() {
   if (box.dataset.key === key) return;
   box.dataset.key = key;
   if (state.clash?.length) {
-    list.push(h('div', { class: 'conflict' }, `⚠ Im Chat-Commands-Addon gibt es auch ${state.clash.join(', ')}. Dann antworten beide. Schalte den Command dort aus oder lösche ihn.`));
+    list.push(h('div', { class: 'conflict' }, icon('triangle-alert'), ` Im Chat-Commands-Addon gibt es auch ${state.clash.join(', ')}. Dann antworten beide. Schalte den Command dort aus oder lösche ihn.`));
   }
   box.replaceChildren(...list);
 }
@@ -117,11 +122,11 @@ function renderQueue() {
       h('div', { class: 'main' },
         h('div', { class: 'top' },
           h('span', { class: 'name' }, `${i + 1}. ${p.target.name}`),
-          h('span', { class: 'badge' }, SOURCES[p.source] ?? p.source),
+          h('span', { class: 'badge' }, SOURCES[p.source]?.() ?? p.source),
           p.by && p.source !== 'raid' ? h('span', { class: 'badge' }, `von ${p.by}`) : null),
         h('div', { class: 'detail' }, `seit ${ago(p.addedAt)} in der Warteschlange`)),
       h('span', { class: 'eta', 'data-ready': p.readyAt, title: 'Frühestens dann erlaubt Twitch den Shoutout' }),
-      h('button', { class: 'icon-btn', title: 'Aus der Warteschlange nehmen', onclick: () => call('/queue/remove', { id: p.id }) }, '🗑'));
+      h('button', { class: 'icon-btn', title: 'Aus der Warteschlange nehmen', 'aria-label': 'Aus der Warteschlange nehmen', onclick: () => call('/queue/remove', { id: p.id }) }, icon('trash-2')));
   })), info);
   tick();
 }
@@ -148,27 +153,28 @@ function renderHistory() {
     return;
   }
   box.replaceChildren(h('div', { class: 'list' }, ...list.map((e) => {
-    const [cls, label] = API_BADGE[e.api] ?? ['', e.api];
-    const details = [
-      e.game ? `🎮 ${e.game}` : null,
+    const [cls, label] = API_BADGE[e.api] ?? ['', () => e.api];
+    const parts = [
+      e.game ? [icon('gamepad-2'), ` ${e.game}`] : null,
       e.viewers !== undefined ? `${e.viewers} Raider` : null,
-      e.clip ? `🎬 ${e.clip}` : null,
-    ].filter(Boolean).join(' · ');
+      e.clip ? [icon('clapperboard'), ` ${e.clip}`] : null,
+    ].filter(Boolean);
+    const details = [e.game, e.viewers !== undefined ? `${e.viewers} Raider` : null, e.clip].filter((x) => x != null).join(' · ');
     return h('div', { class: 'item' },
       h('div', { class: 'main' },
         h('div', { class: 'top' },
           h('span', { class: 'name' }, h('a', { href: `https://twitch.tv/${e.target.login}`, target: '_blank', rel: 'noopener' }, e.target.name)),
-          h('span', { class: 'badge' }, SOURCES[e.source] ?? e.source),
+          h('span', { class: 'badge' }, SOURCES[e.source]?.() ?? e.source),
           e.by && e.source !== 'raid' && e.source !== 'manual' ? h('span', { class: 'badge' }, `von ${e.by}`) : null,
-          e.chat ? h('span', { class: 'badge accent' }, '💬 Chat') : null,
-          e.source !== 'twitch' ? h('span', { class: `badge ${cls}`, title: e.apiNote }, label) : null),
+          e.chat ? h('span', { class: 'badge accent' }, icon('message-circle'), ' Chat') : null,
+          e.source !== 'twitch' ? h('span', { class: `badge ${cls}`, title: e.apiNote }, label()) : null),
         e.source !== 'twitch' && e.apiNote && e.api !== 'sent' ? h('div', { class: 'detail', title: e.apiNote }, `Twitch-Shoutout: ${e.apiNote}`) : null,
-        details ? h('div', { class: 'detail', title: details }, details) : null),
+        details ? h('div', { class: 'detail', title: details }, ...parts.flatMap((p, i) => (i ? [' · ', p] : [p]))) : null),
       h('span', { class: 'when', title: fmtTime(e.at) }, ago(e.at)),
       h('button', {
-        class: 'icon-btn', title: 'Nochmal (in „Shoutout geben“ übernehmen)',
+        class: 'icon-btn', title: 'Nochmal (in „Shoutout geben“ übernehmen)', 'aria-label': 'Nochmal (in „Shoutout geben“ übernehmen)',
         onclick: () => { $('#so-name').value = e.target.login; void loadPreview(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
-      }, '↻'));
+      }, icon('rotate-cw')));
   })));
 }
 
@@ -180,7 +186,7 @@ function renderOverlayNow() {
     return;
   }
   box.replaceChildren(h('div', { class: 'now-playing' },
-    `▶ Läuft gerade: ${o.showing.name}${o.showing.clip ? ` – „${o.showing.clip}“` : ' (ohne Clip)'}`,
+    icon('play'), ` Läuft gerade: ${o.showing.name}${o.showing.clip ? ` – „${o.showing.clip}“` : ' (ohne Clip)'}`,
     o.waiting ? ` · ${o.waiting} warten` : ''));
 }
 
@@ -266,28 +272,28 @@ function renderPreview() {
       h('div', { class: 'pv-who' },
         h('div', { class: 'pv-name' },
           h('a', { href: `https://twitch.tv/${t.login}`, target: '_blank', rel: 'noopener' }, t.name),
-          p.live ? h('span', { class: 'badge err' }, `● LIVE · ${p.live.viewers} Zuschauer`) : h('span', { class: 'badge' }, 'offline'),
+          p.live ? h('span', { class: 'badge err' }, h('span', { class: 'dot err' }), ` LIVE · ${p.live.viewers} Zuschauer`) : h('span', { class: 'badge' }, 'offline'),
           typeLabel ? h('span', { class: 'badge accent' }, typeLabel) : null),
-        h('div', { class: 'pv-meta' }, `🎮 ${t.game || 'keine Kategorie'}`),
+        h('div', { class: 'pv-meta' }, icon('gamepad-2'), ` ${t.game || 'keine Kategorie'}`),
         t.title ? h('div', { class: 'pv-meta no-i18n', title: t.title }, t.title) : null)),
     p.clip
       ? h('div', { class: 'pv-clip' },
         h('a', { href: p.clip.url, target: '_blank', rel: 'noopener' }, h('img', { src: p.clip.thumbnail, alt: '' })),
         h('div', {},
-          h('div', { class: 't no-i18n' }, `🎬 ${p.clip.title}`),
+          h('div', { class: 't no-i18n' }, icon('clapperboard'), ` ${p.clip.title}`),
           h('div', { class: 'note' }, `${p.clip.views.toLocaleString('de-DE')} Aufrufe · ${Math.round(p.clip.duration)} Sek. · ${fmtTime(new Date(p.clip.createdAt).getTime())}`),
           h('div', { class: 'note' }, state.data.settings.clip.mode === 'random' ? 'Zufällig aus den Top-Clips – beim Shoutout kann es ein anderer sein.' : 'Meistgesehener Clip nach deinen Einstellungen.')))
       : h('div', { class: 'note' }, 'Keine Clips gefunden.'),
     h('div', { class: 'pv-api' }, h('span', { class: `badge ${apiCls}` }, 'Twitch-Shoutout'), ' ', p.api.note),
     p.lastAt ? h('div', { class: 'note' }, `Letzter Shoutout an ${t.name}: ${ago(p.lastAt)}`) : null,
     p.self
-      ? h('div', { class: 'conflict' }, 'Das bist du selbst – dir selbst kannst du keinen Shoutout geben 😄')
+      ? h('div', { class: 'conflict' }, 'Das bist du selbst – dir selbst kannst du keinen Shoutout geben')
       : [
         h('div', { class: 'pv-opts' }, opt('chat', 'Chat-Nachricht'), opt('api', 'Twitch-Shoutout'), opt('clip', 'Clip im Overlay')),
         h('div', { class: 'pv-foot' },
           h('span', { class: 'spacer' }),
           h('button', { class: 'btn', onclick: () => { state.preview = null; renderPreview(); } }, 'Schließen'),
-          h('button', { class: 'btn primary', onclick: (e) => give(e.currentTarget) }, '📣 Shoutout geben')),
+          h('button', { class: 'btn primary', onclick: (e) => give(e.currentTarget) }, icon('megaphone'), ' Shoutout geben')),
       ]));
 }
 
@@ -298,7 +304,7 @@ function logTest(input, r) {
     h('div', {},
       h('div', { class: 'in no-i18n' }, input),
       ...(r.replies.length ? r.replies.map((t) => h('div', { class: 'out no-i18n' }, t)) : [h('div', { class: 'none' }, '(keine Chat-Nachricht)')]),
-      ...(r.notes ?? []).map((n) => h('div', { class: 'info' }, `ℹ ${n}`))));
+      ...(r.notes ?? []).map((n) => h('div', { class: 'info' }, icon('info'), ` ${n}`))));
 }
 
 async function runTest() {
@@ -324,7 +330,7 @@ async function runRaid() {
   const viewers = Number($('#raid-viewers').value) || 0;
   try {
     const r = await api(`${BASE}/test`, { kind: 'raid', name, viewers });
-    logTest([h('b', {}, '🚀 Raid'), `: ${name} mit ${viewers} Zuschauern`], r);
+    logTest([h('b', {}, icon('rocket'), ' Raid'), `: ${name} mit ${viewers} Zuschauern`], r);
   } catch (err) {
     toast(err.message, 'err');
   }
@@ -405,7 +411,7 @@ function openSettings() {
 
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, '⚙ Shoutout-Einstellungen'), h('button', { class: 'icon-btn', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, icon('settings'), ' Shoutout-Einstellungen'), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' },
         h('div', { class: 'sub' }, 'COMMAND'),
         h('div', { class: 'f-row' },

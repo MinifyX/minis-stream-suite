@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/uwuclip';
 
 const state = { data: null };
@@ -85,8 +85,8 @@ function showTestResult(result) {
   box.hidden = false;
   box.className = `test-result ${result.ok ? 'ok' : 'err'}`;
   // Fehlertext als eigener Textknoten, damit ihn die Übersetzung erkennt
-  if (result.ok) box.textContent = `✓ Verbunden (Antwort ${result.status})`;
-  else box.replaceChildren('✗ ', h('span', {}, result.error));
+  if (result.ok) box.replaceChildren(icon('check'), ` Verbunden (Antwort ${result.status})`);
+  else box.replaceChildren(icon('x'), ' ', h('span', {}, result.error));
 }
 
 // ============================================================ Aktionen

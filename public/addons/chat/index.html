@@ -10,16 +10,16 @@
 <body>
   <div class="page">
     <header class="head">
-      <h1>🗨️ Chat-Overlay & Fenster</h1>
+      <h1><span data-icon="messages-square"></span> Chat-Overlay & Fenster</h1>
       <span class="spacer"></span>
       <span class="save-state" id="save-state"></span>
-      <button class="btn primary" id="open-window">🪟 Chat-Fenster öffnen</button>
+      <button class="btn primary" id="open-window"><span data-icon="app-window"></span> Chat-Fenster öffnen</button>
     </header>
 
     <nav class="tabs" id="tabs">
-      <button data-tab="overlay" class="active">🎨 OBS-Overlay</button>
-      <button data-tab="window">🪟 Chat-Fenster</button>
-      <button data-tab="help">😀 Emotes & Hilfe</button>
+      <button data-tab="overlay" class="active"><span data-icon="palette"></span> OBS-Overlay</button>
+      <button data-tab="window"><span data-icon="app-window"></span> Chat-Fenster</button>
+      <button data-tab="help"><span data-icon="smile"></span> Emotes & Hilfe</button>
     </nav>
 
     <section class="tab" id="tab-overlay">
@@ -41,8 +41,8 @@
             </div>
             <p class="note">In OBS: Quelle hinzufügen → <b>Browser</b> → URL einfügen, z.B. 450 × 700.</p>
             <div class="btn-row">
-              <button class="btn small" id="test-message">🧪 Test-Nachricht</button>
-              <button class="btn small" id="test-event">🧪 Test-Event (Sub)</button>
+              <button class="btn small" id="test-message"><span data-icon="flask-conical"></span> Test-Nachricht</button>
+              <button class="btn small" id="test-event"><span data-icon="flask-conical"></span> Test-Event (Sub)</button>
             </div>
           </div>
         </aside>
@@ -61,9 +61,9 @@
               <div class="cw-list" id="window-preview"></div>
             </div>
             <div class="btn-row">
-              <button class="btn primary small" id="open-window-2">🪟 Chat-Fenster öffnen</button>
+              <button class="btn primary small" id="open-window-2"><span data-icon="app-window"></span> Chat-Fenster öffnen</button>
             </div>
-            <p class="note">Das Fenster merkt sich Größe, Position und 📌 „Immer im Vordergrund“. Auch als OBS-Dock nutzbar: Docks → Benutzerdefinierte Browser-Docks → diese URL:</p>
+            <p class="note">Das Fenster merkt sich Größe, Position und <span data-icon="pin"></span> „Immer im Vordergrund“. Auch als OBS-Dock nutzbar: Docks → Benutzerdefinierte Browser-Docks → diese URL:</p>
             <div class="url-row">
               <input type="text" id="dock-url" readonly>
               <button class="btn small" id="copy-dock">Kopieren</button>

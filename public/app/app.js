@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 
 const state = {
   status: null,
@@ -7,19 +7,30 @@ const state = {
   logKey: '',
 };
 
-const TEST_EVENTS = [
-  ['follow', '💜 Follow'],
-  ['sub', '⭐ Sub'],
-  ['resub', '⭐ Resub'],
-  ['giftsub', '🎁 Gift-Subs'],
-  ['cheer', '💎 Cheer'],
-  ['raid', '🚀 Raid'],
-  ['redemption', '✨ Kanalpunkte'],
-  ['hypetrain', '🚂 Hype Train'],
-  ['prediction', '🔮 Vorhersage'],
-  ['shoutout', '📣 Shoutout'],
-  ['adbreak', '📺 Werbung'],
-];
+/**
+ * Event-Arten für Test-Knöpfe und den Event-Feed: Beschriftung, Lucide-Icon und Anfang der Log-Zeile
+ * (Texte aus describe() in src/core/eventBus.ts; der Rest der Zeile wird zum Detail, z.B. der Name)
+ */
+const EVENT_KINDS = {
+  follow: { label: 'Follow', icon: 'heart', re: /^follow von / },
+  sub: { label: 'Sub', icon: 'star', re: /^sub von / },
+  resub: { label: 'Resub', icon: 'star', re: /^resub von / },
+  giftsub: { label: 'Gift-Subs', icon: 'gift', re: /^giftsub von / },
+  cheer: { label: 'Cheer', icon: 'gem', re: /^cheer von / },
+  raid: { label: 'Raid', icon: 'rocket', re: /^raid von / },
+  redemption: { label: 'Kanalpunkte', icon: 'sparkles', re: /^redemption von / },
+  hypetrain: { label: 'Hype Train', icon: 'train-front', re: /^Hype Train / },
+  prediction: { label: 'Vorhersage', icon: 'wand-sparkles', re: /^Vorhersage / },
+  shoutout: { label: 'Shoutout', icon: 'megaphone', re: /^Shoutout / },
+  adbreak: { label: 'Werbung', icon: 'tv', re: /^Werbepause: / },
+  poll: { label: 'Twitch-Umfrage', icon: 'chart-column', re: /^Twitch-Umfrage / },
+  redemptionupdate: { label: 'Einlösung', icon: 'check', re: /^Einlösung / },
+  online: { label: 'Stream ist live', icon: 'radio', re: /^Stream ist live\s*\S*/ },
+  offline: { label: 'Stream beendet', icon: 'circle-stop', re: /^Stream beendet/ },
+  channel: { label: 'Kanal geändert', icon: 'pencil-line', re: /^Kanal geändert: / },
+};
+const TEST_EVENTS = ['follow', 'sub', 'resub', 'giftsub', 'cheer', 'raid', 'redemption', 'hypetrain', 'prediction', 'shoutout', 'adbreak'];
+const FEED_MAX = 8;
 
 // Lucide-Icons (ISC) je eingebautem Addon; unbekannte IDs und Plugins behalten ihr Emoji
 const ADDON_ICONS = {
@@ -57,7 +68,7 @@ const SHELL_ICONS = {
 const svg = (paths) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 
 /** Icon-Element aus Lucide-Pfaden */
-function icon(paths, cls = 'nav-icon') {
+function svgIcon(paths, cls = 'nav-icon') {
   const el = h('span', { class: cls, 'aria-hidden': 'true' });
   el.innerHTML = svg(paths);
   return el;
@@ -66,7 +77,7 @@ function icon(paths, cls = 'nav-icon') {
 /** Icon eines Addons: Lucide-SVG für eingebaute Addons, sonst das Emoji aus dem Manifest */
 function addonIcon(addon, cls) {
   const paths = !addon.plugin && ADDON_ICONS[addon.id];
-  if (paths) return icon(paths, cls);
+  if (paths) return svgIcon(paths, cls);
   return h('span', { class: `${cls} emoji`, 'aria-hidden': 'true' }, addon.icon);
 }
 
@@ -148,7 +159,7 @@ function renderCrumbs(view, addon) {
   const current = (text) => h('li', { 'aria-current': 'page' }, text);
   const items = view === 'overview'
     ? [current('Start')]
-    : [h('li', {}, h('a', { class: 'crumb-home', href: '#/overview' }, icon(SHELL_ICONS.back), 'Start')),
+    : [h('li', {}, h('a', { class: 'crumb-home', href: '#/overview' }, svgIcon(SHELL_ICONS.back), 'Start')),
       ...(addon ? [h('li', {}, groupOf(addon)), current(addon.name)] : [current(SUITE.find((s) => s.view === view).name)])];
   $('#crumbs').replaceChildren(...items);
 }
@@ -172,7 +183,7 @@ function renderAddonNav() {
     ...(withPage.length
       ? grouped(withPage).map(([name, list], i) => section(name, i, list.map((a) => tile(`#/addon/${a.id}`, addonIcon(a, 'tile-icon'), a.name, a.description, a.id))))
       : [h('p', { class: 'nav-empty' }, 'Keine aktiven Addons. Im Addon-Store kannst du welche einschalten.')]),
-    section('Suite', 'suite', SUITE.map((s) => tile(`#/${s.view}`, icon(s.icon, 'tile-icon'), s.name, suiteText[s.view] ?? s.text))));
+    section('Suite', 'suite', SUITE.map((s) => tile(`#/${s.view}`, svgIcon(s.icon, 'tile-icon'), s.name, suiteText[s.view] ?? s.text))));
   refreshDetails();
 }
 
@@ -280,9 +291,9 @@ function openSwitcher() {
   };
   const addons = state.addons.installed.filter((a) => a.active && a.settingsPage);
   const lis = [
-    entry('#/overview', icon(SHELL_ICONS.home), 'Start', 'Suite'),
+    entry('#/overview', svgIcon(SHELL_ICONS.home), 'Start', 'Suite'),
     ...grouped(addons).flatMap(([group, list]) => list.map((a) => entry(`#/addon/${a.id}`, addonIcon(a, 'nav-icon'), a.name, group))),
-    ...SUITE.map((s) => entry(`#/${s.view}`, icon(s.icon), s.name, 'Suite')),
+    ...SUITE.map((s) => entry(`#/${s.view}`, svgIcon(s.icon), s.name, 'Suite')),
   ];
   lis.forEach((li, i) => {
     li.id = `sw-${i}`;
@@ -395,7 +406,7 @@ function renderTwitchCard(force = false) {
   state.twitchKey = key;
 
   const card = $('#twitch-card');
-  const title = h('h2', {}, 'Twitch-Verbindung');
+  const title = h('h2', {}, icon('plug'), ' Twitch-Verbindung');
   const changeId = h('button', { class: 'btn', onclick: () => card.replaceChildren(title, ...clientIdSetup(customClientId ? clientId : '')) }, customClientId ? 'Eigene Client-ID ändern' : 'Erweitert');
 
   switch (auth.state) {
@@ -472,7 +483,7 @@ function renderBotCard(force = false) {
   state.botKey = key;
 
   const card = $('#bot-card');
-  const title = h('h2', {}, '🤖 Bot-Account');
+  const title = h('h2', {}, icon('bot'), ' Bot-Account');
   const intro = h('p', { class: 'muted' },
     'Optional: Ein zweiter Twitch-Account (z.B. „MinisBot“), der die Nachrichten der Suite schreibt: Commands, Timer, Umfragen, Lurk. Ohne Bot schreibt dein eigener Account.');
 
@@ -504,7 +515,7 @@ function renderBotCard(force = false) {
         ? h('span', { class: 'status-line' }, h('span', { class: 'dot ok' }), 'Ist Mod in deinem Kanal')
         : bot.isMod === false
           ? h('div', { class: 'status-line' }, h('span', { class: 'dot warn' }), 'Noch kein Mod: schreibt langsamer, Links können blockiert werden.',
-            h('button', { class: 'btn small', onclick: async () => { if (await botCall('/make-mod', {})) toast('Bot ist jetzt Mod', 'ok'); } }, '🛡 Zum Mod machen'))
+            h('button', { class: 'btn small', onclick: async () => { if (await botCall('/make-mod', {})) toast('Bot ist jetzt Mod', 'ok'); } }, icon('shield'), ' Zum Mod machen'))
           : h('span', { class: 'status-line muted' }, h('span', { class: 'dot' }), 'Mod-Status unbekannt');
       card.replaceChildren(title,
         h('div', { class: 'user-row' },
@@ -518,8 +529,8 @@ function renderBotCard(force = false) {
           toggle(bot.fallback, (on) => botCall('/settings', { fallback: on }), 'Notfalls eigener Account'),
           h('span', {}, 'Klappt es mit dem Bot nicht, notfalls mit deinem Account senden')),
         h('div', { class: 'btn-row' },
-          h('button', { class: 'btn', disabled: !bot.enabled, onclick: async () => { if (await botCall('/test', {})) toast('Test-Nachricht gesendet', 'ok'); } }, '💬 Test-Nachricht'),
-          h('button', { class: 'btn', onclick: () => botCall('/check-mod', {}) }, '↻ Mod-Status prüfen'),
+          h('button', { class: 'btn', disabled: !bot.enabled, onclick: async () => { if (await botCall('/test', {})) toast('Test-Nachricht gesendet', 'ok'); } }, icon('message-circle'), ' Test-Nachricht'),
+          h('button', { class: 'btn', onclick: () => botCall('/check-mod', {}) }, icon('rotate-cw'), ' Mod-Status prüfen'),
           h('button', { class: 'btn', onclick: () => { if (confirm('Bot-Account trennen?')) botCall('/logout', {}); } }, 'Trennen')));
       break;
     }
@@ -548,7 +559,7 @@ function renderDesktopCard() {
   const d = state.desktop;
   if (!d) return;
   $('#desktop-card').replaceChildren(...[
-    h('h2', {}, '🖥 App'),
+    h('h2', {}, icon('app-window'), ' App'),
     h('div', { class: 'opt-line' },
       toggle(d.autostart, (on) => loadDesktop({ autostart: on }), 'Mit Windows starten'),
       h('span', {}, 'Mit Windows starten (unsichtbar im Infobereich)')),
@@ -558,7 +569,7 @@ function renderDesktopCard() {
       h('span', {}, 'X schließt nur das Fenster, die Suite läuft im Infobereich weiter')),
     h('p', { class: 'muted small' }, 'So bleiben Overlays, Commands und Bot aktiv, auch wenn das Fenster zu ist. Beenden: Rechtsklick auf das Symbol unten rechts.'),
     h('div', { class: 'opt-line no-i18n' },
-      h('span', {}, '🌐 Sprache / Language'),
+      h('span', {}, icon('languages'), ' Sprache / Language'),
       ...[['de', 'Deutsch'], ['en', 'English']].map(([code, label]) => h('button', {
         class: `btn small${window.I18N.lang === code ? ' primary' : ''}`,
         onclick: () => {
@@ -569,7 +580,7 @@ function renderDesktopCard() {
       }, label))),
     updateLine(),
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn', onclick: () => api('core/desktop/open-data', {}).catch((err) => toast(err.message, 'err')) }, '📁 Datenordner öffnen'),
+      h('button', { class: 'btn', onclick: () => api('core/desktop/open-data', {}).catch((err) => toast(err.message, 'err')) }, icon('folder-open'), ' Datenordner öffnen'),
       h('span', { class: 'muted small', style: { alignSelf: 'center' } }, `v${state.status?.version ?? ''}${d.packaged ? '' : ' · Entwicklermodus'}`))].filter(Boolean));
 }
 
@@ -586,11 +597,11 @@ function updateLine() {
     renderDesktopCard();
   };
   const text = {
-    idle: '✅ Du hast die neueste Version.',
-    checking: '🔎 Suche nach Updates…',
-    downloading: `⬇ Version ${u.version} wird geladen (${u.percent ?? 0} %)…`,
-    ready: `🎉 Version ${u.version} ist bereit. Wird beim Beenden installiert.`,
-    error: `⚠ ${u.message}`,
+    idle: [icon('circle-check'), ' Du hast die neueste Version.'],
+    checking: [icon('search'), ' Suche nach Updates…'],
+    downloading: [icon('download'), ` Version ${u.version} wird geladen (${u.percent ?? 0} %)…`],
+    ready: [icon('party-popper'), ` Version ${u.version} ist bereit. Wird beim Beenden installiert.`],
+    error: [icon('triangle-alert'), ` ${u.message}`],
   }[u.state];
   return h('div', { class: 'opt-line' },
     h('span', { class: 'small', style: { flex: 1 } }, text),
@@ -623,18 +634,18 @@ function renderBackupCard() {
     loadBackup();
   };
   $('#backup-card').replaceChildren(
-    h('h2', {}, '💾 Sicherung'),
+    h('h2', {}, icon('archive'), ' Sicherung'),
     h('p', { class: 'muted' }, 'Alle Einstellungen in eine Datei packen, z.B. für einen neuen PC, oder eine Sicherung wieder einspielen. Deine Twitch-Anmeldung ist nicht dabei.'),
     h('div', { class: 'opt-line' },
       toggle(state.backupWithFiles, (on) => { state.backupWithFiles = on; }, 'Dateien mitsichern'),
       h('span', {}, 'Hochgeladene Bilder und Sounds mitsichern')),
     h('div', { class: 'btn-row' },
-      h('button', { class: 'btn primary', onclick: () => run('core/backup/export', { withFiles: state.backupWithFiles }) }, '⬇ Sicherung speichern'),
-      h('button', { class: 'btn', onclick: () => run('core/backup/import', {}) }, '⬆ Sicherung einspielen')),
+      h('button', { class: 'btn primary', onclick: () => run('core/backup/export', { withFiles: state.backupWithFiles }) }, icon('download'), ' Sicherung speichern'),
+      h('button', { class: 'btn', onclick: () => run('core/backup/import', {}) }, icon('upload'), ' Sicherung einspielen')),
     h('div', { class: 'opt-line' },
       h('span', { class: 'muted small', style: { flex: 1 } },
         b?.count ? `Automatisch: einmal am Tag (nur Einstellungen). ${b.count} Sicherung(en) im Ordner.` : 'Automatisch: einmal am Tag (nur Einstellungen).'),
-      h('button', { class: 'btn small', onclick: () => api('core/backup/open-folder', {}).catch((err) => toast(err.message, 'err')) }, '📁 Ordner')));
+      h('button', { class: 'btn small', onclick: () => api('core/backup/open-folder', {}).catch((err) => toast(err.message, 'err')) }, icon('folder-open'), ' Ordner')));
 }
 
 async function refreshStatus() {
@@ -658,6 +669,7 @@ async function refreshLogs() {
   if (key === state.logKey) return;
   state.logKey = key;
 
+  renderFeed(logs);
   const box = $('#log');
   const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 10;
   box.replaceChildren(...logs.map((entry) =>
@@ -666,6 +678,31 @@ async function refreshLogs() {
       h('span', { class: 'src' }, `[${entry.source}] `),
       entry.message)));
   if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+/** Event-Feed auf dem Startbildschirm: die letzten Events aus dem Log, neueste oben */
+function renderFeed(logs) {
+  const list = $('#event-feed');
+  const events = logs.filter((entry) => entry.source === 'Events').slice(-FEED_MAX);
+  const seen = state.feedSeen ?? new Set();
+  state.feedSeen = new Set(events.map((entry) => entry.time + entry.message));
+  // Nur neue Zeilen oben einfügen, damit der Screenreader (role="log") nicht alles neu vorliest
+  for (const entry of events) {
+    const key = entry.time + entry.message;
+    if (seen.has(key)) continue;
+    const test = entry.message.startsWith('[Test] ');
+    const text = test ? entry.message.slice(7) : entry.message;
+    const [, kind = { label: 'Event', icon: 'zap', re: /^/ }] = Object.entries(EVENT_KINDS).find(([, k]) => k.re.test(text)) ?? [];
+    const detail = text.replace(kind.re, '').trim();
+    list.prepend(h('li', { class: 'feed-row' },
+      h('span', { class: 'feed-icon', 'data-icon': kind.icon }),
+      h('span', { class: 'feed-text' }, h('strong', {}, kind.label), detail ? h('span', { class: 'no-i18n' }, ` ${detail}`) : null),
+      test ? h('span', { class: 'badge' }, 'Test') : null,
+      h('time', { class: 'feed-time', datetime: new Date(entry.time).toISOString() },
+        new Date(entry.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }))));
+  }
+  while (list.children.length > FEED_MAX) list.lastElementChild.remove();
+  $('#feed-empty').hidden = list.children.length > 0;
 }
 
 // ---------------------------------------------------------------- Addon-Store
@@ -685,7 +722,7 @@ function renderStore() {
     h('div', { class: 'card addon-card' },
       h('div', { class: 'top' },
         addonIcon(addon, 'addon-icon'),
-        h('div', {}, h('strong', {}, addon.name), h('small', {}, `v${addon.version} · von ${addon.author}`, addon.plugin ? ' · 🧩 Plugin' : ''))),
+        h('div', {}, h('strong', {}, addon.name), h('small', {}, `v${addon.version} · von ${addon.author}`, addon.plugin ? ' · Plugin' : ''))),
       h('p', { class: 'muted' }, addon.description),
       h('div', { class: 'bottom' },
         addon.active ? h('span', { class: 'badge ok' }, 'Aktiv') : h('span', { class: 'badge' }, 'Aus'),
@@ -719,18 +756,21 @@ function renderPluginBar() {
   if (!p) return;
   const broken = p.plugins.filter((x) => x.error);
   $('#plugin-bar').replaceChildren(...[
-    h('span', { class: 'muted small' }, `🧩 Plugins (Addons von außerhalb) kommen in den Plugin-Ordner und bleiben bei Updates erhalten. Danach die Suite neu starten.`),
-    h('button', { class: 'btn small', onclick: () => api('core/plugins/open-folder', {}).catch((err) => toast(err.message, 'err')) }, '📁 Plugin-Ordner öffnen'),
+    h('span', { class: 'muted small' }, icon('puzzle'), ' Plugins (Addons von außerhalb) kommen in den Plugin-Ordner und bleiben bei Updates erhalten. Danach die Suite neu starten.'),
+    h('button', { class: 'btn small', onclick: () => api('core/plugins/open-folder', {}).catch((err) => toast(err.message, 'err')) }, icon('folder-open'), ' Plugin-Ordner öffnen'),
     ...broken.map((x) => h('div', { class: 'badge err' }, `Plugin „${x.folder}“: ${x.error}`)),
   ]);
 }
 
 // ---------------------------------------------------------------- Start
 
-$('#test-buttons').replaceChildren(...TEST_EVENTS.map(([type, label]) =>
+$('#test-buttons').replaceChildren(...TEST_EVENTS.map((type) =>
   h('button', { class: 'btn', onclick: async () => {
-    if (await call('core/test-event', { type })) toast(`Test-Event „${type}“ gesendet`, 'ok');
-  } }, label)));
+    if (await call('core/test-event', { type })) {
+      toast(`Test-Event „${type}“ gesendet`, 'ok');
+      refreshLogs();
+    }
+  } }, h('span', { 'data-icon': EVENT_KINDS[type].icon }), EVENT_KINDS[type].label)));
 
 window.addEventListener('hashchange', route);
 

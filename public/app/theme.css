@@ -75,6 +75,9 @@ code {
   background: var(--card-2); padding: 1px 6px; border-radius: var(--radius-small);
 }
 .muted { color: var(--muted); }
+/* Lucide-Icon neben Text (UI.icon / data-icon), Abstand kommt vom Leerzeichen bzw. gap */
+.ico { display: inline-flex; flex: none; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+.ico svg { width: 100%; height: 100%; }
 
 /* Fokus: deckender Pink-Ring wie --uwu-focus */
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }

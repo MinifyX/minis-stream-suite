@@ -1,7 +1,7 @@
 // Kleiner Musik-Player (Now Playing + Knöpfe + Lautstärke), z.B. auf der Intro-Seite.
 // MusicMini.mount(container) → false, wenn das Musik-Addon aus ist.
 window.MusicMini = (() => {
-  const { h, api, toast } = window.UI;
+  const { h, api, toast, icon } = window.UI;
 
   async function mount(container) {
     let s;
@@ -18,7 +18,7 @@ window.MusicMini = (() => {
     const artist = h('div', { class: 'mm-artist no-i18n' });
     const bar = h('div', { class: 'mm-bar-fill' });
     const time = h('span', { class: 'mm-time' });
-    const toggleBtn = h('button', { class: 'btn mm-btn', title: 'Play/Pause' });
+    const toggleBtn = h('button', { class: 'btn mm-btn', title: 'Play/Pause', 'aria-label': 'Play/Pause' });
     const volume = h('input', { type: 'range', min: 0, max: 100, class: 'mm-vol' });
     const volLabel = h('span', { class: 'mm-vol-label' });
     const provider = h('div', { class: 'note' });
@@ -69,10 +69,10 @@ window.MusicMini = (() => {
       if (np?.coverUrl) {
         const img = cover.querySelector('img');
         if (!img || img.getAttribute('src') !== np.coverUrl) cover.replaceChildren(h('img', { src: np.coverUrl, alt: '' }));
-      } else cover.replaceChildren('🎵');
+      } else cover.replaceChildren(icon('music'));
       title.textContent = np ? np.title : 'Gerade läuft nichts';
-      artist.textContent = np ? `${np.artists.join(', ')}${np.requestedBy ? ` · 🙋 gewünscht von ${np.requestedBy}` : ''}` : '';
-      toggleBtn.textContent = np?.isPlaying ? '⏸' : '▶';
+      artist.textContent = np ? `${np.artists.join(', ')}${np.requestedBy ? ` · gewünscht von ${np.requestedBy}` : ''}` : '';
+      toggleBtn.replaceChildren(np?.isPlaying ? icon('pause') : icon('play'));
       if (!dragging) {
         volume.value = s.volume;
         volLabel.textContent = `${s.volume}%`;
@@ -88,12 +88,12 @@ window.MusicMini = (() => {
         title, artist,
         h('div', { class: 'mm-bar' }, bar),
         h('div', { class: 'mm-row' },
-          h('button', { class: 'btn mm-btn', title: 'Zurück', onclick: () => cmd('previous') }, '⏮'),
+          h('button', { class: 'btn mm-btn', title: 'Zurück', 'aria-label': 'Zurück', onclick: () => cmd('previous') }, icon('skip-back')),
           toggleBtn,
-          h('button', { class: 'btn mm-btn', title: 'Weiter', onclick: () => cmd('next') }, '⏭'),
+          h('button', { class: 'btn mm-btn', title: 'Weiter', 'aria-label': 'Weiter', onclick: () => cmd('next') }, icon('skip-forward')),
           time,
           h('span', { class: 'spacer' }),
-          h('span', {}, '🔊'), volume, volLabel),
+          h('span', {}, icon('volume-2')), volume, volLabel),
         provider)));
 
     const style = document.getElementById('mm-style') ?? document.head.appendChild(h('style', { id: 'mm-style' }));

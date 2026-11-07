@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/music';
 
 const state = {
@@ -71,13 +71,13 @@ function renderHead() {
   sp.replaceChildren(h('span', { class: `dot ${spotify.loggedIn ? 'ok' : ''}` }), spotify.loggedIn ? `Spotify${sdkText ? ` · ${sdkText}` : ''}` : 'Spotify nicht verbunden');
 
   const select = $('#provider');
-  select.replaceChildren(...state.s.providers.map((p) => h('option', { value: p.id, selected: p.id === state.s.chosenProvider }, `${p.label}${p.reason ? ' ⚠' : ''}`)));
+  select.replaceChildren(...state.s.providers.map((p) => h('option', { value: p.id, selected: p.id === state.s.chosenProvider }, `${p.label}`)));
   select.onchange = () => call('provider', { provider: select.value });
   const chosen = state.s.providers.find((p) => p.id === state.s.chosenProvider);
   select.title = chosen?.reason ?? 'Quelle';
 
   $('#fallback').replaceChildren(...(state.s.fallback
-    ? [h('div', { class: 'fallback' }, `⚠ Spotify in der Suite geht gerade nicht (${spotify.sdkError ?? 'unbekannt'}). Die Suite steuert stattdessen die Spotify-App fern. Erneut versuchen: oben „Spotify (in der Suite)“ wählen.`)]
+    ? [h('div', { class: 'fallback' }, icon('triangle-alert'), ` Spotify in der Suite geht gerade nicht (${spotify.sdkError ?? 'unbekannt'}). Die Suite steuert stattdessen die Spotify-App fern. Erneut versuchen: oben „Spotify (in der Suite)“ wählen.`)]
     : chosen?.reason ? [h('p', { class: 'warn-note' }, chosen.reason)] : []));
 }
 
@@ -85,26 +85,26 @@ function renderHead() {
 
 function sourceName(source) {
   if (!source) return null;
-  if (source === 'game') return '🎮 Set passend zum Spiel';
-  if (source.startsWith('set:')) return `🎛 ${state.s.sets?.sets.find((x) => x.id === source.slice(4))?.name ?? 'gelöschtes Set'}`;
+  if (source === 'game') return [icon('gamepad-2'), ' Set passend zum Spiel'];
+  if (source.startsWith('set:')) return [icon('sliders-horizontal'), ` ${state.s.sets?.sets.find((x) => x.id === source.slice(4))?.name ?? 'gelöschtes Set'}`];
   const all = [...(state.lists?.spotify ?? []), ...(state.lists?.local ?? [])];
   return all.find((p) => p.id === source)?.name ?? source;
 }
 
 function renderAutostart() {
   const source = state.s.settings.autoStartSource;
-  const input = h('input', { type: 'text', class: 'no-i18n', placeholder: 'Spotify-Link oder -URI (Playlist, Album, Titel) – oder unten ⭐ klicken', value: source.startsWith('local:') ? '' : source });
+  const input = h('input', { type: 'text', class: 'no-i18n', placeholder: 'Spotify-Link oder -URI (Playlist, Album, Titel) – oder unten den Stern klicken', value: source.startsWith('local:') ? '' : source });
   fill('#autostart',
     h('p', { class: 'auto-current' }, source ? ['Nach dem Intro läuft: ', h('b', { class: 'no-i18n' }, sourceName(source))] : 'Noch nichts eingestellt.'),
     h('div', { class: 'field' },
       h('select', { onchange: (e) => e.target.value && call('settings', { autoStartSource: e.target.value }, 'Auto-Start gespeichert') },
-        h('option', { value: '', selected: !(source === 'game' || source.startsWith('set:')) }, '– Playlist (unten mit ⭐ wählen oder Link einfügen) –'),
-        h('option', { value: 'game', selected: source === 'game' }, '🎮 Set passend zum Spiel'),
-        ...(state.s.sets?.sets ?? []).map((x) => h('option', { value: `set:${x.id}`, selected: source === `set:${x.id}`, class: 'no-i18n' }, `🎛 ${x.name}`)))),
+        h('option', { value: '', selected: !(source === 'game' || source.startsWith('set:')) }, '– Playlist (unten mit dem Stern wählen oder Link einfügen) –'),
+        h('option', { value: 'game', selected: source === 'game' }, 'Set passend zum Spiel'),
+        ...(state.s.sets?.sets ?? []).map((x) => h('option', { value: `set:${x.id}`, selected: source === `set:${x.id}`, class: 'no-i18n' }, x.name)))),
     h('div', { class: 'auto-row' },
       input,
       h('button', { class: 'btn small', onclick: () => call('settings', { autoStartSource: input.value }, 'Auto-Start gespeichert') }, 'Speichern'),
-      source ? h('button', { class: 'btn small', onclick: () => call('play', { source }) }, '▶ Testen') : null),
+      source ? h('button', { class: 'btn small', onclick: () => call('play', { source }) }, icon('play'), ' Testen') : null),
     h('div', { class: 'f-row' },
       h('div', { class: 'field' }, h('label', {}, `Lautstärke danach: ${state.s.settings.volume}%`),
         h('input', { type: 'range', min: 0, max: 100, value: state.s.settings.volume, onchange: (e) => call('settings', { volume: Number(e.target.value) }) })),
@@ -135,10 +135,10 @@ function renderLists() {
     return box.replaceChildren(h('div', { class: 'empty' }, state.tab === 'local' ? 'Keine Musik gefunden. Rechts einen Ordner einstellen – jeder Unterordner wird eine Playlist.' : 'Keine Playlists.'));
   }
   box.replaceChildren(...items.map((p) => h('div', { class: `pl${p.id === auto ? ' auto' : ''}` },
-    h('div', { class: 'pl-img', style: p.image ? { backgroundImage: `url("${p.image}")` } : {} }, p.image ? '' : (p.provider === 'local' ? '📁' : '🎵')),
+    h('div', { class: 'pl-img', style: p.image ? { backgroundImage: `url("${p.image}")` } : {} }, p.image ? '' : (p.provider === 'local' ? icon('folder-open') : icon('music'))),
     h('div', { class: 'pl-main' }, h('div', { class: 'pl-name no-i18n', title: p.name }, p.name), h('div', { class: 'pl-count' }, `${p.count} Titel`)),
-    h('button', { class: `icon-btn${p.id === auto ? ' on' : ''}`, title: 'Als Auto-Start nach dem Intro', onclick: () => call('settings', { autoStartSource: p.id }, `„${p.name}“ läuft nach dem Intro`) }, p.id === auto ? '★' : '☆'),
-    h('button', { class: 'icon-btn', title: 'Jetzt abspielen', onclick: () => call('play', { source: p.id }) }, '▶'))));
+    h('button', { class: `icon-btn${p.id === auto ? ' on' : ''}`, title: 'Als Auto-Start nach dem Intro', 'aria-label': 'Als Auto-Start nach dem Intro', 'aria-pressed': String(p.id === auto), onclick: () => call('settings', { autoStartSource: p.id }, `„${p.name}“ läuft nach dem Intro`) }, icon('star')),
+    h('button', { class: 'icon-btn', title: 'Jetzt abspielen', 'aria-label': 'Jetzt abspielen', onclick: () => call('play', { source: p.id }) }, icon('play')))));
 }
 
 // ============================================================ Music-Host
@@ -157,11 +157,11 @@ function renderHost() {
     h('div', { class: 'status-list' },
       h('div', { class: 'line' }, h('span', { class: `dot ${host.connected ? 'ok' : 'err'}` }), host.connected ? `Offen${host.browser ? ` (${host.browser})` : ''}` : 'Nicht offen'),
       host.connected ? h('div', { class: 'line' }, h('span', { class: `dot ${host.audioUnlocked ? 'ok' : 'warn'}` }), host.audioUnlocked ? 'Ton freigegeben' : 'Ton blockiert – im Host-Fenster einmal klicken') : null,
-      host.connected > 1 ? h('p', { class: 'warn-note' }, `⚠ ${host.connected} Host-Fenster offen – bitte nur eins.`) : null),
-    h('button', { class: 'btn primary', onclick: open }, host.connected ? 'Noch ein Fenster öffnen' : '🖥 Music-Host öffnen'),
+      host.connected > 1 ? h('p', { class: 'warn-note' }, icon('triangle-alert'), ` ${host.connected} Host-Fenster offen – bitte nur eins.`) : null),
+    h('button', { class: 'btn primary', onclick: open }, host.connected ? 'Noch ein Fenster öffnen' : [icon('monitor'), ' Music-Host öffnen']),
     h('p', { class: 'note' }, 'Öffnet ein eigenes Chrome- oder Edge-Fenster. Spotify braucht einen echten Browser – in OBS oder im Suite-Fenster geht es nicht. Das Fenster offen lassen (minimieren ist ok).'),
     h('details', {},
-      h('summary', {}, h('span', { class: 'note' }, '📖 Ton in OBS einbinden')),
+      h('summary', {}, h('span', { class: 'note' }, icon('book-open'), ' Ton in OBS einbinden')),
       h('ol', { class: 'howto' },
         h('li', {}, 'In OBS: Quelle hinzufügen → ', h('b', {}, 'Anwendungsaudioaufnahme'), '.'),
         h('li', {}, 'Fenster: ', h('b', {}, '„Music-Host – Stream Suite“'), ' (bzw. bei „Desktop-App fernsteuern“: die Spotify-App).'),
@@ -204,7 +204,7 @@ function renderSpotify() {
     h('div', { class: 'field' }, h('label', {}, 'Desktop-App fernsteuern: Gerät'), connectInput),
     h('button', { class: 'btn small', onclick: () => call('settings', { spotify: { clientId: idInput.value, deviceName: deviceInput.value, connectDeviceName: connectInput.value } }, 'Gespeichert') }, 'Speichern'),
     h('details', {},
-      h('summary', {}, h('span', { class: 'note' }, '📖 Spotify-App anlegen (einmalig)')),
+      h('summary', {}, h('span', { class: 'note' }, icon('book-open'), ' Spotify-App anlegen (einmalig)')),
       h('ol', { class: 'howto' },
         h('li', {}, h('a', { href: 'https://developer.spotify.com/dashboard', target: '_blank' }, 'developer.spotify.com/dashboard'), ' öffnen, mit deinem Spotify-Account anmelden.'),
         h('li', {}, '„Create app“: Name frei wählbar, bei ', h('b', {}, 'Redirect URI'), ' genau diese Adresse eintragen:'),
@@ -229,7 +229,7 @@ function renderLocal() {
     h('div', { class: 'field' }, h('label', {}, 'Überblenden (Sek.)'), fade),
     h('div', { class: 'btn-row' },
       h('button', { class: 'btn small primary', onclick: () => call('settings', { local: { rootDir: dir.value, crossfadeMs: Number(fade.value) * 1000 } }, 'Gespeichert').then((ok) => ok && loadLists()) }, 'Speichern'),
-      h('button', { class: 'btn small', onclick: () => call('library/rescan', {}, 'Ordner neu eingelesen').then((ok) => ok && loadLists()) }, '↻ Neu einlesen')),
+      h('button', { class: 'btn small', onclick: () => call('library/rescan', {}, 'Ordner neu eingelesen').then((ok) => ok && loadLists()) }, icon('rotate-cw'), ' Neu einlesen')),
     settings.local.rootDir ? h('p', { class: 'note' }, `${library.length} Playlist(s), ${total} Titel.`) : null,
   );
 }
@@ -255,10 +255,10 @@ function renderOverlay() {
 // ============================================================ Log
 
 function renderLog() {
-  const icons = { info: 'ℹ️', warn: '⚠️', error: '❌' };
+  const icons = { info: () => icon('info'), warn: () => icon('triangle-alert'), error: () => icon('circle-x') };
   const rows = state.s.log.map((e) => h('div', { class: `l-row ${e.level}` },
     h('span', { class: 'l-time' }, new Date(e.ts).toLocaleTimeString().slice(0, 8)),
-    h('span', {}, icons[e.level] ?? ''),
+    h('span', {}, icons[e.level]?.() ?? ''),
     h('span', { class: 'l-text no-i18n' }, e.message)));
   $('#log').replaceChildren(...(rows.length ? rows : [h('div', { class: 'log-empty' }, 'Noch nichts passiert.')]));
 }

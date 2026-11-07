@@ -2242,7 +2242,306 @@
     "Mit Twitch verbunden, aber gerade kommen keine Events an.": "Connected to Twitch, but no events are coming in right now.",
     "Verbindung prüfen": "Check connection",
     "Test & Log": "Test & log",
-    "Addon wechseln": "Switch addon"
+    "Addon wechseln": "Switch addon",
+    "Nächster Titel": "Next track",
+    "Voriger Titel": "Previous track",
+    "Stopp": "Stop",
+    "Stumm": "Mute",
+    "Leiser": "Volume down",
+    "Lauter": "Volume up",
+    "Aufnehmen": "Record",
+    "Dieser PC": "This PC",
+    "Einrichten unter Kanalpunkte → Satellite.": "Set it up under Channel Points → Satellite.",
+    "Die Tasten gehen an das Fenster, das gerade im Vordergrund ist, meist also dein Spiel.": "Keys go to the window that's currently in the foreground – usually your game.",
+    "Für OBS: Leg in OBS einen Hotkey auf F13–F24 (hier als Sondertaste) und nimm denselben hier. Die Tasten kollidieren nie mit dem Spiel.": "For OBS: assign a hotkey to F13–F24 in OBS (listed here as a special key) and pick the same one here. These keys never collide with your game.",
+    "Läuft das Spiel als Administrator, muss die Suite (bzw. der Satellite) auch als Administrator laufen, sonst blockiert Windows die Tasten.": "If the game runs as administrator, the Suite (or the Satellite) must run as administrator too, otherwise Windows blocks the keys.",
+    "Manche Spiele mit Anti-Cheat ignorieren simulierte Tasten oder sehen sie nicht gern. Im Zweifel lieber OBS-Hotkeys nutzen.": "Some games with anti-cheat ignore simulated keys or don't like them. When in doubt, use OBS hotkeys instead.",
+    "Gift-Subs": "Gift subs",
+    "Vorhersage": "Prediction",
+    "Werbung": "Ad break",
+    "Zum Mod machen": "Make mod",
+    "Test-Nachricht": "Test message",
+    "Mod-Status prüfen": "Check mod status",
+    "Datenordner öffnen": "Open data folder",
+    "Du hast die neueste Version.": "You have the latest version.",
+    "Suche nach Updates…": "Checking for updates…",
+    "Sicherung": "Backup",
+    "Sicherung speichern": "Save backup",
+    "Sicherung einspielen": "Restore backup",
+    "Ordner": "Folder",
+    "Plugins (Addons von außerhalb) kommen in den Plugin-Ordner und bleiben bei Updates erhalten. Danach die Suite neu starten.": "Plugins (third-party addons) go into the plugin folder and are kept across updates. Restart the Suite afterwards.",
+    "Plugin-Ordner öffnen": "Open plugin folder",
+    "Live-Status wird geladen…": "Loading live status…",
+    "vorhanden": "exists",
+    "Mit Twitch abgleichen": "Sync with Twitch",
+    "Fremde Belohnungen": "External rewards",
+    "Tipp: Im Addon „Kanalpunkte“ kannst du Dashboard-Belohnungen mit Übernehmen zur Suite holen.": "Tip: in the “Channel Points” addon you can move dashboard rewards to the Suite with Take over.",
+    "Nichts offen": "Nothing open",
+    "Alles aktuell": "Everything up to date",
+    "Wartet auf Stream-Start": "Waiting for stream start",
+    "Gleich (Mindestabstand zu anderem Timer)": "Soon (minimum gap to another timer)",
+    "Wird gleich gesendet": "About to be sent",
+    "nur live": "live only",
+    "zufällig": "random",
+    "der Reihe nach": "in order",
+    "Jetzt senden": "Send now",
+    "Der Reihe nach": "In order",
+    "Lurkt gerade": "Lurking now",
+    "Lurk-Statistik": "Lurk stats",
+    "Im Chat": "In chat",
+    "Lurk-Einstellungen": "Lurk settings",
+    "Letzte Umfragen": "Recent polls",
+    "Letzte Vorhersagen": "Recent Predictions",
+    "So funktioniert's": "How it works",
+    "Chat-Umfrage": "Chat poll",
+    "Twitch-Umfrage": "Twitch poll",
+    "Umfrage starten": "Start poll",
+    "GESPERRT": "LOCKED",
+    "Jetzt beenden": "End now",
+    "Abbrechen (ohne Ergebnis)": "Cancel (no result)",
+    "Umfragen-Einstellungen": "Poll settings",
+    "Abstimmen & Nachrichten": "Voting & messages",
+    "Mod-Commands": "Mod commands",
+    "Speichern & Overlay testen": "Save & test overlay",
+    "Vorhersage starten": "Start Prediction",
+    "Jetzt sperren": "Lock now",
+    "Abbrechen (Punkte zurück)": "Cancel (refund points)",
+    "Vorhersagen-Einstellungen": "Prediction settings",
+    "Nachrichten": "Messages",
+    "Aus Vorlage": "From preset",
+    "Antwort": "Reply",
+    "Keybind testen (3 s)": "Test keybind (3 s)",
+    "Zusätzlich Tasten drücken (z.B. OBS-Szene wechseln)": "Also press keys (e.g. switch OBS scene)",
+    "Regeln anwenden": "Apply rules",
+    "Im Dashboard bearbeiten": "Edit in dashboard",
+    "Ganze Gruppe": "Whole group",
+    "Nur bei Spiel": "Only for game",
+    "Spiele vom Keybind übernehmen": "Use games from keybind",
+    "Regel entfernen": "Remove rule",
+    "Original ist gelöscht.": "Original is deleted.",
+    "Nicht übernehmen, wenn die Belohnung von einer anderen App stammt (z.B. HudFX, Sound Alerts, Spiele-Integrationen)! Die andere App erkennt die neue Belohnung sonst nicht mehr.": "Don't take it over if the reward comes from another app (e.g. HudFX, Sound Alerts, game integrations)! Otherwise the other app won't recognize the new reward anymore.",
+    "Das eigene Bild kann Twitch nicht per App setzen. Lade es danach im Dashboard wieder hoch.": "Twitch doesn't let apps set a custom image. Upload it again in the dashboard afterwards.",
+    "Übernehmen": "Take over",
+    "verwaltet": "managed",
+    "nur lesen": "read only",
+    "andere App": "other app",
+    "Keybinds aus": "Keybinds off",
+    "Satellite: aus": "Satellite: off",
+    "Satellite: wartet…": "Satellite: waiting…",
+    "Satellite-Datei herunterladen": "Download Satellite file",
+    "Beim ersten Einschalten fragt Windows auf diesem PC evtl., ob die Suite im Netzwerk erreichbar sein darf: „Private Netzwerke“ erlauben. Sonst kommt der Satellite nicht durch.": "When you turn it on for the first time, Windows on this PC may ask whether the Suite may be reachable on the network: allow “Private networks”. Otherwise the Satellite can't get through.",
+    "Die Datei enthält einen geheimen Schlüssel. Nicht öffentlich teilen (z.B. nicht in Discord posten).": "The file contains a secret key. Don't share it publicly (e.g. don't post it on Discord).",
+    "Läuft das Spiel als Administrator, muss auch der Satellite als Administrator laufen (Rechtsklick → Als Administrator ausführen).": "If the game runs as administrator, the Satellite must run as administrator too (right-click → Run as administrator).",
+    "Testen (3 s)": "Test (3 s)",
+    "Vorschau abspielen": "Play preview",
+    "Test-Alert senden": "Send test alert",
+    "Keine Belohnung ausgewählt": "No reward selected",
+    "Variante löschen": "Delete variant",
+    "Stimme testen": "Test voice",
+    "Hochladen": "Upload",
+    "Bibliothek": "Library",
+    "Bild-Bibliothek": "Image library",
+    "Sound-Bibliothek": "Sound library",
+    "Kein Alert für diese Belohnung": "No alert for this reward",
+    "stumm": "muted",
+    "Trotzdem zeigen": "Show anyway",
+    "Nochmal": "Again",
+    "Chat-Fenster öffnen": "Open chat window",
+    "OBS-Overlay": "OBS overlay",
+    "Chat-Fenster": "Chat window",
+    "Markdown, Farben & Emotes": "Markdown, colors & emotes",
+    "Test-Event (Sub)": "Test event (sub)",
+    "Neue Abos": "New subs",
+    "Abo-Verlängerungen": "Resubs",
+    "Kanalpunkte-Einlösungen": "Channel Points redemptions",
+    "Stream-Start/-Ende": "Stream start/end",
+    "Aussehen": "Appearance",
+    "Verhalten": "Behavior",
+    "Events im Overlay": "Events in the overlay",
+    "Darstellung": "Display",
+    "Hervorheben": "Highlight",
+    "Events im Fenster": "Events in the window",
+    "Markdown & Farben im Chat": "Markdown & colors in chat",
+    "Emotes von Drittanbietern": "Third-party emotes",
+    "Emotes neu laden": "Reload emotes",
+    "Kanalpunkte & Spoiler": "Channel Points & spoilers",
+    "Damit verrät auch der Chat keinen HudFX-Jumpscare. Im Chat-Fenster siehst du sie trotzdem (mit markiert), das sieht ja nur du.": "That way the chat doesn't give away a HudFX jumpscare either. You still see them in the chat window (marked with ), since only you can see that.",
+    "Einlösungen": "Redemptions",
+    "nicht im Overlay": "not in overlay",
+    "Alerts pausiert": "Alerts paused",
+    "Alerts laufen wieder": "Alerts running again",
+    "Nicht mit Twitch verbunden: Follower- und Abo-Zahlen können nicht geladen werden und Events kommen erst nach dem Verbinden an. Eigene Zähler funktionieren trotzdem.": "Not connected to Twitch: follower and sub counts can't be loaded and events only come in after connecting. Custom counters still work.",
+    "Ziele": "Goals",
+    "Letzte Events": "Recent events",
+    "Von Twitch aktualisieren": "Refresh from Twitch",
+    "Schritt testen": "Test step",
+    "Feier testen": "Test celebration",
+    "Test-Events zeigen": "Show test events",
+    "Follower gesamt": "Total followers",
+    "Neue Follower seit Reset": "New followers since reset",
+    "Abos gesamt": "Total subs",
+    "Abos seit Reset": "Subs since reset",
+    "Bits seit Reset": "Bits since reset",
+    "Eigener Zähler": "Custom counter",
+    "Schmal": "Slim",
+    "Kreis": "Circle",
+    "Leiste": "Bar",
+    "Liste": "List",
+    "Laufband": "Ticker",
+    "Nochmal versuchen": "Try again",
+    "Stand": "Count",
+    "Korrektur löschen & neu von Twitch laden": "Clear correction & reload from Twitch",
+    "Ziel löschen": "Delete goal",
+    "Ziel erreicht!": "Goal reached!",
+    "Dieses Aussehen für alle Ziele übernehmen": "Apply this look to all goals",
+    "Was angezeigt wird": "What is shown",
+    "Aktuelle Werte": "Current values",
+    "Alle leeren": "Clear all",
+    "Regeln": "Rules",
+    "Ausnahmen & !permit": "Exceptions & !permit",
+    "Protokoll": "Log",
+    "Spam-Schutz ist jetzt scharf geschaltet": "Spam protection is now live",
+    "„Nur testen“ ist an: Es wird nichts gelöscht, niemand getimeoutet und keine Warnung gesendet. Im Protokoll siehst du, was passiert wäre. Wenn alles passt, schalte oben rechts „Nur testen“ aus.": "“Test only” is on: nothing is deleted, nobody is timed out and no warning is sent. The log shows what would have happened. When everything looks right, turn “Test only” off in the top right.",
+    "Getimeoutet wird mit deinem Account. Timeouts hebst du im Protokoll mit wieder auf.": "Timeouts are given with your account. You can lift them in the log with .",
+    "Kein Treffer – die Nachricht bleibt stehen.": "No match – the message stays.",
+    "Alles stoppen": "Stop everything",
+    "Verbindung": "Connection",
+    "So schaltest du den WebSocket-Server in OBS ein": "How to turn on the WebSocket server in OBS",
+    "Kanalpunkte-Belohnung": "Channel Points reward",
+    "Sub (neu, Resub, Geschenk)": "Sub (new, resub, gift)",
+    "Nur per Test-Knopf": "Test button only",
+    "Szene wechseln": "Switch scene",
+    "Quelle ein/aus": "Source on/off",
+    "Filter ein/aus": "Filter on/off",
+    "Warten": "Wait",
+    "Not-Aus – alles aus": "Emergency stop – all off",
+    "Nur per Test": "Test only",
+    "überspringen": "skip",
+    "Nach": "Revert after",
+    "Liste aus OBS laden": "Load list from OBS",
+    "Jetzt testen": "Test now",
+    "＋ Szene wechseln": "＋ Switch scene",
+    "＋ Quelle ein/aus": "＋ Source on/off",
+    "＋ Filter ein/aus": "＋ Filter on/off",
+    "＋ Warten": "＋ Wait",
+    "Shoutout geben": "Give Shoutout",
+    "Warteschlange (Twitch-Shoutouts)": "Queue (Twitch Shoutouts)",
+    "Letzte Shoutouts": "Recent Shoutouts",
+    "Clip-Overlay für OBS": "Clip overlay for OBS",
+    "Overlay testen": "Test overlay",
+    "Stoppen": "Stop",
+    "bei Twitch": "on Twitch",
+    "wartet": "waiting",
+    "keine Kategorie": "no category",
+    "Das bist du selbst – dir selbst kannst du keinen Shoutout geben": "That's you – you can't give yourself a Shoutout",
+    "Shoutout-Einstellungen": "Shoutout settings",
+    "Jetzt": "Now",
+    "Variablen in Vorlagen": "Variables in presets",
+    "Du bist nicht bei Twitch eingeloggt. Verbinde dich zuerst in der Übersicht – dann kannst du hier Titel und Kategorie ändern.": "You're not logged in to Twitch. Connect in the Overview first – then you can change title and category here.",
+    "Spiel-Regeln aus dem Kanalpunkte-Addon schalten sich automatisch um, sobald du hier die Kategorie wechselst.": "Game rules from the Channel Points addon switch automatically as soon as you change the category here.",
+    "Tipp: Mit den Spiel-Regeln im Kanalpunkte-Addon schalten sich Belohnungen automatisch um, sobald du hier die Kategorie wechselst.": "Tip: with the game rules in the Channel Points addon, rewards switch automatically as soon as you change the category here.",
+    "Bei Twitch gespeichert": "Saved on Twitch",
+    "Anwenden": "Apply",
+    "Stream-Info-Einstellungen": "Stream Info settings",
+    "Aktualisieren": "Refresh",
+    "Wird geladen…": "Loading…",
+    "Verschieben (+5 Min.)": "Snooze (+5 min)",
+    "Jetzt Werbung starten": "Run ad now",
+    "Vorwarnungen": "Warnings",
+    "Während und nach der Werbung": "During and after the ad",
+    "Speichern & testen": "Save & test",
+    "Nicht eingeloggt": "Not logged in",
+    "Werbung läuft – noch": "Ad running – remaining",
+    "Wenn die Werbung startet": "When the ad starts",
+    "Wenn die Werbung vorbei ist": "When the ad is over",
+    "Emotes & Hilfe": "Emotes & help",
+    "Markdown, Farben & Emotes im Overlay": "Markdown, colors & emotes in the overlay",
+    "Alles hier gilt nur für dein Chat-Fenster (wie Chatterino). Das sieht nur du, am OBS-Overlay ändert sich nichts.": "Everything here only applies to your chat window (like Chatterino). Only you see it, the OBS overlay stays unchanged.",
+    "Markdown, Farben & Emotes im Fenster": "Markdown, colors & emotes in the window",
+    "Anzeigen, mit markiert": "Show, marked with",
+    "So schreibt man Markdown und Farben": "How to write Markdown and colors",
+    "Ereignisse": "Events",
+    "Medien": "Media",
+    "Ordner öffnen": "Open folder",
+    "Player neu laden": "Reload player",
+    "Anforderungen an die Dateien": "File requirements",
+    "Nach dem Intro": "After the intro",
+    "Webhooks": "Webhooks",
+    "Streamdeck": "Stream Deck",
+    "Music-Host": "Music host",
+    "Ton aktivieren (einmal klicken)": "Enable sound (click once)",
+    "Auto-Start nach dem Intro": "Autostart after the intro",
+    "Playlists": "Playlists",
+    "Now-Playing-Overlay": "Now playing overlay",
+    "Zurücknehmen": "Cancel",
+    "Abort": "Abort",
+    "Alle Dateien gefunden.": "All files found.",
+    "Spotify-Link oder -URI (Playlist, Album, Titel) – oder unten klicken": "Spotify link or URI (playlist, album, track) – or click below",
+    "Music-Host öffnen": "Open music host",
+    "Ton in OBS einbinden": "Add the sound to OBS",
+    "Spotify-App anlegen (einmalig)": "Create a Spotify app (one-time)",
+    "Neu einlesen": "Rescan",
+    "Player": "Player",
+    "Musik-Sets": "Music sets",
+    "Songwünsche": "Song requests",
+    "Spielwechsel": "Game change",
+    "Vorschläge": "Suggestions",
+    "Queue": "Queue",
+    "Chat-Antworten": "Chat replies",
+    "Ausprobieren": "Try it out",
+    "Set passend zum Spiel": "Set matching the game",
+    "Verknüpft": "Linked",
+    "Eigene Liste": "Custom list",
+    "Läuft automatisch bei diesen Spielen": "Plays automatically for these games",
+    "Belohnung ist angelegt.": "Reward is created.",
+    "Wunsch schicken": "Send request",
+    "So richtest du es ein": "How to set it up",
+    "Als Fenster": "As window",
+    "Nochmal“ schickt den Alert erneut ans Overlay, mit deinen aktuellen Varianten. Praktisch, wenn ein Alert nicht durchkam oder OBS gerade zu war.": "Again” sends the alert to the overlay again, using your current variants. Handy if an alert didn't come through or OBS was closed.",
+    "Variante duplizieren": "Duplicate variant",
+    "Übernehmen).": "Take over).",
+    "Der Satellite ist eine kleine Datei für deinen Gaming-PC. Keybinds mit Ziel „Satellite“ werden dann dort gedrückt statt auf diesem PC.": "The Satellite is a small file for your gaming PC. Keybinds with the target “Satellite” are then pressed there instead of on this PC.",
+    "Belohnungen einer anderen App kann die Suite sortieren und für Alerts stummschalten, aber nicht übernehmen. Bearbeiten geht über „Dashboard“.": "The Suite can sort rewards of another app and mute them for alerts, but not take them over. Edit them via “Dashboard”.",
+    "Wie man Markdown und Farben schreibt, steht im Tab „Emotes & Hilfe“.": "How to write Markdown and colors is explained in the \"Emotes & help\"tab.",
+    "Alles hier gilt nur für das OBS-Overlay, das deine Zuschauer sehen. Das Chat-Fenster stellst du im Tab „Chat-Fenster“ ein.": "Everything here only applies to the OBS overlay your viewers see. The chat window is set up in the \"Chat window\"tab.",
+    "Zurücksetzen (auf 0)": "Reset (to 0)",
+    "Reset": "Reset",
+    "Zurücksetzen": "Reset",
+    "Die Aktion läuft nur, wenn du auf „Test“ klickst.": "The action only runs when you click “Test”.",
+    "LÄUFT": "RUNNING",
+    "Keine Tipps mehr möglich. Sobald das Ergebnis feststeht: bei der richtigen Antwort auf „Gewinner“ klicken.": "No more bets possible. As soon as the result is clear: click “Winner” on the correct answer.",
+    "Nichts offen. Neue Einlösungen erscheinen hier automatisch.": "Nothing open. New redemptions appear here automatically.",
+    "Neue Vorlage": "New preset",
+    "Einstellungen.": "Settings.",
+    "Das Fenster merkt sich Größe, Position und": "The window remembers its size, position and",
+    "„Immer im Vordergrund“. Auch als OBS-Dock nutzbar: Docks → Benutzerdefinierte Browser-Docks → diese URL:": "\"Always on top\". Also works as an OBS dock: Docks → Custom Browser Docks → this URL:",
+    "Laufenden Alert überspringen": "Skip the current alert",
+    "Event-Filter": "Event filter",
+    "Noch keine Events in dieser Sitzung. Follows, Subs, Raids und Test-Events erscheinen hier.": "No events in this session yet. Follows, subs, raids and test events show up here.",
+    ") wurden im Twitch-Dashboard oder von einer anderen App wie HudFX angelegt und werden übersprungen.": ") were created in the Twitch dashboard or by another app like HudFX and are skipped.",
+    "und werden nicht automatisch geschaltet. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet.": "and won’t be switched automatically. Twitch only allows that for rewards managed by the Suite.",
+    "Diese Belohnung ist": "This reward is",
+    "und kann nicht automatisch geschaltet werden. Twitch erlaubt das nur für Belohnungen, die die Suite verwaltet (": "and can’t be switched automatically. Twitch only allows that for rewards managed by the Suite (",
+    "Nach dem Löschen:": "After deleting:",
+    "Nur bei bestimmten Spielen": "Only for certain games",
+    "Hake alle Belohnungen an, die zu dieser Gruppe gehören.": "Check all rewards that belong to this group.",
+    "= kann die Suite nicht pausieren, aber für Alerts stummschalten.": "= the Suite can’t pause it, but can mute it for alerts.",
+    "Anzeigen, markiert": "Show, marked",
+    "Lässt sich auch direkt im Fenster über": "In the window itself, use",
+    "umschalten.": "to toggle it.",
+    "Alert nochmal abspielen": "Replay alert",
+    "läuft · lokal": "playing · local",
+    "pausiert · lokal": "paused · local",
+    "läuft · Spotify": "playing · Spotify",
+    "pausiert · Spotify": "paused · Spotify",
+    "– Playlist (unten mit dem Stern wählen oder Link einfügen) –": "– Playlist (pick below with the star or paste a link) –",
+    "Abspielen": "Play",
+    "Zurückerstatten": "Refund",
+    "Chat-Commands sind aus. Einschalten unter": "Chat commands are off. Turn them on under",
+    "Einlösung": "Redemption",
+    "Stream ist live": "Stream is live",
+    "Stream beendet": "Stream ended",
+    "Kanal geändert": "Channel updated"
   },
   "patterns": [
     [
@@ -4448,6 +4747,254 @@
     [
       "^(.+) von (.+) Addons aktiv$",
       "$1 of $2 addons active"
+    ],
+    [
+      "^Version (.+) wird geladen \\((.+) %\\)…$",
+      "Downloading version $1 ($2 %)…"
+    ],
+    [
+      "^Version (.+) ist bereit\\. Wird beim Beenden installiert\\.$",
+      "Version $1 is ready. It will be installed when you quit."
+    ],
+    [
+      "^nur bei (.+)$",
+      "only for $1"
+    ],
+    [
+      "^Wartet auf (.+)$",
+      "Waiting for $1"
+    ],
+    [
+      "^Nächste in ca\\. (\\d+) Min\\.$",
+      "Next in approx. $1 min"
+    ],
+    [
+      "^Wartet auf Chat \\((\\d+)/(\\d+) Nachrichten\\)$",
+      "Waiting for chat ($1/$2 messages)"
+    ],
+    [
+      "^ab (\\d+) Chat-Nachrichten$",
+      "from $1 chat messages"
+    ],
+    [
+      "^Im Chat-Commands-Addon gibt es auch (.+)\\. Dann antworten beide\\. Schalte den Command dort aus oder lösche ihn\\.$",
+      "The Chat Commands addon also has $1. Then both will reply. Turn the command off there or delete it."
+    ],
+    [
+      "^Satellite drückt: (.+) \\(im Test nicht ausgeführt\\)$",
+      "Satellite presses: $1 (not run in test)"
+    ],
+    [
+      "^Dieser PC drückt: (.+) \\(im Test nicht ausgeführt\\)$",
+      "This PC presses: $1 (not run in test)"
+    ],
+    [
+      "^Keine Berechtigung \\(Nur du\\)$",
+      "No permission (only you)"
+    ],
+    [
+      "^Keine Berechtigung \\((.+)\\)$",
+      "No permission ($1)"
+    ],
+    [
+      "^Cooldown \\(noch (\\d+) s \\(alle\\)\\)$",
+      "Cooldown ($1 s left (everyone))"
+    ],
+    [
+      "^Cooldown \\(noch (\\d+) s \\(pro Zuschauer\\)\\)$",
+      "Cooldown ($1 s left (per viewer))"
+    ],
+    [
+      "^Keine Kategorie$",
+      "No category"
+    ],
+    [
+      "^(\\d+) von der Suite verwaltet$",
+      "$1 managed by the Suite"
+    ],
+    [
+      "^(\\d+) nur lesen$",
+      "$1 read only"
+    ],
+    [
+      "^(\\d+) Belohnung\\(en\\) umgeschaltet · (\\d+) übersprungen$",
+      "$1 reward(s) switched · $2 skipped"
+    ],
+    [
+      "^Alles schon passend geschaltet · (\\d+) übersprungen$",
+      "Everything is already set correctly · $1 skipped"
+    ],
+    [
+      "^„(.+)“ wird übernommen$",
+      "“$1” is being taken over"
+    ],
+    [
+      "^andere App \\(Gruppe (.+)\\)$",
+      "other app (group $1)"
+    ],
+    [
+      "^(\\d+) Keybind\\(s\\) aktiv$",
+      "$1 keybind(s) active"
+    ],
+    [
+      "^(.+) verbunden$",
+      "$1 connected"
+    ],
+    [
+      "^(\\d+) neue Nachricht$",
+      "$1 new message"
+    ],
+    [
+      "^(\\d+) neue Nachrichten$",
+      "$1 new messages"
+    ],
+    [
+      "^Antwort an (.+)$",
+      "Reply to $1"
+    ],
+    [
+      "^Alert „(.+)“ kommt$",
+      "Alert “$1” is coming"
+    ],
+    [
+      "^\\+(.+) Bits testen$",
+      "Test +$1 Bits"
+    ],
+    [
+      "^\\+(.+) testen$",
+      "Test +$1"
+    ],
+    [
+      "^Ausgenommen: Nachricht der Suite / des Bots$",
+      "Exempt: message from the Suite / the bot"
+    ],
+    [
+      "^Ausgenommen: Das bist du selbst$",
+      "Exempt: that's you"
+    ],
+    [
+      "^Ausgenommen: Mods sind immer ausgenommen$",
+      "Exempt: mods are always exempt"
+    ],
+    [
+      "^Ausgenommen: Steht auf der Erlaubt-Liste$",
+      "Exempt: is on the allow list"
+    ],
+    [
+      "^Ausgenommen: Rolle ist ausgenommen \\(ab Subs\\)$",
+      "Exempt: role is exempt (subs and above)"
+    ],
+    [
+      "^Ausgenommen: Rolle ist ausgenommen \\(ab VIPs\\)$",
+      "Exempt: role is exempt (VIPs and above)"
+    ],
+    [
+      "^Ausgenommen: Rolle ist ausgenommen \\(ab Mods\\)$",
+      "Exempt: role is exempt (mods and above)"
+    ],
+    [
+      "^Ausgenommen: (.+)$",
+      "Exempt: $1"
+    ],
+    [
+      "^Links: Link: (.+)$",
+      "Links: link: $1"
+    ],
+    [
+      "^Großbuchstaben: (\\d+) % Großbuchstaben \\(erlaubt: (\\d+) %\\)$",
+      "Capital letters: $1 % capital letters (allowed: $2 %)"
+    ],
+    [
+      "^Verbotene Wörter: Wort: „(.+)“$",
+      "Banned words: word: “$1”"
+    ],
+    [
+      "^Verbotene Wörter: Sofort-Timeout-Wort: „(.+)“$",
+      "Banned words: instant-timeout word: “$1”"
+    ],
+    [
+      "^Wiederholungen: (\\d+)× dieselbe Nachricht in (\\d+) s$",
+      "Repetitions: same message $1× in $2 s"
+    ],
+    [
+      "^Zeichen & Emotes: (\\d+) Emotes \\(erlaubt: (\\d+)\\)$",
+      "Symbols & emotes: $1 emotes (allowed: $2)"
+    ],
+    [
+      "^Zeichen & Emotes: (\\d+) % Sonderzeichen \\(erlaubt: (\\d+) %\\)$",
+      "Symbols & emotes: $1 % special characters (allowed: $2 %)"
+    ],
+    [
+      "^ab (\\d+) Bits$",
+      "from $1 Bits"
+    ],
+    [
+      "^Raid ab (\\d+) Zuschauern$",
+      "Raid from $1 viewers"
+    ],
+    [
+      "^läuft \\(\\+(\\d+) wartend\\)$",
+      "running (+$1 waiting)"
+    ],
+    [
+      "^Läuft gerade: (.+) \\(ohne Clip\\)$",
+      "Playing now: $1 (no clip)"
+    ],
+    [
+      "^Läuft gerade: (.+)$",
+      "Playing now: $1"
+    ],
+    [
+      "^Vorlage „(.+)“ angewendet$",
+      "Preset “$1” applied"
+    ],
+    [
+      "^Im Chat-Commands-Addon gibt es auch (.+)\\. Dann antworten beide\\. Schalte den Command dort aus oder benenne ihn hier um\\.$",
+      "The Chat Commands addon also has $1. Then both will reply. Turn the command off there or rename it here."
+    ],
+    [
+      "^(.+) Player verbunden – das Intro läuft in jedem davon\\. Bitte nur eine Browserquelle offen lassen\\.$",
+      "$1 players connected – the intro plays in each of them. Please keep only one browser source open."
+    ],
+    [
+      "^Spotify in der Suite geht gerade nicht \\((.+)\\)\\. Die Suite steuert stattdessen die Spotify-App fern\\. Erneut versuchen: oben „Spotify \\(in der Suite\\)“ wählen\\.$",
+      "Spotify in the suite isn't working right now ($1). The suite is remote-controlling the Spotify app instead. To try again: select \"Spotify (in the suite)\" above."
+    ],
+    [
+      "^(.+) Host-Fenster offen – bitte nur eins\\.$",
+      "$1 host windows open – please only one."
+    ],
+    [
+      "^(.+) · gewünscht von (.+)$",
+      "$1 · requested by $2"
+    ],
+    [
+      "^gelöschtes Set$",
+      "deleted set"
+    ],
+    [
+      "^Hauptordner$",
+      "Main folder"
+    ],
+    [
+      "^Verbunden \\(Antwort (.+)\\)$",
+      "Connected (response $1)"
+    ],
+    [
+      "^(.+) Belohnung\\(en\\) dieser Gruppe sind$",
+      "$1 reward(s) in this group are"
+    ],
+    [
+      "^· (.+) übersprungen$",
+      "· $1 skipped"
+    ],
+    [
+      "^\\(zurück nach (.+) s\\)$",
+      "(back after $1 s)"
+    ],
+    [
+      "^LIVE · (.+) Zuschauer$",
+      "LIVE · $1 viewers"
     ]
   ]
 }

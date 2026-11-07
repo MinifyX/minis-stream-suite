@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/lurk';
 
 const state = { data: null, search: '', sort: 'totalMs', clockOffset: 0 };
@@ -63,11 +63,11 @@ function renderActive() {
         h('div', { class: 'name no-i18n' }, l.name),
         l.message ? h('div', { class: 'msg', title: l.message }, `„${l.message}“`) : h('div', { class: 'msg' }, `seit ${fmtDate(l.since)}`)),
       h('span', { class: 'since', title: `seit ${fmtDate(l.since)}` }, fmt(now - l.since)),
-      h('button', { class: 'icon-btn', title: 'Beenden (zählt in die Statistik, ohne Chat-Nachricht)', onclick: () => call('/end', { id: l.id }) }, '⏹'),
+      h('button', { class: 'icon-btn', title: 'Beenden (zählt in die Statistik, ohne Chat-Nachricht)', 'aria-label': 'Beenden (zählt in die Statistik, ohne Chat-Nachricht)', onclick: () => call('/end', { id: l.id }) }, icon('square')),
       h('button', {
-        class: 'icon-btn', title: 'Verwerfen (zählt nicht)',
+        class: 'icon-btn', title: 'Verwerfen (zählt nicht)', 'aria-label': 'Verwerfen (zählt nicht)',
         onclick: () => { if (confirm(`Lurk von ${l.name} verwerfen? Er zählt dann nicht in die Statistik.`)) call('/discard', { id: l.id }); },
-      }, '🗑')))));
+      }, icon('trash-2'))))));
 }
 
 function renderStats() {
@@ -94,9 +94,9 @@ function renderStats() {
           h('td', { class: 'num' }, fmt(s.longestMs)),
           h('td', { class: 'num' }, fmtDate(s.lastLurkAt)),
           h('td', { class: 'act' }, h('button', {
-            class: 'icon-btn', title: 'Statistik dieses Zuschauers löschen',
+            class: 'icon-btn', title: 'Statistik dieses Zuschauers löschen', 'aria-label': 'Statistik dieses Zuschauers löschen',
             onclick: () => { if (confirm(`Lurk-Statistik von ${s.name} löschen?`)) call('/stats/delete', { id: s.id }); },
-          }, '🗑')))))),
+          }, icon('trash-2'))))))),
     h('div', { class: 'stats-foot' },
       h('span', { class: 'note' }, `${state.data.stats.length} Zuschauer · zusammen ${fmt(state.data.stats.reduce((sum, s) => sum + s.totalMs, 0))} gelurkt`),
       h('span', { class: 'spacer' }),
@@ -135,7 +135,7 @@ async function checkConflicts() {
     // Commands-Addon ist aus → kein Konflikt
   }
   $('#conflict').replaceChildren(...(clash.length
-    ? [h('div', { class: 'conflict' }, `⚠ Im Chat-Commands-Addon gibt es auch ${clash.join(', ')}. Dann antworten beide. Schalte den Command dort aus oder lösche ihn.`)]
+    ? [h('div', { class: 'conflict' }, icon('triangle-alert'), ` Im Chat-Commands-Addon gibt es auch ${clash.join(', ')}. Dann antworten beide. Schalte den Command dort aus oder lösche ihn.`)]
     : []));
 }
 
@@ -211,7 +211,7 @@ function openSettings() {
 
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, '⚙ Lurk-Einstellungen'), h('button', { class: 'icon-btn', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, icon('settings'), ' Lurk-Einstellungen'), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' },
         h('div', { class: 'sub' }, 'COMMANDS (OHNE !, LEER = AUS)'),
         h('div', { class: 'f-row' }, field('Lurk starten', cmd.lurk), field('Ausdrücklich zurück', cmd.unlurk)),

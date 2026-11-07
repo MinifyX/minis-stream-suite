@@ -1,10 +1,10 @@
-const { $, h, api, toast } = window.UI;
+const { $, h, api, toast, icon } = window.UI;
 const BASE = 'addons/chat';
 const MAX_ITEMS = 500;
 const EVENT_LABELS = {
-  follow: '💜 Follows', sub: '⭐ Subs', resub: '⭐ Resubs', giftsub: '🎁 Gift-Subs',
-  cheer: '💎 Bits', raid: '🚀 Raids', redemption: '✨ Einlösungen', stream: '🔴 Stream',
-  hypetrain: '🚂 Hype Train', prediction: '🔮 Vorhersagen', shoutout: '📣 Shoutouts', ads: '📺 Werbung',
+  follow: () => [icon('heart'), ' Follows'], sub: () => [icon('star'), ' Subs'], resub: () => [icon('star'), ' Resubs'], giftsub: () => [icon('gift'), ' Gift-Subs'],
+  cheer: () => [icon('gem'), ' Bits'], raid: () => [icon('rocket'), ' Raids'], redemption: () => [icon('sparkles'), ' Einlösungen'], stream: () => [icon('radio-tower'), ' Stream'],
+  hypetrain: () => [icon('train-front'), ' Hype Train'], prediction: () => [icon('target'), ' Vorhersagen'], shoutout: () => [icon('megaphone'), ' Shoutouts'], ads: () => [icon('tv'), ' Werbung'],
 };
 
 const list = $('#list');
@@ -24,8 +24,8 @@ const visible = (item) => ChatRender.windowVisible(item, w());
 /** Hinweis an Einlösungen, die im Alert-Filter stumm sind */
 function muteNote() {
   return settings.overlay.respectAlertFilter
-    ? h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm und wird im Overlay nicht gezeigt' }, '🔕 nicht im Overlay')
-    : h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm (kein Alert)' }, '🔕 stumm');
+    ? h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm und wird im Overlay nicht gezeigt' }, icon('bell-off'), ' nicht im Overlay')
+    : h('span', { class: 'cr-mute-note', title: 'Diese Belohnung ist im Alert-Filter stumm (kein Alert)' }, icon('bell-off'), ' stumm');
 }
 
 function build(item) {
@@ -37,7 +37,7 @@ function build(item) {
     }
     if (item.replay) {
       node.append(h('div', { class: 'cw-actions' },
-        h('button', { title: 'Alert dazu nochmal im Overlay abspielen', onclick: () => replay(item) }, '▶')));
+        h('button', { title: 'Alert dazu nochmal im Overlay abspielen', onclick: () => replay(item), 'aria-label': 'Alert nochmal abspielen' }, icon('play'))));
     }
     return node;
   }
@@ -49,8 +49,8 @@ function build(item) {
   }
   node.querySelector('.cr-name')?.addEventListener('click', () => insertText(`@${item.user.login || item.user.name} `));
   node.append(h('div', { class: 'cw-actions' },
-    h('button', { title: 'Antworten', onclick: () => setReply(item) }, '↩'),
-    h('button', { title: 'Text kopieren', onclick: () => copy(ChatRender.plainText(item)) }, '📋')));
+    h('button', { title: 'Antworten', onclick: () => setReply(item), 'aria-label': 'Antworten' }, icon('reply')),
+    h('button', { title: 'Text kopieren', onclick: () => copy(ChatRender.plainText(item)), 'aria-label': 'Text kopieren' }, icon('clipboard-copy'))));
   return node;
 }
 
@@ -82,7 +82,7 @@ function add(item) {
   if (paused) {
     unseen++;
     $('#more').hidden = false;
-    $('#more').textContent = `⏬ ${unseen} neue ${unseen === 1 ? 'Nachricht' : 'Nachrichten'}`;
+    $('#more').replaceChildren(icon('chevrons-down'), ` ${unseen} neue ${unseen === 1 ? 'Nachricht' : 'Nachrichten'}`);
   } else {
     list.scrollTop = list.scrollHeight;
   }
@@ -112,7 +112,7 @@ function setReply(item) {
   const bar = $('#reply');
   bar.hidden = !replyTo;
   if (replyTo) {
-    bar.replaceChildren(h('span', {}, `↩ Antwort an ${replyTo.name}`), h('button', { title: 'Abbrechen', onclick: () => setReply(null) }, '✕'));
+    bar.replaceChildren(h('span', {}, icon('reply'), ` Antwort an ${replyTo.name}`), h('button', { title: 'Abbrechen', 'aria-label': 'Abbrechen', onclick: () => setReply(null) }, icon('x')));
     input.focus();
   }
 }
@@ -176,7 +176,7 @@ function renderFilterMenu() {
           renderAll();
           await saveWindow({ events: { [kind]: w().events[kind] } });
         },
-      }, label)),
+      }, ...label())),
     h('button', {
       class: w().hideCommands ? 'on' : '',
       title: 'Nachrichten, die mit ! beginnen, ausblenden',
@@ -186,7 +186,7 @@ function renderFilterMenu() {
         renderAll();
         await saveWindow({ hideCommands: w().hideCommands });
       },
-    }, '🙈 !Commands ausblenden'));
+    }, icon('eye-off'), ' !Commands ausblenden'));
 }
 
 // ============================================================ Alerts steuern (nochmal abspielen, pausieren)
@@ -194,7 +194,7 @@ function renderFilterMenu() {
 async function replay(item) {
   try {
     const result = await api(`${BASE}/replay`, { id: item.id });
-    toast(result.shown ? `▶ Alert „${result.variant}“ kommt` : 'Kein Alert: keine aktive Variante passt (oder die Belohnung ist stumm)', result.shown ? 'ok' : 'err');
+    toast(result.shown ? `Alert „${result.variant}“ kommt` : 'Kein Alert: keine aktive Variante passt (oder die Belohnung ist stumm)', result.shown ? 'ok' : 'err');
   } catch (err) {
     toast(err.message, 'err');
   }
@@ -207,7 +207,7 @@ function renderAlerts(status) {
   $('#alerts-skip').hidden = !status;
   if (!status) return;
   pause.classList.toggle('on', status.paused);
-  pause.textContent = status.paused ? `▶${status.held ? ` ${status.held}` : ''}` : '⏸';
+  if (status.paused) pause.replaceChildren(icon('play'), status.held ? ` ${status.held}` : ''); else pause.replaceChildren(icon('pause'));
   pause.title = status.paused
     ? `Alerts sind pausiert${status.held ? ` (${status.held} warten)` : ''}. Klicken zum Fortsetzen.`
     : 'Alerts pausieren: neue Alerts warten, bis du fortsetzt';
@@ -314,7 +314,7 @@ $('#alerts-pause').onclick = async () => {
   try {
     const status = await api(`${BASE}/alerts/pause`, { paused: !$('#alerts-pause').classList.contains('on') });
     renderAlerts(status);
-    toast(status.paused ? '⏸ Alerts pausiert' : '▶ Alerts laufen wieder', 'ok');
+    toast(status.paused ? 'Alerts pausiert' : 'Alerts laufen wieder', 'ok');
   } catch (err) {
     toast(err.message, 'err');
   }

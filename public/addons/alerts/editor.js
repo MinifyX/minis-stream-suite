@@ -1,16 +1,16 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/alerts';
 
 // ============================================================ Stammdaten
 
 const CATEGORIES = {
-  follow: { icon: '💜', name: 'Follows', vars: ['user'], sample: { user: 'maxart' }, userMessage: '' },
-  sub: { icon: '⭐', name: 'Abos', vars: ['user', 'tier', 'months'], sample: { user: 'maxart', tier: '1', months: 12 }, userMessage: 'Schon ein Jahr dabei!' },
-  giftsub: { icon: '🎁', name: 'Verschenkte Abos', vars: ['user', 'tier', 'count'], sample: { user: 'maxart', tier: '1', count: 5 }, userMessage: '' },
-  cheer: { icon: '💎', name: 'Bits', vars: ['user', 'bits'], sample: { user: 'maxart', bits: 500 }, userMessage: 'Cheer500 GG!' },
-  raid: { icon: '🚀', name: 'Raids', vars: ['user', 'viewers'], sample: { user: 'maxart', viewers: 42 }, userMessage: '' },
-  hypetrain: { icon: '🚂', name: 'Hype Train', vars: ['level', 'total', 'top', 'type'], sample: { user: 'maxart', level: 3, total: 4200, top: 'maxart', type: 'Hype Train' }, userMessage: '' },
-  redemption: { icon: '✨', name: 'Kanalpunkte', vars: ['user', 'reward', 'cost'], sample: { user: 'maxart', reward: 'Hydrate!', cost: 500 }, userMessage: 'Text vom Zuschauer' },
+  follow: { icon: () => icon('heart'), name: 'Follows', vars: ['user'], sample: { user: 'maxart' }, userMessage: '' },
+  sub: { icon: () => icon('star'), name: 'Abos', vars: ['user', 'tier', 'months'], sample: { user: 'maxart', tier: '1', months: 12 }, userMessage: 'Schon ein Jahr dabei!' },
+  giftsub: { icon: () => icon('gift'), name: 'Verschenkte Abos', vars: ['user', 'tier', 'count'], sample: { user: 'maxart', tier: '1', count: 5 }, userMessage: '' },
+  cheer: { icon: () => icon('gem'), name: 'Bits', vars: ['user', 'bits'], sample: { user: 'maxart', bits: 500 }, userMessage: 'Cheer500 GG!' },
+  raid: { icon: () => icon('rocket'), name: 'Raids', vars: ['user', 'viewers'], sample: { user: 'maxart', viewers: 42 }, userMessage: '' },
+  hypetrain: { icon: () => icon('train-front'), name: 'Hype Train', vars: ['level', 'total', 'top', 'type'], sample: { user: 'maxart', level: 3, total: 4200, top: 'maxart', type: 'Hype Train' }, userMessage: '' },
+  redemption: { icon: () => icon('sparkles'), name: 'Kanalpunkte', vars: ['user', 'reward', 'cost'], sample: { user: 'maxart', reward: 'Hydrate!', cost: 500 }, userMessage: 'Text vom Zuschauer' },
 };
 const HAS_USER_MESSAGE = ['sub', 'cheer', 'redemption'];
 
@@ -19,15 +19,15 @@ const ANIM_OUT = [['fade', 'Ausblenden'], ['slide-up', 'Nach oben'], ['slide-dow
 const WEIGHTS = [[400, 'Normal'], [500, 'Medium'], [600, 'Halbfett'], [700, 'Fett'], [800, 'Extrafett'], [900, 'Black']];
 
 // Kleine Symbole für Layout und Ausrichtung
-const icon = (inner, vb = '0 0 40 28') => `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${inner}</svg>`;
+const layoutSvg = (inner, vb = '0 0 40 28') => `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${inner}</svg>`;
 const IMG = (x, y, w, hh) => `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="2"/><path d="M${x + 2} ${y + hh - 2} l${w * 0.3} ${-hh * 0.45} l${w * 0.25} ${hh * 0.3} l${w * 0.15} ${-hh * 0.15} l${w * 0.3 - 4} ${hh * 0.3}" stroke-width="1.5"/>`;
 const LINES = (x, y, w, n) => Array.from({ length: n }, (_, i) => `<line x1="${x}" y1="${y + i * 5}" x2="${x + w - (i % 2) * 5}" y2="${y + i * 5}"/>`).join('');
 const LAYOUTS = [
-  ['image-left', 'Bild links', icon(IMG(3, 7, 14, 14) + LINES(21, 10, 16, 3))],
-  ['image-right', 'Bild rechts', icon(IMG(23, 7, 14, 14) + LINES(3, 10, 16, 3))],
-  ['image-top', 'Bild oben', icon(IMG(13, 2, 14, 13) + LINES(9, 20, 22, 2))],
-  ['image-bottom', 'Bild unten', icon(LINES(9, 4, 22, 2) + IMG(13, 13, 14, 13))],
-  ['overlay', 'Text auf Bild', icon(IMG(6, 2, 28, 24) + LINES(12, 11, 16, 2))],
+  ['image-left', 'Bild links', layoutSvg(IMG(3, 7, 14, 14) + LINES(21, 10, 16, 3))],
+  ['image-right', 'Bild rechts', layoutSvg(IMG(23, 7, 14, 14) + LINES(3, 10, 16, 3))],
+  ['image-top', 'Bild oben', layoutSvg(IMG(13, 2, 14, 13) + LINES(9, 20, 22, 2))],
+  ['image-bottom', 'Bild unten', layoutSvg(LINES(9, 4, 22, 2) + IMG(13, 13, 14, 13))],
+  ['overlay', 'Text auf Bild', layoutSvg(IMG(6, 2, 28, 24) + LINES(12, 11, 16, 2))],
 ];
 const ALIGN_LINES = {
   left: '<line x1="3" y1="4" x2="19" y2="4"/><line x1="3" y1="9" x2="13" y2="9"/><line x1="3" y1="14" x2="17" y2="14"/>',
@@ -209,7 +209,7 @@ function summary(catId, v) {
     }
     case 'redemption': {
       if (c.rewardMode === 'all') return 'Alle Belohnungen (außer gefilterte)';
-      if (!c.rewardIds.length) return '⚠ Keine Belohnung ausgewählt';
+      if (!c.rewardIds.length) return 'Keine Belohnung ausgewählt';
       const names = c.rewardIds.map((id) => rewardById(id)?.title ?? state.s.rewards[id]?.title ?? 'Unbekannt');
       return names.length <= 2 ? names.join(', ') : `${names[0]}, ${names[1]} +${names.length - 2}`;
     }
@@ -231,10 +231,10 @@ function renderSidebar() {
         renderSidebar();
       },
     },
-    h('span', { class: 'cat-icon' }, meta.icon),
+    h('span', { class: 'cat-icon' }, meta.icon()),
     h('span', { class: 'cat-name' }, meta.name),
     h('span', { class: `badge${active ? ' ok' : ''}`, title: 'aktive / alle Varianten' }, `${active}/${cat.variants.length}`),
-    h('span', { class: 'chev' }, open ? '▲' : '▼'));
+    h('span', { class: 'chev' }, open ? icon('chevron-up') : icon('chevron-down')));
 
     if (!open) return h('div', { class: 'cat' }, head);
 
@@ -242,12 +242,12 @@ function renderSidebar() {
       h('div', { class: 'cat-row' },
         toggle(cat.randomize, (on) => { cat.randomize = on; markDirty({ previewUpdate: false }); }, 'Zufällig'),
         h('span', {}, 'Zufällig abwechseln'),
-        h('span', { class: 'hint', title: 'An: Aus allen passenden aktiven Varianten wird zufällig eine gewählt.\nAus: Die oberste passende Variante gewinnt.' }, 'ⓘ')),
+        h('span', { class: 'hint', title: 'An: Aus allen passenden aktiven Varianten wird zufällig eine gewählt.\nAus: Die oberste passende Variante gewinnt.' }, icon('info'))),
       h('button', { class: 'cat-add', onclick: () => addVariant(catId) }, '＋ Neue Variante'),
       h('div', { class: 'variant-list' }, ...cat.variants.map((v, i) => variantItem(catId, v, i))),
       catId === 'redemption'
         ? h('button', { class: `variant-item filter-item${state.view === 'rewards' ? ' selected' : ''}`, onclick: showRewards },
-          h('span', { class: 'v-num' }, '🔕'),
+          h('span', { class: 'v-num' }, icon('bell-off')),
           h('span', { class: 'v-text' }, h('strong', {}, 'Belohnungs-Filter'), h('small', {}, 'Belohnungen, die nie einen Alert auslösen')))
         : null));
   }));
@@ -345,7 +345,7 @@ function section(id, emoji, title, body) {
         else state.openSections.add(id);
         renderProps();
       },
-    }, h('span', {}, emoji), h('span', { class: 'sec-title' }, title), h('span', { class: 'chev' }, open ? '▲' : '▼')),
+    }, h('span', {}, emoji), h('span', { class: 'sec-title' }, title), h('span', { class: 'chev' }, open ? icon('chevron-up') : icon('chevron-down'))),
     open ? h('div', { class: 'sec-body' }, ...body().filter(Boolean)) : null);
 }
 
@@ -356,7 +356,7 @@ function renderProps() {
     box.replaceChildren(h('div', { class: 'props-empty' },
       h('p', {}, h('b', {}, 'Verlauf')),
       h('p', {}, 'Hier landen alle Follows, Abos, Bits, Raids, Hype Trains (Start, Level-Aufstieg, Ende) und Einlösungen, auch die ohne Alert (z.B. stumme HudFX-Belohnungen).'),
-      h('p', {}, '„▶ Nochmal“ schickt den Alert erneut ans Overlay, mit deinen aktuellen Varianten. Praktisch, wenn ein Alert nicht durchkam oder OBS gerade zu war.'),
+      h('p', {}, '„', icon('play'), ' Nochmal“ schickt den Alert erneut ans Overlay, mit deinen aktuellen Varianten. Praktisch, wenn ein Alert nicht durchkam oder OBS gerade zu war.'),
       h('p', {}, 'Die letzten 200 Events werden gespeichert.')));
     return;
   }
@@ -373,14 +373,14 @@ function renderProps() {
     return;
   }
   box.replaceChildren(
-    section('general', '⚙️', 'Allgemein', () => generalSection(v)),
-    section('layout', '🔲', 'Layout', () => layoutSection(v.design)),
-    section('text', '🔤', 'Text & Sprache', () => textSection(v.design)),
-    section('media', '🖼️', 'Bild & Sound', () => mediaSection(v.design)),
-    section('fx', '🎉', 'Effekte', () => fxSection(v.design)),
-    section('variant', '🗂️', 'Variante', () => [
-      h('button', { class: 'btn block', onclick: duplicateVariant }, '⧉ Variante duplizieren'),
-      h('button', { class: 'btn danger block', onclick: deleteVariant }, '🗑 Variante löschen'),
+    section('general', icon('settings'), 'Allgemein', () => generalSection(v)),
+    section('layout', icon('layout-grid'), 'Layout', () => layoutSection(v.design)),
+    section('text', icon('type'), 'Text & Sprache', () => textSection(v.design)),
+    section('media', icon('image'), 'Bild & Sound', () => mediaSection(v.design)),
+    section('fx', icon('party-popper'), 'Effekte', () => fxSection(v.design)),
+    section('variant', icon('list'), 'Variante', () => [
+      h('button', { class: 'btn block', onclick: duplicateVariant }, icon('copy'), ' Variante duplizieren'),
+      h('button', { class: 'btn danger block', onclick: deleteVariant }, icon('trash-2'), ' Variante löschen'),
     ]),
   );
   box.scrollTop = scroll;
@@ -463,7 +463,7 @@ function rewardConditionFields(c) {
           },
         }),
         h('span', {}, r.title),
-        r.alert ? null : h('span', { title: 'Im Belohnungs-Filter ausgeschaltet – kommt nie' }, '🔕'),
+        r.alert ? null : h('span', { title: 'Im Belohnungs-Filter ausgeschaltet – kommt nie' }, icon('bell-off')),
         h('span', { class: 'cost' }, r.cost.toLocaleString('de-DE')))));
   };
   renderList();
@@ -542,7 +542,7 @@ function ttsFields(tts) {
     tts.readUserMessage && HAS_USER_MESSAGE.includes(state.cat)
       ? h('div', { class: 'warn-note' }, 'Achtung: Zuschauer können damit alles vorlesen lassen, was sie schreiben.')
       : null,
-    h('button', { class: 'btn small', onclick: testVoice }, '🔊 Stimme testen'),
+    h('button', { class: 'btn small', onclick: testVoice }, icon('volume-2'), ' Stimme testen'),
   ].filter(Boolean);
 }
 
@@ -550,7 +550,7 @@ function mediaThumb(ref) {
   const thumb = h('div', { class: 'media-thumb' });
   if (!ref) thumb.textContent = '—';
   else if (ref.source === 'builtin' && ref.kind !== 'audio') thumb.innerHTML = AlertLibrary.images[ref.id]?.svg ?? '';
-  else if (ref.kind === 'audio') thumb.textContent = '🎵';
+  else if (ref.kind === 'audio') thumb.replaceChildren(icon('music'));
   else if (ref.kind === 'video') thumb.append(h('video', { src: `/addon-data/alerts/media/${encodeURIComponent(ref.id)}`, muted: true, autoplay: true, loop: true }));
   else thumb.append(h('img', { src: `/addon-data/alerts/media/${encodeURIComponent(ref.id)}`, alt: '' }));
   return thumb;
@@ -560,27 +560,27 @@ function mediaSection(d) {
   const imageCard = h('div', { class: 'media-card' },
     mediaThumb(d.image),
     h('span', { class: 'media-name' }, d.image ? d.image.name : 'Kein Bild'),
-    d.image ? h('button', { class: 'icon-btn', title: 'Bild entfernen', onclick: () => { d.image = null; markDirty({ props: true }); } }, '✕') : null);
+    d.image ? h('button', { class: 'icon-btn', title: 'Bild entfernen', 'aria-label': 'Bild entfernen', onclick: () => { d.image = null; markDirty({ props: true }); } }, icon('x')) : null);
 
   const soundCard = h('div', { class: 'media-card' },
     mediaThumb(d.sound),
     h('span', { class: 'media-name' }, d.sound ? d.sound.name : 'Kein Sound'),
-    d.sound ? h('button', { class: 'icon-btn', title: 'Anhören', onclick: () => playSoundRef(d.sound, d.soundVolume) }, '▶') : null,
-    d.sound ? h('button', { class: 'icon-btn', title: 'Sound entfernen', onclick: () => { d.sound = null; markDirty({ props: true, previewUpdate: false }); } }, '✕') : null);
+    d.sound ? h('button', { class: 'icon-btn', title: 'Anhören', 'aria-label': 'Anhören', onclick: () => playSoundRef(d.sound, d.soundVolume) }, icon('play')) : null,
+    d.sound ? h('button', { class: 'icon-btn', title: 'Sound entfernen', 'aria-label': 'Sound entfernen', onclick: () => { d.sound = null; markDirty({ props: true, previewUpdate: false }); } }, icon('x')) : null);
 
   return [
     subHead('BILD / VIDEO'),
     imageCard,
     row2(
-      h('button', { class: 'btn small block', onclick: () => uploadInto(d, 'image') }, '⬆ Hochladen'),
-      h('button', { class: 'btn small block', onclick: () => openLibrary(d, 'image') }, '📚 Bibliothek')),
+      h('button', { class: 'btn small block', onclick: () => uploadInto(d, 'image') }, icon('upload'), ' Hochladen'),
+      h('button', { class: 'btn small block', onclick: () => openLibrary(d, 'image') }, icon('library'), ' Bibliothek')),
     field('Größe (% der Höhe)', slider(d.imageSize, 5, 100, (val) => { d.imageSize = val; markDirty(); })),
     d.image?.kind === 'video' ? field('Video-Lautstärke', slider(d.imageVolume, 0, 100, (val) => { d.imageVolume = val; markDirty({ previewUpdate: false }); })) : null,
     subHead('SOUND'),
     soundCard,
     row2(
-      h('button', { class: 'btn small block', onclick: () => uploadInto(d, 'sound') }, '⬆ Hochladen'),
-      h('button', { class: 'btn small block', onclick: () => openLibrary(d, 'sound') }, '📚 Bibliothek')),
+      h('button', { class: 'btn small block', onclick: () => uploadInto(d, 'sound') }, icon('upload'), ' Hochladen'),
+      h('button', { class: 'btn small block', onclick: () => openLibrary(d, 'sound') }, icon('library'), ' Bibliothek')),
     field('Lautstärke', slider(d.soundVolume, 0, 100, (val) => { d.soundVolume = val; markDirty({ previewUpdate: false }); })),
     h('div', { class: 'note' }, 'Bilder: PNG, JPG, GIF, WebP · Videos: WebM (mit Transparenz), MP4 · Sounds: MP3, WAV, OGG. Deine Dateien bleiben auf deinem PC.'),
   ];
@@ -673,14 +673,14 @@ function openLibrary(d, slot) {
       const ref = { source: 'builtin', id, name: item.name, kind: isImage ? 'image' : 'audio' };
       const previewBox = h('div', { class: 'lib-preview' });
       if (isImage) previewBox.innerHTML = item.svg;
-      else previewBox.append(h('button', { class: 'btn small', onclick: (e) => { e.stopPropagation(); AlertLibrary.playSound(id, d.soundVolume); } }, '▶ Anhören'));
+      else previewBox.append(h('button', { class: 'btn small', onclick: (e) => { e.stopPropagation(); AlertLibrary.playSound(id, d.soundVolume); } }, icon('play'), ' Anhören'));
       return h('div', { class: `lib-tile${isCurrent('builtin', id) ? ' selected' : ''}`, onclick: () => choose(ref) }, previewBox, h('span', { class: 'lib-name' }, item.name));
     });
 
     const files = state.media.filter((f) => (isImage ? f.kind !== 'audio' : f.kind === 'audio')).map((f) =>
       h('div', { class: `lib-tile${isCurrent('file', f.id) ? ' selected' : ''}`, onclick: () => choose(fileRef(f)) },
         h('button', {
-          class: 'icon-btn', title: 'Datei löschen',
+          class: 'icon-btn', title: 'Datei löschen', 'aria-label': 'Datei löschen',
           onclick: async (e) => {
             e.stopPropagation();
             if (!confirm(`„${f.name}“ löschen? Varianten, die sie benutzen, zeigen dann nichts mehr an.`)) return;
@@ -692,23 +692,23 @@ function openLibrary(d, slot) {
               toast(err.message, 'err');
             }
           },
-        }, '🗑'),
+        }, icon('trash-2')),
         h('div', { class: 'lib-preview' },
-          isImage ? mediaThumb(fileRef(f)).firstChild ?? '' : h('button', { class: 'btn small', onclick: (e) => { e.stopPropagation(); playSoundRef(fileRef(f), d.soundVolume); } }, '▶ Anhören')),
+          isImage ? mediaThumb(fileRef(f)).firstChild ?? '' : h('button', { class: 'btn small', onclick: (e) => { e.stopPropagation(); playSoundRef(fileRef(f), d.soundVolume); } }, icon('play'), ' Anhören')),
         h('span', { class: 'lib-name', title: f.name }, f.name)));
 
     host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
       h('div', { class: 'modal' },
         h('div', { class: 'modal-head' },
-          h('h2', {}, isImage ? '📚 Bild-Bibliothek' : '📚 Sound-Bibliothek'),
+          h('h2', {}, isImage ? [icon('library'), ' Bild-Bibliothek'] : [icon('library'), ' Sound-Bibliothek']),
           h('button', {
             class: 'btn small',
             onclick: async () => {
               const file = await uploadFile(slot);
               if (file) render();
             },
-          }, '⬆ Hochladen'),
-          h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+          }, icon('upload'), ' Hochladen'),
+          h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
         h('div', { class: 'modal-body' },
           subHead('EINGEBAUT'),
           h('div', { class: 'lib-grid' }, ...builtins),
@@ -962,9 +962,9 @@ function renderRewardsView() {
             ...r.groups.map(groupById).filter(Boolean).map((g) => h('span', { class: 'badge no-i18n', style: { background: `${g.color}33`, color: '#fff' } }, `${g.icon} ${g.name}`)),
             reasonBadge(r))),
         h('div', { class: 'reward-actions' },
-          r.custom ? h('button', { class: 'btn small', title: 'Auf Standard zurücksetzen', onclick: () => setRewardFilter({ [r.id]: null }) }, '↺') : null,
+          r.custom ? h('button', { class: 'btn small', title: 'Auf Standard zurücksetzen', 'aria-label': 'Auf Standard zurücksetzen', onclick: () => setRewardFilter({ [r.id]: null }) }, icon('rotate-ccw')) : null,
           h('button', { class: 'btn small', title: 'Prüft, ob ein Alert käme, und zeigt ihn im Overlay', onclick: () => testReward(r) }, 'Test'),
-          h('span', { title: r.alert ? 'Alert an' : 'Kein Alert' }, r.alert ? '🔔' : '🔕'),
+          h('span', { title: r.alert ? 'Alert an' : 'Kein Alert' }, r.alert ? icon('bell') : icon('bell-off')),
           toggle(r.alert, (on) => setRewardFilter({ [r.id]: { alert: on, title: r.title } }), `Alert für ${r.title}`)))));
   };
 
@@ -981,7 +981,7 @@ function renderRewardsView() {
   };
 
   box.replaceChildren(
-    h('h2', {}, '🔕 Belohnungs-Filter'),
+    h('h2', {}, icon('bell-off'), ' Belohnungs-Filter'),
     h('p', { class: 'muted' }, 'Hier ausgeschaltete Belohnungen lösen nie einen Alert aus, z.B. HudFX-Belohnungen, damit kein Alert den Jumpscare verrät.'),
     h('div', { class: 'default-row' },
       toggle(state.s.newRewardDefault, async (on) => {
@@ -1003,7 +1003,7 @@ function renderRewardsView() {
       search,
       h('button', { class: 'btn small', onclick: () => setVisible(true) }, 'Angezeigte: Alert an'),
       h('button', { class: 'btn small', onclick: () => setVisible(false) }, 'Angezeigte: Alert aus'),
-      h('button', { class: 'btn small', onclick: loadRewards }, '↻')),
+      h('button', { class: 'btn small', title: 'Neu laden', 'aria-label': 'Neu laden', onclick: loadRewards }, icon('rotate-cw'))),
     list);
   renderList();
 }
@@ -1129,22 +1129,22 @@ async function clearHistory() {
 function historyRow(entry) {
   const [who, what] = historyText(entry.event);
   const status = entry.variant
-    ? h('span', { class: 'badge ok', title: 'Diese Variante kam' }, `🔔 ${entry.variant}`)
+    ? h('span', { class: 'badge ok', title: 'Diese Variante kam' }, icon('bell'), ` ${entry.variant}`)
     : entry.reason === 'muted'
-      ? h('span', { class: 'badge', title: 'Belohnung ist im Belohnungs-Filter stumm' }, '🔕 stumm')
-      : h('span', { class: 'badge warn', title: 'Keine aktive Variante passte' }, '⚠ kein Alert');
+      ? h('span', { class: 'badge', title: 'Belohnung ist im Belohnungs-Filter stumm' }, icon('bell-off'), ' stumm')
+      : h('span', { class: 'badge warn', title: 'Keine aktive Variante passte' }, icon('triangle-alert'), ' kein Alert');
   return h('div', { class: `reward-row${entry.variant ? '' : ' silent'}` },
-    h('div', { class: 'reward-img hist-icon' }, CATEGORIES[entry.category]?.icon ?? '•'),
+    h('div', { class: 'reward-img hist-icon' }, CATEGORIES[entry.category]?.icon() ?? '•'),
     h('div', { class: 'reward-info' },
       h('strong', { class: 'no-i18n' }, who), ' ', h('span', { class: 'hist-what' }, what),
       h('div', { class: 'reward-meta' },
         h('span', { class: 'muted', title: new Date(entry.at).toLocaleString('de-DE') }, timeAgo(entry.at)),
-        entry.event.test ? h('span', { class: 'badge accent' }, '🧪 Test') : null,
+        entry.event.test ? h('span', { class: 'badge accent' }, icon('flask-conical'), ' Test') : null,
         status)),
     h('div', { class: 'reward-actions' },
       entry.reason === 'muted'
-        ? h('button', { class: 'btn small', title: 'Die Belohnung ist stumm. Trotzdem mit der ersten passenden Variante zeigen?', onclick: () => replay(entry, true) }, '▶ Trotzdem zeigen')
-        : h('button', { class: 'btn small', title: 'Alert nochmal ans Overlay schicken', onclick: () => replay(entry) }, '▶ Nochmal')));
+        ? h('button', { class: 'btn small', title: 'Die Belohnung ist stumm. Trotzdem mit der ersten passenden Variante zeigen?', onclick: () => replay(entry, true) }, icon('play'), ' Trotzdem zeigen')
+        : h('button', { class: 'btn small', title: 'Alert nochmal ans Overlay schicken', onclick: () => replay(entry) }, icon('play'), ' Nochmal')));
 }
 
 function renderHistoryView() {
@@ -1160,15 +1160,15 @@ function renderHistoryView() {
   } else content = h('div', { class: 'hist-list' }, ...list.map(historyRow));
 
   $('#history-view').replaceChildren(
-    h('h2', {}, '🕘 Verlauf'),
+    h('h2', {}, icon('history'), ' Verlauf'),
     h('p', { class: 'muted' }, 'Die letzten Events mit Alert. Kam ein Alert nicht durch, schick ihn hier nochmal ans Overlay.'),
     h('div', { class: 'toolbar' },
       h('label', { class: 'hist-opt' },
         toggle(state.historyHideMuted, (on) => { state.historyHideMuted = on; renderHistoryView(); }, 'Stumme ausblenden'),
         h('span', {}, 'Stumme Belohnungen ausblenden')),
       h('span', { class: 'spacer' }),
-      h('button', { class: 'btn small', title: 'Neu laden', onclick: loadHistory }, '↻'),
-      h('button', { class: 'btn small', disabled: !all.length, onclick: clearHistory }, '🗑 Leeren')),
+      h('button', { class: 'btn small', title: 'Neu laden', 'aria-label': 'Neu laden', onclick: loadHistory }, icon('rotate-cw')),
+      h('button', { class: 'btn small', disabled: !all.length, onclick: clearHistory }, icon('trash-2'), ' Leeren')),
     content);
 }
 

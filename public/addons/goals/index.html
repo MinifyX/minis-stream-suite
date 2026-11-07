@@ -9,19 +9,19 @@
 <body>
   <div class="page">
     <header class="head">
-      <h1>🎯 Ziele & Events</h1>
+      <h1><span data-icon="target"></span> Ziele & Events</h1>
       <span class="spacer"></span>
       <span class="save-state" id="save-state"></span>
     </header>
 
     <p class="login-note" id="login-note" hidden>
-      ⚠️ Nicht mit Twitch verbunden: Follower- und Abo-Zahlen können nicht geladen werden und Events kommen erst nach dem Verbinden an.
+      <span data-icon="triangle-alert"></span> Nicht mit Twitch verbunden: Follower- und Abo-Zahlen können nicht geladen werden und Events kommen erst nach dem Verbinden an.
       Eigene Zähler funktionieren trotzdem.
     </p>
 
     <nav class="tabs" id="tabs">
-      <button data-tab="goals" class="active">🎯 Ziele</button>
-      <button data-tab="recent">🕘 Letzte Events</button>
+      <button data-tab="goals" class="active"><span data-icon="target"></span> Ziele</button>
+      <button data-tab="recent"><span data-icon="history"></span> Letzte Events</button>
     </nav>
 
     <!-- ============================================================ Ziele -->
@@ -31,7 +31,7 @@
           <h2>Deine Ziele</h2>
           <span class="spacer"></span>
           <span class="note" id="refresh-info"></span>
-          <button class="btn small" id="refresh">↻ Von Twitch aktualisieren</button>
+          <button class="btn small" id="refresh"><span data-icon="rotate-cw"></span> Von Twitch aktualisieren</button>
           <button class="btn small primary" id="add-goal">+ Neues Ziel</button>
         </div>
         <div class="type-picker" id="type-picker" hidden></div>
@@ -55,8 +55,8 @@
             <p class="note">In OBS: Quelle hinzufügen → <b>Browser</b> → URL einfügen. Jedes Ziel hat seine eigene URL.
               Größe z.B. <span id="goal-size-hint">650 × 150</span>.</p>
             <div class="btn-row">
-              <button class="btn small" id="goal-test-step">🧪 Schritt testen</button>
-              <button class="btn small" id="goal-test-celebrate">🎉 Feier testen</button>
+              <button class="btn small" id="goal-test-step"><span data-icon="flask-conical"></span> Schritt testen</button>
+              <button class="btn small" id="goal-test-celebrate"><span data-icon="party-popper"></span> Feier testen</button>
             </div>
             <p class="note">Tests (auch die Test-Buttons der Alerts) bewegen die Overlays kurz mit, zählen aber nicht:
               nach 8 Sekunden steht wieder der echte Stand da.</p>
@@ -84,7 +84,7 @@
             </div>
             <p class="note">In OBS: Quelle hinzufügen → <b>Browser</b> → URL einfügen, z.B. 1200 × 120 (Leiste) oder 400 × 450 (Liste).</p>
             <div class="btn-row">
-              <button class="btn small" id="recent-test">🧪 Test-Events zeigen</button>
+              <button class="btn small" id="recent-test"><span data-icon="flask-conical"></span> Test-Events zeigen</button>
             </div>
             <p class="note">Test-Events erscheinen 8 Sekunden lang im Overlay und werden nicht gespeichert.</p>
           </div>

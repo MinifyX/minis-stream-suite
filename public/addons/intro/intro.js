@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/intro';
 
 const CHAIN = [
@@ -130,7 +130,7 @@ function renderControl() {
 
   const triggerLabel = { go: 'Go', outro: 'Outro' }[intro.pendingTrigger];
   $('#pending').replaceChildren(...(intro.pendingTrigger
-    ? [h('span', { class: 'pending-badge' }, `⏳ „${triggerLabel}“ vorgemerkt`,
+    ? [h('span', { class: 'pending-badge' }, icon('hourglass'), ` „${triggerLabel}“ vorgemerkt`,
       h('button', { onclick: () => command('cancel-pending') }, 'zurücknehmen'))]
     : []));
   renderCountdown();
@@ -141,14 +141,14 @@ function renderControl() {
     class: `btn cmd${hot === action ? ' hot' : ''}${extra}`,
     disabled,
     onclick: () => command(action),
-  }, label, h('small', {}, hint));
+  }, h('span', {}, label), h('small', {}, hint));
   $('#commands').replaceChildren(
-    btn('start', '▶ Start', 'Sequenz starten'),
-    btn('go', '⏭ Go', 'nach Loop 1'),
-    btn('outro', '🏁 Outro', 'nach Loop 2'),
-    btn('cancel-pending', '↩ Zurücknehmen', 'Trigger verwerfen'),
-    btn('abort', '⛔ Abort', 'Notausstieg', ' danger'),
-    btn('reset', '⟲ Reset', 'zurück auf Anfang'),
+    btn('start', [icon('play'), ' Start'], 'Sequenz starten'),
+    btn('go', [icon('skip-forward'), ' Go'], 'nach Loop 1'),
+    btn('outro', [icon('flag'), ' Outro'], 'nach Loop 2'),
+    btn('cancel-pending', [icon('undo-2'), ' Zurücknehmen'], 'Trigger verwerfen'),
+    btn('abort', [icon('ban'), ' Abort'], 'Notausstieg', ' danger'),
+    btn('reset', [icon('rotate-ccw'), ' Reset'], 'zurück auf Anfang'),
   );
 
   const hints = {
@@ -183,7 +183,7 @@ function renderPlayer() {
   }
 
   $('#player-detail').replaceChildren(...[
-    player.connected > 1 ? h('p', { class: 'warn-note' }, `⚠ ${player.connected} Player verbunden – das Intro läuft in jedem davon. Bitte nur eine Browserquelle offen lassen.`) : null,
+    player.connected > 1 ? h('p', { class: 'warn-note' }, icon('triangle-alert'), ` ${player.connected} Player verbunden – das Intro läuft in jedem davon. Bitte nur eine Browserquelle offen lassen.`) : null,
     player.error ? h('p', { class: 'err-note no-i18n' }, player.error) : null,
   ].filter(Boolean));
 }
@@ -207,7 +207,7 @@ function renderMedia() {
 
   $('#missing').replaceChildren(...(s.missingFiles.length
     ? [h('div', { class: 'missing' }, h('b', {}, `Fehlt im Ordner (${s.missingFiles.length}):`), ...s.missingFiles.map((f) => h('span', { class: 'no-i18n' }, `• ${f}`)))]
-    : [h('p', { class: 'note' }, '✓ Alle Dateien gefunden.')]));
+    : [h('p', { class: 'note' }, icon('check'), ' Alle Dateien gefunden.')]));
 }
 
 async function saveMedia() {
@@ -309,10 +309,10 @@ function renderWebhooks() {
 // ============================================================ Log
 
 function renderLog() {
-  const icons = { info: 'ℹ️', warn: '⚠️', error: '❌' };
+  const icons = { info: () => icon('info'), warn: () => icon('triangle-alert'), error: () => icon('circle-x') };
   const rows = state.s.log.map((e) => h('div', { class: `l-row ${e.level}` },
     h('span', { class: 'l-time' }, new Date(e.ts).toLocaleTimeString().slice(0, 8)),
-    h('span', {}, icons[e.level] ?? ''),
+    h('span', {}, icons[e.level]?.() ?? ''),
     h('span', { class: 'l-text no-i18n' }, e.message)));
   $('#log').replaceChildren(...(rows.length ? rows : [h('div', { class: 'log-empty' }, 'Noch nichts passiert.')]));
 }

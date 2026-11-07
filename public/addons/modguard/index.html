@@ -10,7 +10,7 @@
 <body>
   <div class="page">
     <header class="title-row">
-      <h1>🛡️ Spam-Schutz</h1>
+      <h1><span data-icon="shield"></span> Spam-Schutz</h1>
       <span class="spacer"></span>
       <label class="head-toggle" id="dry-toggle"></label>
     </header>
@@ -20,20 +20,20 @@
     <div class="layout">
       <main>
         <section class="card">
-          <h2>📋 Regeln</h2>
+          <h2><span data-icon="clipboard-list"></span> Regeln</h2>
           <div id="rules" class="rules"></div>
         </section>
         <section class="card">
-          <h2>📈 Eskalation</h2>
+          <h2><span data-icon="trending-up"></span> Eskalation</h2>
           <div id="escalation"></div>
         </section>
         <section class="card">
-          <h2>🙋 Ausnahmen &amp; !permit</h2>
+          <h2><span data-icon="hand"></span> Ausnahmen &amp; !permit</h2>
           <div id="exempt"></div>
         </section>
         <section class="card">
           <div class="card-head">
-            <h2>📜 Protokoll</h2>
+            <h2><span data-icon="scroll-text"></span> Protokoll</h2>
             <span class="spacer"></span>
             <button class="btn small" id="log-clear">Leeren</button>
           </div>
@@ -44,7 +44,7 @@
 
       <aside>
         <section class="card">
-          <h2>🧪 Testen</h2>
+          <h2><span data-icon="flask-conical"></span> Testen</h2>
           <p class="note">Prüft eine Nachricht mit den <b>gespeicherten</b> Einstellungen. Es wird nichts gesendet, gelöscht oder an Twitch geschickt. Twitch-Emotes erkennt der Test nicht (Emojis schon).</p>
           <div class="f-row">
             <div class="field"><label>Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
@@ -67,7 +67,7 @@
           <div id="test-log" class="test-log"></div>
         </section>
         <section class="card">
-          <h2>💬 Im Chat</h2>
+          <h2><span data-icon="message-circle"></span> Im Chat</h2>
           <div id="chat-help" class="help"></div>
         </section>
       </aside>

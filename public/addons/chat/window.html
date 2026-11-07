@@ -10,25 +10,25 @@
 <body>
   <div class="cw">
     <header class="cw-head">
-      <span class="cw-title">💬 <span id="channel">Chat</span></span>
+      <span class="cw-title"><span data-icon="message-circle"></span> <span id="channel">Chat</span></span>
       <span class="spacer"></span>
       <button class="cw-btn" id="font-down" title="Schrift kleiner">A−</button>
       <button class="cw-btn" id="font-up" title="Schrift größer">A+</button>
-      <button class="cw-btn" id="alerts-pause" title="Alerts pausieren: neue Alerts warten, bis du fortsetzt" hidden>⏸</button>
-      <button class="cw-btn" id="alerts-skip" title="Laufenden Alert im Overlay überspringen" hidden>⏭</button>
-      <button class="cw-btn" id="filter" title="Welche Events angezeigt werden">🔔</button>
-      <button class="cw-btn" id="pin" title="Immer im Vordergrund">📌</button>
+      <button class="cw-btn" id="alerts-pause" title="Alerts pausieren: neue Alerts warten, bis du fortsetzt" aria-label="Alerts pausieren" hidden><span data-icon="pause"></span></button>
+      <button class="cw-btn" id="alerts-skip" title="Laufenden Alert im Overlay überspringen" aria-label="Laufenden Alert überspringen" hidden><span data-icon="skip-forward"></span></button>
+      <button class="cw-btn" id="filter" title="Welche Events angezeigt werden" aria-label="Event-Filter"><span data-icon="bell"></span></button>
+      <button class="cw-btn" id="pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund"><span data-icon="pin"></span></button>
     </header>
     <div class="cw-filter" id="filter-menu" hidden></div>
 
     <div class="cw-list" id="list"></div>
-    <button class="cw-more" id="more" hidden>⏬ Neue Nachrichten</button>
+    <button class="cw-more" id="more" hidden><span data-icon="chevrons-down"></span> Neue Nachrichten</button>
 
     <footer class="cw-foot">
       <div class="cw-reply" id="reply" hidden></div>
       <div class="cw-input-row">
         <textarea id="input" rows="1" maxlength="500" placeholder="Nachricht senden…"></textarea>
-        <button class="cw-send" id="send" title="Senden (Enter)">➤</button>
+        <button class="cw-send" id="send" title="Senden (Enter)" aria-label="Senden"><span data-icon="send"></span></button>
       </div>
     </footer>
   </div>

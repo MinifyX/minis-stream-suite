@@ -195,7 +195,7 @@
       positionMs: Math.round((d.audio.currentTime || 0) * 1000),
       durationMs: Number.isFinite(d.audio.duration) ? Math.round(d.audio.duration * 1000) : 0,
     });
-    if (engine === 'local') setRow('now', playing ? 'ok' : '', d.track ? `${playing ? '▶' : '⏸'} lokal` : '–');
+    if (engine === 'local') setRow('now', playing ? 'ok' : '', d.track ? `${playing ? 'läuft' : 'pausiert'} · lokal` : '–');
   }
   setInterval(() => {
     if (engine === 'local' && deck().track) reportLocal();
@@ -303,7 +303,7 @@
         coverUrl: t.album && t.album.images && t.album.images.length ? t.album.images[0].url : null,
       },
     });
-    if (engine === 'sdk') setRow('now', state.paused ? '' : 'ok', `${state.paused ? '⏸' : '▶'} Spotify`);
+    if (engine === 'sdk') setRow('now', state.paused ? '' : 'ok', `${state.paused ? 'pausiert' : 'läuft'} · Spotify`);
   }
 
   async function initSdk(msg) {

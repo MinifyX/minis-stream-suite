@@ -10,10 +10,10 @@
 <body>
   <div class="page">
     <header class="title-row">
-      <h1>👀 Lurk</h1>
+      <h1><span data-icon="eye"></span> Lurk</h1>
       <span class="spacer"></span>
       <label class="head-toggle" id="enabled-toggle"></label>
-      <button class="btn" id="open-settings">⚙ Einstellungen</button>
+      <button class="btn" id="open-settings"><span data-icon="settings"></span> Einstellungen</button>
     </header>
     <p class="note">Zuschauer schreiben <code>!lurk</code>, wenn sie nur nebenbei zuschauen. Sobald sie wieder etwas in den Chat schreiben, begrüßt die Suite sie automatisch zurück und merkt sich, wie lange sie weg waren.</p>
     <div id="conflict"></div>
@@ -22,7 +22,7 @@
       <main>
         <section class="card">
           <div class="card-head">
-            <h2>🟢 Lurkt gerade</h2>
+            <h2><span class="dot ok"></span> Lurkt gerade</h2>
             <span class="spacer"></span>
             <button class="btn small" id="end-all">Alle beenden</button>
           </div>
@@ -30,7 +30,7 @@
         </section>
         <section class="card">
           <div class="card-head">
-            <h2>🏆 Lurk-Statistik</h2>
+            <h2><span data-icon="trophy"></span> Lurk-Statistik</h2>
             <span class="spacer"></span>
             <input type="search" id="search" placeholder="Suchen…">
             <select id="sort">
@@ -46,7 +46,7 @@
 
       <aside>
         <section class="card">
-          <h2>🧪 Testen</h2>
+          <h2><span data-icon="flask-conical"></span> Testen</h2>
           <p class="note">Simuliert Chat-Nachrichten eines Test-Zuschauers. Nichts wird gesendet oder gespeichert.</p>
           <div class="f-row">
             <div class="field"><label>Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
@@ -60,7 +60,7 @@
           <div id="test-log" class="test-log"></div>
         </section>
         <section class="card">
-          <h2>💬 Im Chat</h2>
+          <h2><span data-icon="message-circle"></span> Im Chat</h2>
           <div id="chat-help" class="help"></div>
         </section>
       </aside>

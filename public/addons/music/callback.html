@@ -13,7 +13,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="big" id="icon">⏳</div>
+    <div class="big" id="icon"><span data-icon="hourglass"></span></div>
     <h2 id="title">Verbinde mit Spotify…</h2>
     <p class="muted" id="text"></p>
   </div>
@@ -22,7 +22,7 @@
     (async () => {
       const params = new URLSearchParams(location.search);
       const show = (icon, title, text) => {
-        document.getElementById('icon').textContent = icon;
+        document.getElementById('icon').replaceChildren(icon);
         document.getElementById('title').textContent = title;
         document.getElementById('text').textContent = text;
       };
@@ -32,11 +32,11 @@
           state: params.get('state'),
           error: params.get('error'),
         });
-        show('✅', 'Mit Spotify verbunden', `${res.user ? `Angemeldet als ${res.user.name}. ` : ''}Du kannst dieses Fenster jetzt schließen.`);
+        show(window.UI.icon('circle-check'), 'Mit Spotify verbunden', `${res.user ? `Angemeldet als ${res.user.name}. ` : ''}Du kannst dieses Fenster jetzt schließen.`);
         // Code nicht in der Adresszeile/History stehen lassen
         history.replaceState(null, '', location.pathname);
       } catch (err) {
-        show('⚠️', 'Login hat nicht geklappt', err.message);
+        show(window.UI.icon('triangle-alert'), 'Login hat nicht geklappt', err.message);
       }
     })();
   </script>

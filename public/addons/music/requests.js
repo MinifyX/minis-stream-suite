@@ -1,6 +1,6 @@
 // Reiter „Songwünsche“: Vorschläge freigeben, Queue sortieren, Regeln, Kanalpunkte, Chat-Texte.
 (() => {
-  const { $, h, api, toast, toggle } = window.UI;
+  const { $, h, api, toast, toggle, icon } = window.UI;
   const BASE = 'addons/music';
 
   const ROLES = [['everyone', 'Alle'], ['subscriber', 'Subs'], ['vip', 'VIPs'], ['moderator', 'Mods'], ['broadcaster', 'Nur du']];
@@ -52,14 +52,14 @@
     }
   }
 
-  const sourceIcon = (r) => ({ chat: '💬', reward: '💜', panel: '🎛' }[r.source] ?? '');
+  const sourceIcon = (r) => ({ chat: icon('message-circle'), reward: icon('heart'), panel: icon('sliders-horizontal') }[r.source] ?? '');
 
   function row(r, actions) {
     const t = r.item;
     return h('div', { class: `req${r.status === 'playing' ? ' playing' : ''}` },
-      t.image ? h('img', { src: t.image, alt: '' }) : h('span', { class: 'track-icon' }, t.kind === 'local' ? '📁' : '🟢'),
+      t.image ? h('img', { src: t.image, alt: '' }) : h('span', { class: 'track-icon' }, t.kind === 'local' ? icon('folder-open') : icon('music')),
       h('div', { class: 'track-main no-i18n' }, h('b', {}, t.title), h('span', {}, t.artists.join(', '))),
-      h('div', { class: 'req-meta' }, h('span', { class: 'no-i18n' }, `${sourceIcon(r)} ${r.user.name}`), h('span', { class: 'note' }, `${fmt(t.durationMs)} · ${ago(r.at)}`)),
+      h('div', { class: 'req-meta' }, h('span', { class: 'no-i18n' }, sourceIcon(r), ` ${r.user.name}`), h('span', { class: 'note' }, `${fmt(t.durationMs)} · ${ago(r.at)}`)),
       h('div', { class: 'req-actions' }, ...actions));
   }
 
@@ -76,27 +76,27 @@
     $('#req-status').textContent = rs.enabled ? `an · ${rs.command}` : 'aus';
     fill($('#req-pending'), pending.length
       ? pending.map((r) => row(r, [
-        h('button', { class: 'btn small primary', title: 'Annehmen', onclick: () => post('requests/approve', { id: r.id }) }, '✓'),
-        h('button', { class: 'btn small', title: 'Ablehnen', onclick: () => post('requests/reject', { id: r.id }) }, '✕'),
+        h('button', { class: 'btn small primary', title: 'Annehmen', 'aria-label': 'Annehmen', onclick: () => post('requests/approve', { id: r.id }) }, icon('check')),
+        h('button', { class: 'btn small', title: 'Ablehnen', 'aria-label': 'Ablehnen', onclick: () => post('requests/reject', { id: r.id }) }, icon('x')),
       ]))
       : h('div', { class: 'empty' }, 'Keine offenen Vorschläge.'));
 
     $('#req-list-info').textContent = list ? `danach eigene Liste „${list.name}“` : '';
     fill($('#req-queue'), queued.length
       ? queued.map((r) => row(r, r.status === 'playing'
-        ? [h('span', { class: 'badge ok' }, '▶ läuft')]
+        ? [h('span', { class: 'badge ok' }, icon('play'), ' läuft')]
         : [
           h('span', { class: 'req-pos' }, `#${r.position}`),
-          r.locked ? h('span', { class: 'badge', title: 'Schon an Spotify übergeben – kommt als Nächstes' }, '🔒') : null,
-          h('button', { class: 'icon-btn', title: 'Nach oben', disabled: r.locked, onclick: () => post('requests/move', { id: r.id, delta: -1 }) }, '↑'),
-          h('button', { class: 'icon-btn', title: 'Nach unten', disabled: r.locked, onclick: () => post('requests/move', { id: r.id, delta: 1 }) }, '↓'),
-          h('button', { class: 'icon-btn', title: 'Entfernen (Kanalpunkte gibt es zurück)', disabled: r.locked, onclick: () => post('requests/reject', { id: r.id, announce: false }) }, '✕'),
+          r.locked ? h('span', { class: 'badge', title: 'Schon an Spotify übergeben – kommt als Nächstes', 'aria-label': 'Schon an Spotify übergeben – kommt als Nächstes' }, icon('lock')) : null,
+          h('button', { class: 'icon-btn', title: 'Nach oben', 'aria-label': 'Nach oben', disabled: r.locked, onclick: () => post('requests/move', { id: r.id, delta: -1 }) }, icon('arrow-up')),
+          h('button', { class: 'icon-btn', title: 'Nach unten', 'aria-label': 'Nach unten', disabled: r.locked, onclick: () => post('requests/move', { id: r.id, delta: 1 }) }, icon('arrow-down')),
+          h('button', { class: 'icon-btn', title: 'Entfernen (Kanalpunkte gibt es zurück)', 'aria-label': 'Entfernen (Kanalpunkte gibt es zurück)', disabled: r.locked, onclick: () => post('requests/reject', { id: r.id, announce: false }) }, icon('x')),
         ]))
       : h('div', { class: 'empty' }, 'Die Queue ist leer.'));
 
-    const statusText = { played: '✓ gespielt', rejected: '✕ abgelehnt', removed: '– entfernt' };
+    const statusText = { played: () => [icon('check'), ' gespielt'], rejected: () => [icon('x'), ' abgelehnt'], removed: () => ['– entfernt'] };
     fill($('#req-history'), history.length
-      ? history.map((r) => row(r, [h('span', { class: 'note' }, statusText[r.status] ?? r.status)]))
+      ? history.map((r) => row(r, [h('span', { class: 'note' }, statusText[r.status]?.() ?? r.status)]))
       : h('div', { class: 'empty' }, 'Noch nichts.'));
 
     // Formulare nur neu bauen, wenn sich die Einstellungen geändert haben (sonst geht beim Tippen der Fokus verloren)
@@ -161,7 +161,7 @@
         rs.rewardId ? h('button', { class: 'btn small', onclick: () => {
           if (confirm('Belohnung bei Twitch löschen?')) post('requests/reward/delete', {}, 'Belohnung gelöscht');
         } }, 'Löschen') : null),
-      rs.rewardId ? h('p', { class: 'note' }, '✓ Belohnung ist angelegt.') : null,
+      rs.rewardId ? h('p', { class: 'note' }, icon('check'), ' Belohnung ist angelegt.') : null,
       h('div', { class: 'opt-row' }, h('span', {}, 'Kanalpunkte-Wünsche direkt in die Queue'), toggle(rs.rewardDirect, (on) => post('requests/settings', { rewardDirect: on }), 'Direkt in die Queue')),
     );
   }
@@ -198,7 +198,7 @@
         h('label', { class: 'opt-row' }, toggle(false, (on) => {
           reward = on;
         }, 'per Kanalpunkte'), h('span', {}, 'per Kanalpunkte'))),
-      h('button', { class: 'btn small', onclick: send }, '🧪 Wunsch schicken'));
+      h('button', { class: 'btn small', onclick: send }, icon('flask-conical'), ' Wunsch schicken'));
   }
 
   $('#req-add').onclick = async () => {

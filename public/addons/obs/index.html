@@ -10,11 +10,11 @@
   <div class="page">
     <header class="head">
       <div class="title-row">
-        <h1>🎬 OBS-Steuerung</h1>
+        <h1><span data-icon="clapperboard"></span> OBS-Steuerung</h1>
         <span id="status-pill" class="status-pill"></span>
         <span class="spacer"></span>
         <span id="kill-switch"></span>
-        <button class="btn" id="stop-all" hidden>⏹ Alles stoppen</button>
+        <button class="btn" id="stop-all" hidden><span data-icon="square"></span> Alles stoppen</button>
         <button class="btn primary" id="new-action">＋ Neue Aktion</button>
       </div>
       <p class="note">Aktionen steuern OBS direkt über den WebSocket-Server: Szene wechseln, Quellen ein- und ausblenden, Filter schalten. Ausgelöst durch Kanalpunkte, Chat-Commands oder Events.</p>
@@ -28,14 +28,14 @@
 
       <aside>
         <section class="card">
-          <h2>🔌 Verbindung</h2>
+          <h2><span data-icon="plug"></span> Verbindung</h2>
           <div id="conn-status" class="conn-status"></div>
           <div id="conn-form"></div>
         </section>
 
         <section class="card">
           <details id="howto">
-            <summary><h2>📖 So schaltest du den WebSocket-Server in OBS ein</h2></summary>
+            <summary><h2><span data-icon="book-open"></span> So schaltest du den WebSocket-Server in OBS ein</h2></summary>
             <ol class="howto">
               <li>OBS öffnen. Ab <b>OBS 28</b> ist der WebSocket-Server schon eingebaut, du musst nichts installieren.</li>
               <li>Oben im Menü auf <b>Werkzeuge → WebSocket-Server-Einstellungen</b> klicken.</li>
@@ -51,7 +51,7 @@
 
         <section class="card">
           <div class="card-head">
-            <h2>🕘 Verlauf</h2>
+            <h2><span data-icon="history"></span> Verlauf</h2>
             <span class="spacer"></span>
             <button class="btn small" id="log-clear" title="Verlauf leeren">Leeren</button>
           </div>

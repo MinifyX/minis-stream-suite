@@ -1,15 +1,15 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/modguard';
 
 /** saved = so wie gespeichert, draft = was gerade bearbeitet wird */
 const state = { saved: null, draft: null, dirty: false, log: [], logKey: '', open: new Set(['links']) };
 
 const RULES = [
-  { id: 'links', name: 'Links', icon: '🔗', desc: 'Links zu fremden Seiten (erlaubte Domains ausgenommen, Mods können mit !permit einen Link erlauben)' },
-  { id: 'caps', name: 'Großbuchstaben', icon: '🔠', desc: 'Nachrichten, die fast nur aus GROSSBUCHSTABEN bestehen (Emotes zählen nicht)' },
-  { id: 'words', name: 'Verbotene Wörter', icon: '🤬', desc: 'Wörter aus deiner Liste, auch leicht versteckt (h.a.s.s, haaass, h4ss)' },
-  { id: 'repeat', name: 'Wiederholungen', icon: '🔁', desc: 'Dieselbe Nachricht mehrmals hintereinander von derselben Person' },
-  { id: 'symbols', name: 'Zeichen & Emotes', icon: '🔣', desc: 'Emote-Wände und Nachrichten voller Sonderzeichen' },
+  { id: 'links', name: 'Links', icon: () => icon('link'), desc: 'Links zu fremden Seiten (erlaubte Domains ausgenommen, Mods können mit !permit einen Link erlauben)' },
+  { id: 'caps', name: 'Großbuchstaben', icon: () => icon('case-upper'), desc: 'Nachrichten, die fast nur aus GROSSBUCHSTABEN bestehen (Emotes zählen nicht)' },
+  { id: 'words', name: 'Verbotene Wörter', icon: () => icon('ban'), desc: 'Wörter aus deiner Liste, auch leicht versteckt (h.a.s.s, haaass, h4ss)' },
+  { id: 'repeat', name: 'Wiederholungen', icon: () => icon('repeat'), desc: 'Dieselbe Nachricht mehrmals hintereinander von derselben Person' },
+  { id: 'symbols', name: 'Zeichen & Emotes', icon: () => icon('smile'), desc: 'Emote-Wände und Nachrichten voller Sonderzeichen' },
 ];
 const RULE_NAME = Object.fromEntries(RULES.map((r) => [r.id, r.name]));
 const ACTIONS = { delete: 'Nur löschen', timeout: 'Löschen + Timeout', warn: 'Nur Warnung im Chat' };
@@ -71,7 +71,7 @@ async function setDryRun(on) {
     state.saved.dryRun = data.settings.dryRun;
     state.draft.dryRun = data.settings.dryRun;
     renderDryRun();
-    toast(on ? 'Nur testen: es wird nichts mehr gelöscht' : 'Spam-Schutz ist jetzt scharf geschaltet 🛡️', 'ok');
+    toast(on ? 'Nur testen: es wird nichts mehr gelöscht' : 'Spam-Schutz ist jetzt scharf geschaltet', 'ok');
   } catch (err) {
     toast(err.message, 'err');
     renderDryRun(true);
@@ -133,7 +133,7 @@ function renderDryRun(force = false) {
     box.replaceChildren(toggle(on, setDryRun, 'Nur testen'), 'Nur testen');
   }
   $('#dry-banner').replaceChildren(...(on
-    ? [h('div', { class: 'dry-banner' }, '🧪 „Nur testen“ ist an: Es wird nichts gelöscht, niemand getimeoutet und keine Warnung gesendet. Im Protokoll siehst du, was passiert wäre. Wenn alles passt, schalte oben rechts „Nur testen“ aus.')]
+    ? [h('div', { class: 'dry-banner' }, icon('flask-conical'), ' „Nur testen“ ist an: Es wird nichts gelöscht, niemand getimeoutet und keine Warnung gesendet. Im Protokoll siehst du, was passiert wäre. Wenn alles passt, schalte oben rechts „Nur testen“ aus.')]
     : []));
 }
 
@@ -158,9 +158,9 @@ function renderRules() {
     return h('div', { class: `rule${rule.enabled ? '' : ' off'}` },
       h('div', { class: 'rule-head' },
         toggle(rule.enabled, (on) => { rule.enabled = on; changed(); rerender(); }, `${meta.name} an/aus`),
-        h('div', { class: 'rule-title', onclick: flip }, h('b', {}, `${meta.icon} ${meta.name}`), h('span', {}, meta.desc)),
+        h('div', { class: 'rule-title', onclick: flip }, h('b', {}, meta.icon(), ` ${meta.name}`), h('span', {}, meta.desc)),
         actionSummary(rule),
-        h('button', { class: 'icon-btn', title: open ? 'Zuklappen' : 'Einstellungen', onclick: flip }, open ? '▾' : '▸')),
+        h('button', { class: 'icon-btn', title: open ? 'Zuklappen' : 'Einstellungen', 'aria-label': open ? 'Zuklappen' : 'Einstellungen', onclick: flip }, open ? icon('chevron-down') : icon('chevron-right'))),
       open ? h('div', { class: 'rule-body' }, ...ruleFields(meta.id, rule, rerender)) : null);
   }));
 }
@@ -267,7 +267,7 @@ function actionBadge(e) {
   if (e.dryRun) text = `nur Test: ${e.action === 'timeout' ? `Timeout ${fmtSec(e.seconds)}` : e.action === 'delete' ? 'löschen' : 'Warnung'}`;
   const cls = e.error ? 'err' : e.undone ? '' : e.dryRun ? 'accent' : e.action === 'timeout' ? 'err' : e.action === 'warn' ? 'warn' : 'ok';
   return [
-    h('span', { class: `badge ${cls}`, title: e.error || '' }, e.error ? `⚠ ${text}` : e.undone ? `${text} (aufgehoben)` : text),
+    h('span', { class: `badge ${cls}`, title: e.error || '' }, e.error ? [icon('triangle-alert'), ` ${text}`] : e.undone ? `${text} (aufgehoben)` : text),
     e.strike ? h('span', { class: 'reason' }, ` ${e.strike}. Verstoß`) : null,
   ];
 }
@@ -301,7 +301,7 @@ function renderLog() {
   const box = $('#log');
   $('#log-clear').hidden = !state.log.length;
   if (!state.log.length) {
-    box.replaceChildren(h('div', { class: 'empty' }, 'Noch nichts passiert. 🎉'));
+    box.replaceChildren(h('div', { class: 'empty' }, 'Noch nichts passiert.'));
     return;
   }
   box.replaceChildren(h('table', { class: 'log' },
@@ -313,15 +313,15 @@ function renderLog() {
         h('td', {}, RULE_NAME[e.rule] ?? e.rule, h('div', { class: 'reason' }, e.reason)),
         h('td', { class: 'msg' },
           h('div', { class: 'excerpt no-i18n', title: e.excerpt }, e.excerpt),
-          e.warning ? h('div', { class: 'warning', title: 'Warnung im Chat' }, `💬 ${e.warning}`) : null),
+          e.warning ? h('div', { class: 'warning', title: 'Warnung im Chat' }, icon('message-circle'), ` ${e.warning}`) : null),
         h('td', {}, ...actionBadge(e)),
         h('td', { class: 'act' },
           e.action === 'timeout' && !e.dryRun && !e.undone && !e.error
-            ? h('button', { class: 'icon-btn', title: 'Timeout aufheben', onclick: () => undo(e) }, '↩')
+            ? h('button', { class: 'icon-btn', title: 'Timeout aufheben', 'aria-label': 'Timeout aufheben', onclick: () => undo(e) }, icon('undo-2'))
             : null,
           !state.saved || state.saved.allowUsers.includes(e.login.toLowerCase())
             ? null
-            : h('button', { class: 'icon-btn', title: 'Auf die Erlaubt-Liste (Fehlalarm)', onclick: () => allow(e) }, '✓')))))));
+            : h('button', { class: 'icon-btn', title: 'Auf die Erlaubt-Liste (Fehlalarm)', 'aria-label': 'Auf die Erlaubt-Liste (Fehlalarm)', onclick: () => allow(e) }, icon('check'))))))));
 }
 
 async function pollLog() {
@@ -348,18 +348,18 @@ async function runTest(message) {
     const r = await api(`${BASE}/test`, { user, role: $('#test-role').value, permit: $('#test-permit').checked, message: text });
     let out;
     if (r.exempt) {
-      out = h('div', { class: 'out' }, h('div', {}, `✅ Ausgenommen: ${r.exempt}`));
+      out = h('div', { class: 'out' }, h('div', {}, icon('circle-check'), ` Ausgenommen: ${r.exempt}`));
     } else if (!r.hit) {
       out = h('div', { class: 'out' },
-        h('div', {}, '✅ Kein Treffer – die Nachricht bleibt stehen.'),
+        h('div', {}, icon('circle-check'), ' Kein Treffer – die Nachricht bleibt stehen.'),
         r.usedPermit ? h('div', {}, 'Link erlaubt durch !permit (wäre damit verbraucht).') : null);
     } else {
       const d = r.decision;
       const what = d.action === 'timeout' ? `Löschen + Timeout ${fmtSec(d.seconds)}` : d.action === 'delete' ? 'Löschen' : 'Nur Warnung';
       out = h('div', { class: `out ${d.action === 'warn' ? 'warn' : 'hit'}` },
-        h('div', {}, `🛡️ ${r.hit.ruleName}: ${r.hit.reason}`),
+        h('div', {}, icon('shield'), ` ${r.hit.ruleName}: ${r.hit.reason}`),
         h('div', {}, `→ ${what}${d.strike ? ` (${d.strike}. Verstoß)` : ''}`),
-        r.warning ? h('div', { class: 'no-i18n' }, `💬 ${r.warning}`) : null,
+        r.warning ? h('div', { class: 'no-i18n' }, icon('message-circle'), ` ${r.warning}`) : null,
         r.dryRun ? h('div', {}, '„Nur testen“ ist an: im echten Chat würde das nur ins Protokoll kommen.') : null);
     }
     $('#test-log').prepend(h('div', {}, h('div', { class: 'in no-i18n' }, h('b', {}, user), `: ${text}`), out));
@@ -384,7 +384,7 @@ function renderQuickTests() {
         $('#test-log').replaceChildren();
         toast('Test zurückgesetzt', 'ok');
       },
-    }, '↺ Zurücksetzen')].filter(Boolean));
+    }, icon('rotate-ccw'), ' Zurücksetzen')].filter(Boolean));
 }
 
 // ============================================================ Start

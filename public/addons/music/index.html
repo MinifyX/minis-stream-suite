@@ -11,15 +11,15 @@
   <div class="page">
     <header class="head">
       <div class="title-row">
-        <h1>🎵 Musik</h1>
+        <h1><span data-icon="music"></span> Musik</h1>
         <span id="host-pill" class="status-pill"></span>
         <span id="spotify-pill" class="status-pill"></span>
       </div>
       <p class="note">Spotify oder eigene Dateien – gespielt im Music-Host, einem eigenen Browserfenster. Startet nach dem Intro automatisch mit der Auto-Start-Playlist.</p>
       <nav class="page-tabs" id="page-tabs">
-        <button data-tab="player" class="on">▶ Player</button>
-        <button data-tab="sets">🎛 Musik-Sets</button>
-        <button data-tab="requests">🙋 Songwünsche <span class="tab-badge" id="pending-badge" hidden></span></button>
+        <button data-tab="player" class="on"><span data-icon="play"></span> Player</button>
+        <button data-tab="sets"><span data-icon="sliders-horizontal"></span> Musik-Sets</button>
+        <button data-tab="requests"><span data-icon="hand"></span> Songwünsche <span class="tab-badge" id="pending-badge" hidden></span></button>
       </nav>
     </header>
 
@@ -37,24 +37,24 @@
 
         <section class="card">
           <div class="card-head">
-            <h2>⭐ Auto-Start nach dem Intro</h2>
+            <h2><span data-icon="star"></span> Auto-Start nach dem Intro</h2>
           </div>
           <div id="autostart"></div>
         </section>
 
         <section class="card">
           <div class="card-head">
-            <h2>📃 Playlists</h2>
+            <h2><span data-icon="list"></span> Playlists</h2>
             <span class="spacer"></span>
             <div class="tabs" id="tabs"></div>
-            <button class="btn small" id="reload-lists" title="Neu laden">↻</button>
+            <button class="btn small" id="reload-lists" title="Neu laden" aria-label="Neu laden"><span data-icon="rotate-cw"></span></button>
           </div>
           <div id="playlists" class="playlists"></div>
         </section>
 
         <section class="card">
           <div class="card-head">
-            <h2>🕘 Ereignisse</h2>
+            <h2><span data-icon="history"></span> Ereignisse</h2>
             <span class="spacer"></span>
             <button class="btn small" id="log-clear">Leeren</button>
           </div>
@@ -64,30 +64,30 @@
 
       <aside>
         <section class="card">
-          <h2>🖥 Music-Host</h2>
+          <h2><span data-icon="monitor"></span> Music-Host</h2>
           <div id="host"></div>
         </section>
 
         <section class="card">
-          <h2>🟢 Spotify</h2>
+          <h2><span class="dot ok"></span> Spotify</h2>
           <div id="spotify"></div>
         </section>
 
         <section class="card">
-          <h2>📁 Eigene Musik</h2>
+          <h2><span data-icon="folder-open"></span> Eigene Musik</h2>
           <div id="local"></div>
         </section>
 
         <section class="card">
           <details>
-            <summary><h2>📺 Now-Playing-Overlay</h2></summary>
+            <summary><h2><span data-icon="tv"></span> Now-Playing-Overlay</h2></summary>
             <div id="overlay"></div>
           </details>
         </section>
 
         <section class="card">
           <details>
-            <summary><h2>🎛️ Streamdeck</h2></summary>
+            <summary><h2><span data-icon="sliders-horizontal"></span> Streamdeck</h2></summary>
             <div id="remote"></div>
           </details>
         </section>
@@ -99,7 +99,7 @@
       <main>
         <section class="card">
           <div class="card-head">
-            <h2>🎛 Musik-Sets</h2>
+            <h2><span data-icon="sliders-horizontal"></span> Musik-Sets</h2>
             <span class="spacer"></span>
             <button class="btn primary small" id="set-new">＋ Neues Set</button>
           </div>
@@ -109,7 +109,7 @@
       </main>
       <aside>
         <section class="card">
-          <h2>🎮 Spielwechsel</h2>
+          <h2><span data-icon="gamepad-2"></span> Spielwechsel</h2>
           <div id="sets-game"></div>
         </section>
       </aside>
@@ -120,14 +120,14 @@
       <main>
         <section class="card">
           <div class="card-head">
-            <h2>📝 Vorschläge</h2>
+            <h2><span data-icon="notebook-pen"></span> Vorschläge</h2>
             <span class="note" id="req-status"></span>
           </div>
           <div id="req-pending" class="req-list"></div>
         </section>
         <section class="card">
           <div class="card-head">
-            <h2>🎶 Queue</h2>
+            <h2><span data-icon="list"></span> Queue</h2>
             <span class="spacer"></span>
             <span class="note" id="req-list-info"></span>
           </div>
@@ -139,28 +139,28 @@
         </section>
         <section class="card">
           <details>
-            <summary><h2>🕘 Verlauf</h2></summary>
+            <summary><h2><span data-icon="history"></span> Verlauf</h2></summary>
             <div id="req-history" class="req-list"></div>
           </details>
         </section>
       </main>
       <aside>
         <section class="card">
-          <h2>⚙️ Einstellungen</h2>
+          <h2><span data-icon="settings"></span>  Einstellungen</h2>
           <div id="req-settings"></div>
         </section>
         <section class="card">
-          <h2>💜 Kanalpunkte</h2>
+          <h2><span data-icon="heart"></span> Kanalpunkte</h2>
           <div id="req-reward"></div>
         </section>
         <section class="card">
           <details>
-            <summary><h2>💬 Chat-Antworten</h2></summary>
+            <summary><h2><span data-icon="message-circle"></span> Chat-Antworten</h2></summary>
             <div id="req-messages"></div>
           </details>
         </section>
         <section class="card">
-          <h2>🧪 Ausprobieren</h2>
+          <h2><span data-icon="flask-conical"></span> Ausprobieren</h2>
           <div id="req-test"></div>
         </section>
       </aside>

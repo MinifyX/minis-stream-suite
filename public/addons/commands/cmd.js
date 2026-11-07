@@ -1,4 +1,4 @@
-const { $, h, api, toast, toggle } = window.UI;
+const { $, h, api, toast, toggle, icon } = window.UI;
 const BASE = 'addons/commands';
 
 const PERMISSIONS = [
@@ -100,7 +100,7 @@ function renderCommands() {
     box.replaceChildren(h('div', { class: 'cmd-empty' },
       h('p', {}, 'Noch keine Commands.'),
       h('div', { class: 'btn-row', style: { justifyContent: 'center' } },
-        h('button', { class: 'btn', onclick: openTemplates }, '📋 Aus Vorlage'),
+        h('button', { class: 'btn', onclick: openTemplates }, icon('clipboard-list'), ' Aus Vorlage'),
         h('button', { class: 'btn primary', onclick: () => openEditor(null) }, '＋ Neuer Command'))));
     return;
   }
@@ -126,17 +126,17 @@ function renderCommands() {
           c.aliases.length ? h('span', { class: 'cmd-alias' }, c.aliases.map((a) => prefix + a).join(' ')) : null),
         c.response ? h('div', { class: 'cmd-response no-i18n', title: c.response }, c.response) : h('div', { class: 'cmd-response' }, '(keine Antwort)'),
         h('div', { class: 'cmd-meta' },
-          c.permission !== 'everyone' ? h('span', { class: 'badge warn' }, `🔒 ${permissionLabel(c.permission)}`) : h('span', { class: 'badge' }, '👥 Alle'),
-          c.cooldownGlobal ? h('span', { class: 'badge', title: 'Cooldown für alle' }, `⏱ ${c.cooldownGlobal} s`) : null,
-          c.cooldownUser ? h('span', { class: 'badge', title: 'Cooldown pro Zuschauer' }, `👤⏱ ${c.cooldownUser} s`) : null,
-          c.reply ? h('span', { class: 'badge', title: 'Antwortet im Thread auf die Nachricht' }, '↩ Antwort') : null,
+          c.permission !== 'everyone' ? h('span', { class: 'badge warn' }, icon('lock'), ` ${permissionLabel(c.permission)}`) : h('span', { class: 'badge' }, icon('users'), ' Alle'),
+          c.cooldownGlobal ? h('span', { class: 'badge', title: 'Cooldown für alle' }, icon('timer'), ` ${c.cooldownGlobal} s`) : null,
+          c.cooldownUser ? h('span', { class: 'badge', title: 'Cooldown pro Zuschauer' }, icon('user'), icon('timer'), ` ${c.cooldownUser} s`) : null,
+          c.reply ? h('span', { class: 'badge', title: 'Antwortet im Thread auf die Nachricht' }, icon('undo-2'), ' Antwort') : null,
           c.keybind ? h('span', { class: `badge${c.keybind.enabled ? ' accent' : ''}` },
-            `${c.keybind.target === 'satellite' ? '🛰' : '⌨'} ${window.KeyUI.stepsLabel(c.keybind.steps)}`) : null,
+            icon(c.keybind.target === 'satellite' ? 'satellite' : 'keyboard'), ` ${window.KeyUI.stepsLabel(c.keybind.steps)}`) : null,
           h('span', { class: 'badge', title: 'So oft benutzt' }, `# ${c.count}`))),
       h('div', { class: 'cmd-actions' },
-        h('button', { class: 'icon-btn', title: 'Bearbeiten', onclick: () => openEditor(c) }, '✎'),
+        h('button', { class: 'icon-btn', title: 'Bearbeiten', 'aria-label': 'Bearbeiten', onclick: () => openEditor(c) }, icon('pencil')),
         h('button', { class: 'icon-btn', title: 'Duplizieren', onclick: () => openEditor({ ...structuredClone(c), id: null, name: `${c.name}2`, aliases: [], count: 0 }) }, '⧉'),
-        h('button', { class: 'icon-btn', title: 'Löschen', onclick: () => deleteCommand(c) }, '🗑'))))));
+        h('button', { class: 'icon-btn', title: 'Löschen', 'aria-label': 'Löschen', onclick: () => deleteCommand(c) }, icon('trash-2')))))));
 }
 
 async function deleteCommand(c) {
@@ -152,7 +152,7 @@ async function deleteCommand(c) {
 
 // ============================================================ Verlauf
 
-const RESULT_ICONS = { ok: '✅', 'no-permission': '🔒', cooldown: '⏱', error: '⚠️' };
+const RESULT_ICONS = { ok: () => icon('circle-check'), 'no-permission': () => icon('lock'), cooldown: () => icon('timer'), error: () => icon('triangle-alert') };
 
 function renderHistory() {
   const box = $('#history');
@@ -163,7 +163,7 @@ function renderHistory() {
   box.replaceChildren(...state.history.slice(0, 30).map((e) =>
     h('div', { class: 'h-row', title: e.detail },
       h('span', { class: 'h-time' }, new Date(e.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })),
-      h('span', {}, RESULT_ICONS[e.result] ?? '•'),
+      h('span', {}, RESULT_ICONS[e.result]?.() ?? '•'),
       h('span', { class: 'h-text' }, h('b', { class: 'no-i18n' }, e.user), ` ${state.settings.prefix}${e.command} `, h('span', { class: 'muted' }, e.detail)))));
 }
 
@@ -182,9 +182,9 @@ async function runTest() {
         r.response
           ? h('div', { class: 'chat-line' }, h('b', {}, 'Antwort: '), r.response)
           : h('div', { class: 'note' }, 'Keine Chat-Antwort.'),
-        r.keybind ? h('div', { class: 'note' }, `${r.keybind.target === 'satellite' ? '🛰 Satellite' : '⌨ Dieser PC'} drückt: ${window.KeyUI.stepsLabel(r.keybind.steps)} (im Test nicht ausgeführt)`) : null));
+        r.keybind ? h('div', { class: 'note' }, icon(r.keybind.target === 'satellite' ? 'satellite' : 'keyboard'), ` ${r.keybind.target === 'satellite' ? 'Satellite' : 'Dieser PC'} drückt: ${window.KeyUI.stepsLabel(r.keybind.steps)} (im Test nicht ausgeführt)`) : null));
     } else {
-      const reason = r.result === 'no-permission' ? `🔒 Keine Berechtigung (${r.detail})` : `⏱ Cooldown (${r.detail})`;
+      const reason = r.result === 'no-permission' ? [icon('lock'), ` Keine Berechtigung (${r.detail})`] : [icon('timer'), ` Cooldown (${r.detail})`];
       box.replaceChildren(h('div', { class: 'bubble warn' }, reason));
     }
   } catch (err) {
@@ -199,7 +199,7 @@ function modal(title, body, footer) {
   const close = () => host.replaceChildren();
   host.replaceChildren(h('div', { class: 'modal-back', onclick: (e) => { if (e.target === e.currentTarget) close(); } },
     h('div', { class: 'modal' },
-      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', onclick: close }, '✕')),
+      h('div', { class: 'modal-head' }, h('h2', {}, title), h('button', { class: 'icon-btn', title: 'Schließen', 'aria-label': 'Schließen', onclick: close }, icon('x'))),
       h('div', { class: 'modal-body' }, ...body.filter(Boolean)),
       footer ? h('div', { class: 'modal-foot' }, ...footer.filter(Boolean)) : null)));
   return close;
@@ -261,7 +261,7 @@ async function openEditor(command) {
             toast(err.message, 'err');
           }
         },
-      }, '▶ Keybind testen (3 s)'),
+      }, icon('play'), ' Keybind testen (3 s)'),
       window.KeyUI.tips());
   };
   renderKb();
@@ -321,18 +321,18 @@ async function openEditor(command) {
 function openTemplates() {
   const existing = new Set(state.settings.commands.flatMap((c) => [c.name, ...c.aliases]));
   const prefix = state.settings.prefix;
-  modal('📋 Vorlagen', [
+  modal([icon('clipboard-list'), ' Vorlagen'], [
     h('p', { class: 'note' }, 'Beliebte Commands zum Übernehmen. Danach kannst du sie frei anpassen.'),
     h('div', { class: 'tpl-list' }, ...TEMPLATES.map((t) => {
       const taken = existing.has(t.name);
       return h('div', { class: 'tpl' },
         h('div', { class: 'cmd-main' },
           h('div', {}, h('span', { class: 'cmd-name' }, prefix + t.name),
-            t.permission ? h('span', { class: 'badge warn', style: { marginLeft: '8px' } }, `🔒 ${permissionLabel(t.permission)}`) : null,
+            t.permission ? h('span', { class: 'badge warn', style: { marginLeft: '8px' } }, icon('lock'), ` ${permissionLabel(t.permission)}`) : null,
             t.note ? h('span', { class: 'badge accent', style: { marginLeft: '8px' } }, t.note) : null),
           h('div', { class: 'cmd-response no-i18n' }, t.response)),
         taken
-          ? h('span', { class: 'badge ok' }, '✓ vorhanden')
+          ? h('span', { class: 'badge ok' }, icon('check'), ' vorhanden')
           : h('button', {
             class: 'btn small',
             onclick: () => openEditor({
