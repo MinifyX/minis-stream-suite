@@ -178,6 +178,7 @@ export const pollsAddon: Addon = {
     let reminderTimer: NodeJS.Timeout | null = null;
     let broadcastTimer: NodeJS.Timeout | null = null;
     let broadcasterType: string | null = null;
+    let broadcasterRetryAt = 0; // Startseite fragt /state alle 4 s ab: nach Fehler nicht jedes Mal Twitch fragen
 
     const clearTimers = () => {
       if (endTimer) clearTimeout(endTimer);
@@ -593,10 +594,12 @@ export const pollsAddon: Addon = {
       const me = ctx.getUser();
       if (!me) return null;
       if (broadcasterType === null) {
+        if (Date.now() < broadcasterRetryAt) return null;
         try {
           const res = await ctx.twitch.request<{ data: { broadcaster_type: string }[] }>('GET', '/users', { query: { id: me.id } });
           broadcasterType = res.data[0]?.broadcaster_type ?? '';
         } catch {
+          broadcasterRetryAt = Date.now() + 60_000;
           return null;
         }
       }

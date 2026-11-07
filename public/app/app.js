@@ -202,7 +202,7 @@ const LIVE = {
 
 async function refreshDetails() {
   if (currentRoute().view !== 'overview' || !state.details) return;
-  await Promise.all(Object.entries(state.details).map(async ([id, { el, text }]) => {
+  await Promise.allSettled(Object.entries(state.details).map(async ([id, { el, text }]) => {
     if (!LIVE[id]) return;
     const [path, fn] = LIVE[id];
     const s = await api(`addons/${id}/${path}`).catch(() => null);

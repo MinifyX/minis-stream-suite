@@ -35,7 +35,7 @@ const ALIGN_LINES = {
   right: '<line x1="3" y1="4" x2="19" y2="4"/><line x1="9" y1="9" x2="19" y2="9"/><line x1="5" y1="14" x2="19" y2="14"/>',
   justify: '<line x1="3" y1="4" x2="19" y2="4"/><line x1="3" y1="9" x2="19" y2="9"/><line x1="3" y1="14" x2="19" y2="14"/>',
 };
-const ALIGNS = [['left', 'Links'], ['center', 'Mitte'], ['right', 'Rechts'], ['justify', 'Blocksatz']].map(([v, l]) => [v, l, icon(ALIGN_LINES[v], '0 0 22 18')]);
+const ALIGNS = [['left', 'Links'], ['center', 'Mitte'], ['right', 'Rechts'], ['justify', 'Blocksatz']].map(([v, l]) => [v, l, layoutSvg(ALIGN_LINES[v], '0 0 22 18')]);
 const TRAIN_PHASES = [['any', 'Immer (Start, Level-Aufstieg, Ende)'], ['start', 'Start'], ['levelup', 'Level-Aufstieg'], ['end', 'Ende']];
 const PREVIEW_BGS = [['checker', 'Transparent'], ['black', 'Schwarz'], ['white', 'Weiß'], ['green', 'Greenscreen']];
 

@@ -172,7 +172,7 @@ window.UI = (() => {
   function fillIcons(root) {
     const list = root.matches('[data-icon]') ? [root, ...root.querySelectorAll('[data-icon]')] : root.querySelectorAll('[data-icon]');
     for (const el of list) {
-      const paths = ICONS[el.dataset.icon];
+      const paths = Object.hasOwn(ICONS, el.dataset.icon) ? ICONS[el.dataset.icon] : null;
       if (!paths || el.firstChild) continue;
       el.classList.add('ico');
       el.setAttribute('aria-hidden', 'true');
