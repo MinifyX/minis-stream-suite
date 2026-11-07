@@ -51,6 +51,7 @@ const ADDON_ICONS = {
   intro: '<path d="m12.296 3.464 3.02 3.956"/><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m6.18 5.276 3.1 3.899"/>', // clapperboard
   music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', // music
   obs: '<path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/>', // video
+  watchtime: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', // clock
   uwuclip: '<circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>', // scissors
 };
 
@@ -84,7 +85,7 @@ function addonIcon(addon, cls) {
 /** Gruppen auf dem Startbildschirm und im Store, in dieser Reihenfolge. Unbekannte Addons und Plugins landen in OTHER. */
 const GROUPS = [
   ['Chat', ['chat', 'commands', 'timers', 'lurk', 'modguard']],
-  ['Zuschauer-Interaktion', ['channelpoints', 'queue', 'polls', 'predictions', 'goals', 'shoutout']],
+  ['Zuschauer-Interaktion', ['channelpoints', 'queue', 'polls', 'predictions', 'goals', 'shoutout', 'watchtime']],
   ['Overlays & Show', ['alerts', 'intro', 'music', 'uwuclip']],
   ['Stream-Steuerung', ['streaminfo', 'obs', 'ads']],
 ];

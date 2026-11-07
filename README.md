@@ -4,7 +4,7 @@
 
 Eine Windows-App für Twitch-Streamer mit einem Addon-System für Alerts, Kanalpunkte, Commands und mehr.
 
-**Aktueller Stand (v0.8):** Installierbare Windows-App mit Core, Bot-Account und 18 Addons. Oberfläche auf Deutsch oder Englisch.
+**Aktueller Stand (v0.9):** Installierbare Windows-App mit Core, Bot-Account und 19 Addons. Oberfläche auf Deutsch oder Englisch.
 
 **Kanalpunkte-Addon:**
 
@@ -100,6 +100,11 @@ Alle Chat-Nachrichten laufen über eine gemeinsame Warteschlange im Core (`core/
 - **Zuverlässig:** Events werden signiert (HMAC-SHA256) per `POST <server>/api/hooks/suite` geschickt, alle 2 Sek. gesammelt. Ist der Server nicht erreichbar, wartet die Suite (bis zu 7 Tage, auch über einen Neustart) und schickt alles nach. Bei falschem Schlüssel (401) oder fehlender Einrichtung (403) pausiert sie und zeigt den Fehler an.
 - Der Schlüssel wird verschlüsselt gespeichert und ist nie in einer Sicherung.
 
+**⏱️ Watchtime:** Meldet während des Streams alle 5 Minuten, wer im Chat verbunden ist, an einen Server wie den Discord-Bot Mello. Twitch kennt keine echte Watchtime, das ist ein guter Näherungswert. Standardmäßig aus.
+
+- **Einrichten:** Im Addon-Store einschalten, Server-Adresse und Token auf der Watchtime-Seite eintragen. Danach einmal neu bei Twitch anmelden, damit die Suite die Chat-Liste lesen darf.
+- **Verknüpfen:** Wer etwas dafür bekommen möchte, verknüpft sein Konto freiwillig mit `!verknuepfen CODE` im Twitch-Chat. Alle anderen bekommen dort nichts.
+
 **🎛️ Streamdeck:** Intro und Musik lassen sich per HTTP steuern (`/api/intro/…`, `/api/music/…`), geschützt mit einem Schlüssel im Header `X-Suite-Token`.
 
 **💾 Sicherung:** Alle Einstellungen (optional mit Bildern und Sounds) in eine Datei packen und wieder einspielen, z.B. für einen neuen PC. Einmal am Tag sichert die Suite automatisch. Twitch-Logins sind nie in einer Sicherung.
@@ -175,6 +180,7 @@ src/
     intro/                Intro-Sequenz (State Machine: public/addons/intro/sequencer.js)
     music/                Musik: MusicManager, Spotify (spotify.ts), lokale Bibliothek (library.ts, tags.ts)
     uwuclip/              Weiterleitung an UwUClip (forwarder.ts = Warteschlange, Signatur, ohne Electron testbar)
+    watchtime/            Chat-Zeiten an einen Server melden (report.ts = ohne Electron testbar)
 public/
   app/                    Oberfläche der App (HTML/CSS/JS)
   app/i18n/en.json        Englische Texte (ui.js übersetzt die Seiten beim Anzeigen)

@@ -115,6 +115,8 @@ export interface AddonContext {
     /** Zweiter Parameter: Nachrichten-ID (Antwort) oder Optionen. Schreibt über den Bot, falls verknüpft. */
     send(message: string, options?: string | SendOptions): Promise<void>;
     isOwnMessage(messageId: string): boolean;
+    /** Eigene Nachricht, die mit overlay: false gesendet wurde? */
+    isQuiet(text: string): boolean;
     /** Ist das der Bot-Account der Suite? */
     isBot(userId: string): boolean;
     render(template: string, context?: TemplateContext): Promise<string>;
@@ -266,6 +268,7 @@ export class AddonManager {
         send: (message, options) => this.deps.chat.send(message, options),
         isBot: (userId) => this.deps.chat.isBot(userId),
         isOwnMessage: (id) => this.deps.chat.isOwnMessage(id),
+        isQuiet: (text) => this.deps.chat.isQuiet(text),
         render: (template, context) => renderTemplate(template, api, auth, context),
       },
     };

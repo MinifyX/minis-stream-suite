@@ -35,6 +35,8 @@ export const SCOPES = [
   'moderator:manage:banned_users',
   // Stream-Titel und Kategorie ändern
   'channel:manage:broadcast',
+  // Watchtime-Addon: wer gerade im Chat verbunden ist
+  'moderator:read:chatters',
 ];
 
 /** Der Bot-Account braucht nur ein Recht: Nachrichten in den Chat schreiben */

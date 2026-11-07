@@ -421,6 +421,14 @@ describe('ChatService', () => {
     assert.equal(chat.isOwnMessage('msg-999'), false);
   });
 
+  test('Nachrichten ohne Overlay werden einmal erkannt', async () => {
+    const { chat } = setup();
+    await chat.send('leise', { overlay: false });
+    assert.equal(chat.isQuiet('leise'), true);
+    assert.equal(chat.isQuiet('leise'), false);
+    assert.equal(chat.isQuiet('laut'), false);
+  });
+
   test('isBot erkennt den verknüpften Bot', () => {
     assert.equal(setup({ bot: true }).chat.isBot(BOT.id), true);
     assert.equal(setup({ bot: true }).chat.isBot(BROADCASTER.id), false);

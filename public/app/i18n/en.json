@@ -2541,7 +2541,24 @@
     "Einlösung": "Redemption",
     "Stream ist live": "Stream is live",
     "Stream beendet": "Stream ended",
-    "Kanal geändert": "Channel updated"
+    "Kanal geändert": "Channel updated",
+    "Watchtime": "Watchtime",
+    "Meldet während des Streams, wer im Chat verbunden ist, und verknüpft Twitch-Konten mit !discord. Für XP im Discord-Bot.": "Reports who is connected to chat during the stream and links Twitch accounts with !discord. For XP in the Discord bot.",
+    "Meldet während des Streams alle 5 Minuten, wer im Chat verbunden ist. Mit": "Reports every 5 minutes during the stream who is connected to chat. With",
+    "im Chat verknüpfen Zuschauer ihr Konto. Twitch-Namen ohne Verknüpfung verwirft der Server.": "in chat, viewers link their account. The server discards Twitch names without a link.",
+    "Token": "Token",
+    "📡 Status": "📡 Status",
+    "Ein Token ist gespeichert. Leer lassen, um ihn zu behalten.": "A token is saved. Leave empty to keep it.",
+    "Noch kein Token gespeichert.": "No token saved yet.",
+    "Stream läuft.": "Stream is live.",
+    "Gerade kein Stream.": "No stream right now.",
+    "Noch nichts gemeldet.": "Nothing reported yet.",
+    "Verbindung klappt": "Connection works",
+    "Adresse und Token fehlen": "Address and token are missing",
+    "Nur http und https": "Only http and https",
+    "Watchtime an/aus": "Watchtime on/off",
+    "⏱️ Watchtime": "⏱️ Watchtime",
+    "Meldet während des Streams, wer im Chat verbunden ist, und verknüpft Twitch-Konten mit !verknuepfen. Für XP im Discord-Bot.": "Reports who is connected to chat during the stream and links Twitch accounts via !verknuepfen. For XP in the Discord bot."
   },
   "patterns": [
     [
@@ -4995,6 +5012,34 @@
     [
       "^LIVE · (.+) Zuschauer$",
       "LIVE · $1 viewers"
+    ],
+    [
+      "^Server antwortet (.+)$",
+      "Server responds $1"
+    ],
+    [
+      "^Zuletzt gemeldet: (.+).$",
+      "Last reported: $1."
+    ],
+    [
+      "^(.+) Berichte warten.$",
+      "$1 reports waiting."
+    ],
+    [
+      "^Fehler: (.+)$",
+      "Error: $1"
+    ],
+    [
+      "^Watchtime nicht zugestellt: (.+)$",
+      "Watchtime not delivered: $1"
+    ],
+    [
+      "^Chatliste nicht lesbar: (.+)$",
+      "Chat list not readable: $1"
+    ],
+    [
+      "^Live-Status: (.+)$",
+      "Live status: $1"
     ]
   ]
 }
