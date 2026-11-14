@@ -115,7 +115,7 @@ function renderForm() {
     };
     input.onkeydown = (e) => {
       // Enter in der letzten Zeile = neue Antwort
-      if (e.key === 'Enter' && i === f.outcomes.length - 1 && f.outcomes.length < limits.outcomes) {
+      if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229) && i === f.outcomes.length - 1 && f.outcomes.length < limits.outcomes) {
         f.outcomes.push('');
         renderForm();
         [...document.querySelectorAll('.outcome-row input')].at(-1)?.focus();

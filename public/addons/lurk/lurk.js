@@ -246,7 +246,7 @@ function openSettings() {
   $('#search').oninput = (e) => { state.search = e.target.value; renderStats(); };
   $('#sort').onchange = (e) => { state.sort = e.target.value; renderStats(); };
   $('#test-run').onclick = () => runTest();
-  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter') runTest(); };
+  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) runTest(); };
   await load();
   if (state.data) renderQuickTests();
   setInterval(() => {

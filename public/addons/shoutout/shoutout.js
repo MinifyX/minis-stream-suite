@@ -451,7 +451,7 @@ function openSettings() {
 (async () => {
   $('#open-settings').onclick = openSettings;
   $('#so-preview').onclick = () => { state.opts = null; void loadPreview(); };
-  $('#so-name').onkeydown = (e) => { if (e.key === 'Enter') { state.opts = null; void loadPreview(); } };
+  $('#so-name').onkeydown = (e) => { if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) { state.opts = null; void loadPreview(); } };
   $('#queue-clear').onclick = () => { if (confirm('Alle wartenden Twitch-Shoutouts verwerfen?')) call('/queue/clear', {}); };
   $('#history-clear').onclick = () => { if (confirm('Den ganzen Verlauf löschen?')) call('/history/clear', {}); };
   $('#overlay-url').value = OVERLAY_URL;
@@ -463,7 +463,7 @@ function openSettings() {
   $('#overlay-stop').onclick = () => call('/overlay/stop', {}).then(() => load());
   $('#test-role').replaceChildren(...ROLES.map(([v, label]) => h('option', { value: v, selected: v === 'moderator' }, label)));
   $('#test-run').onclick = runTest;
-  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter') runTest(); };
+  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) runTest(); };
   $('#raid-run').onclick = runRaid;
 
   await load();

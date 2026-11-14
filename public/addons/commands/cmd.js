@@ -361,7 +361,7 @@ function render() {
     renderCommands();
   };
   $('#test-run').onclick = runTest;
-  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter') runTest(); };
+  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) runTest(); };
   window.KeyUI.onLayoutReady(() => render());
   await load();
   // Verlauf regelmäßig aktualisieren

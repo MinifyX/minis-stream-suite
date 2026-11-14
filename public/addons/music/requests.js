@@ -186,7 +186,7 @@
       if (await post('requests/test', { query: q.value, role, reward })) q.value = '';
     };
     q.onkeydown = (e) => {
-      if (e.key === 'Enter') send();
+      if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) send();
     };
     fill($('#req-test'),
       h('p', { class: 'note' }, 'Wunsch eines Test-Zuschauers – es geht nichts in den Chat, die Antwort steht im Log (Reiter „Player“).'),
@@ -206,7 +206,7 @@
     if (await post('requests/add', { query: input.value }, 'Eingereiht')) input.value = '';
   };
   $('#req-add-q').onkeydown = (e) => {
-    if (e.key === 'Enter') $('#req-add').click();
+    if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) $('#req-add').click();
   };
 
   window.addEventListener('music-msg', (e) => {

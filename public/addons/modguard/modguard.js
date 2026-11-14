@@ -393,7 +393,7 @@ function renderQuickTests() {
   $('#save').onclick = save;
   $('#discard').onclick = () => setSaved(state.saved);
   $('#test-run').onclick = () => runTest();
-  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter') runTest(); };
+  $('#test-message').onkeydown = (e) => { if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229)) runTest(); };
   $('#log-clear').onclick = async () => {
     if (!confirm('Protokoll leeren?')) return;
     try {

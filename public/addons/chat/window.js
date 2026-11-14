@@ -284,7 +284,7 @@ list.addEventListener('scroll', () => {
 $('#more').onclick = scrollToBottom;
 $('#send').onclick = send;
 input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229) && !e.shiftKey) {
     e.preventDefault();
     send();
   } else if (e.key === 'Escape') setReply(null);

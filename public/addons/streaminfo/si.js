@@ -655,7 +655,7 @@ function connect() {
     renderTitleInfo();
     renderDirty();
   };
-  $('#title').onkeydown = (e) => { if (e.key === 'Enter' && !$('#save').disabled) save(); };
+  $('#title').onkeydown = (e) => { if (e.key === 'Enter' && !(e.isComposing || e.keyCode === 229) && !$('#save').disabled) save(); };
   $('#language').onchange = (e) => {
     if (!state.draft) return;
     state.draft.language = e.target.value;
