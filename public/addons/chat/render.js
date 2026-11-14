@@ -48,21 +48,20 @@ window.ChatRender = (() => {
     (styleTarget ?? document.head).append(style);
   }
 
-  /** Schriften: null = auf dem PC installiert bzw. mitgeliefert (UwU Sans, overlay.css), sonst Google-Fonts-Stärken */
+  /** Schriften: null = auf dem PC installiert bzw. mitgeliefert (UwU Sans, overlay.css), sonst mitgelieferte Webschrift (public/addons/fonts) mit diesen Stärken */
   const FONTS = {
     'UwU Sans': null, 'Segoe UI': null, Arial: null, Verdana: null,
     Nunito: '400;600;700;800;900', Roboto: '400;500;700;900', Montserrat: '400;600;700;800;900',
     Poppins: '400;600;700;800;900', Fredoka: '400;500;600;700', Inter: '400;500;600;700;800;900',
     Oswald: '400;500;600;700', Bangers: '400', 'Press Start 2P': '400', 'Comic Neue': '400;700',
   };
-  const loadedFonts = new Set();
+  // Alle Webschriften liegen selbst gehostet in /addons/fonts/ (fonts.css); der Browser lädt nur die benutzten Dateien
   function loadFont(name) {
-    const weights = FONTS[name];
-    if (!weights || loadedFonts.has(name)) return;
-    loadedFonts.add(name);
+    if (!FONTS[name] || document.getElementById('ms-webfonts')) return;
     const link = document.createElement('link');
+    link.id = 'ms-webfonts';
     link.rel = 'stylesheet';
-    link.href = `https://fonts.googleapis.com/css2?family=${name.replace(/ /g, '+')}:wght@${weights}&display=swap`;
+    link.href = '/addons/fonts/fonts.css';
     document.head.append(link);
   }
 

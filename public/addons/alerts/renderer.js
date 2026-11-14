@@ -1,7 +1,7 @@
 // Zeichnet einen Alert. Wird vom OBS-Overlay UND von der Vorschau im Editor benutzt,
 // damit beides garantiert gleich aussieht.
 window.AlertRenderer = (() => {
-  /** Schriften: null = auf dem PC installiert, sonst Google-Fonts-Stärken */
+  /** Schriften: null = auf dem PC installiert, sonst mitgelieferte Webschrift (public/addons/fonts) mit diesen Stärken */
   const FONTS = {
     'UwU Sans': null, // mitgeliefert (overlay.css)
     'Segoe UI': null,
@@ -88,14 +88,13 @@ window.AlertRenderer = (() => {
     document.head.append(style);
   }
 
-  const loadedFonts = new Set();
+  // Alle Webschriften liegen selbst gehostet in /addons/fonts/ (fonts.css); der Browser lädt nur die benutzten Dateien
   function loadFont(name) {
-    const weights = FONTS[name];
-    if (!weights || loadedFonts.has(name)) return;
-    loadedFonts.add(name);
+    if (!FONTS[name] || document.getElementById('ms-webfonts')) return;
     const link = document.createElement('link');
+    link.id = 'ms-webfonts';
     link.rel = 'stylesheet';
-    link.href = `https://fonts.googleapis.com/css2?family=${name.replace(/ /g, '+')}:wght@${weights}&display=swap`;
+    link.href = '/addons/fonts/fonts.css';
     document.head.append(link);
   }
 

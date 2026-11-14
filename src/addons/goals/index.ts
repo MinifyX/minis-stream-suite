@@ -114,7 +114,7 @@ interface Settings {
   recentStyle: RecentStyle;
 }
 
-/** Schriften, die die Overlays kennen (mitgeliefert, Google Fonts bzw. Windows) – gleiche Liste wie render.js */
+/** Schriften, die die Overlays kennen (mitgeliefert in public/addons/fonts bzw. Windows) – gleiche Liste wie render.js */
 const FONTS = ['UwU Sans', 'Segoe UI', 'Arial', 'Verdana', 'Nunito', 'Roboto', 'Montserrat', 'Poppins', 'Fredoka', 'Inter', 'Oswald', 'Bangers', 'Press Start 2P', 'Comic Neue'];
 
 const DEFAULT_STYLE: GoalStyle = {

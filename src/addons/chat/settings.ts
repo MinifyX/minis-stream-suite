@@ -67,7 +67,7 @@ export interface Settings {
   window: WindowSettings;
 }
 
-/** UwU Sans liefert die App selbst mit (public/addons/overlay.css), alle anderen außer den Systemschriften kommen von Google Fonts */
+/** UwU Sans liefert die App selbst mit (public/addons/overlay.css), die übrigen Webschriften liegen in public/addons/fonts */
 export const OVERLAY_FONTS = ['UwU Sans', 'Segoe UI', 'Arial', 'Verdana', 'Nunito', 'Roboto', 'Montserrat', 'Poppins', 'Fredoka', 'Inter', 'Oswald', 'Bangers', 'Press Start 2P', 'Comic Neue'];
 /** Im Chat-Fenster nur Schriften, die auf jedem Windows-PC da sind (kein Internet nötig) */
 export const WINDOW_FONTS = ['Segoe UI', 'Arial', 'Verdana', 'Tahoma', 'Consolas'];
