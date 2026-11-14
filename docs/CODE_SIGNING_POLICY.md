@@ -19,7 +19,8 @@ What the app talks to, and why:
 
 - **Twitch** (`api.twitch.tv`, `id.twitch.tv`, `eventsub.wss.twitch.tv`, `static-cdn.jtvnw.net`): login, receiving stream events, sending chat messages and loading badges/emotes – only after the user connects their Twitch account.
 - **Emote services** (7TV, BetterTTV, FrankerFaceZ): loading public emotes for the user's channel, if enabled in the chat overlay settings.
-- **Google Fonts** (`fonts.googleapis.com`): only when the user picks a web font for an alert or the chat overlay.
+- **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`): only when the user picks a web font for an alert, a goal overlay or the chat overlay.
+- **Spotify** (`accounts.spotify.com`, `api.spotify.com`, `sdk.scdn.co`): login, playback control and loading the Web Playback SDK in the music host – only after the user connects their Spotify account.
 - **GitHub** (`github.com`): checking for and downloading updates of the app.
 
 The optional browser extension (`browser-extension/`) additionally connects to Twitch chat (`irc-ws.chat.twitch.tv`, read-only, anonymous) and `api.ivr.fi` for channel badges.

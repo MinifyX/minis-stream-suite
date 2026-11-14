@@ -32,8 +32,8 @@
           <div class="card-head">
             <h2><span data-icon="trophy"></span> Lurk-Statistik</h2>
             <span class="spacer"></span>
-            <input type="search" id="search" placeholder="Suchen…">
-            <select id="sort">
+            <input type="search" id="search" aria-label="Suchen…" placeholder="Suchen…">
+            <select id="sort" aria-label="Sortierung">
               <option value="totalMs">nach Gesamtzeit</option>
               <option value="count">nach Anzahl</option>
               <option value="longestMs">nach längstem Lurk</option>
@@ -49,11 +49,11 @@
           <h2><span data-icon="flask-conical"></span> Testen</h2>
           <p class="note">Simuliert Chat-Nachrichten eines Test-Zuschauers. Nichts wird gesendet oder gespeichert.</p>
           <div class="f-row">
-            <div class="field"><label>Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
-            <div class="field"><label>Lurk „schon seit“ (Min.)</label><input type="number" id="test-minutes" value="45" min="0" max="1440"></div>
+            <div class="field"><label for="test-user">Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
+            <div class="field"><label for="test-minutes">Lurk „schon seit“ (Min.)</label><input type="number" id="test-minutes" value="45" min="0" max="1440"></div>
           </div>
           <div class="copy-row">
-            <input type="text" id="test-message" placeholder="!lurk">
+            <input type="text" id="test-message" aria-label="Testnachricht" placeholder="!lurk">
             <button class="btn" id="test-run">Senden</button>
           </div>
           <div class="btn-row" id="test-quick"></div>

@@ -26,6 +26,6 @@ body { overflow: hidden; background: var(--bg); }
   flex: 1; resize: none; min-height: 40px; background: var(--bg); border: 1px solid var(--control); color: var(--text); border-radius: var(--radius-control);
   padding: 9px 14px; font: inherit; font-size: 13px; max-height: 90px; line-height: 1.35;
 }
-.cw-input-row textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
+.cw-input-row textarea:focus { outline: 2px solid transparent; border-color: var(--accent); box-shadow: var(--focus); }
 .cw-send { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px; width: 40px; height: 40px; cursor: pointer; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; }
 .cw-send:disabled { opacity: .5; }

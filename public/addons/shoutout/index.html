@@ -23,7 +23,7 @@
         <section class="card">
           <h2><span data-icon="megaphone"></span> Shoutout geben</h2>
           <div class="copy-row">
-            <input type="text" id="so-name" placeholder="Twitch-Name, z.B. @minifyx oder twitch.tv/minifyx" maxlength="80">
+            <input type="text" id="so-name" aria-label="Twitch-Name" placeholder="Twitch-Name, z.B. @minifyx oder twitch.tv/minifyx" maxlength="80">
             <button class="btn" id="so-preview">Vorschau</button>
           </div>
           <div id="preview"></div>
@@ -53,7 +53,7 @@
           <h2><span data-icon="video"></span> Clip-Overlay für OBS</h2>
           <p class="note">Als Browser-Quelle in OBS einfügen, z.B. 960 × 640. <b>Wichtig:</b> genau diese Adresse mit <code>localhost</code> nehmen (nicht 127.0.0.1) – Twitch spielt Clips sonst nicht ab.</p>
           <div class="copy-row">
-            <input type="text" id="overlay-url" readonly>
+            <input type="text" id="overlay-url" aria-label="Overlay-Adresse" readonly>
             <button class="btn small" id="copy-url">Kopieren</button>
           </div>
           <p class="note">Hörst du den Clip in OBS nicht? Bei der Browser-Quelle „Audio über OBS steuern“ einschalten und im Audio-Mixer die Lautstärke prüfen.</p>
@@ -69,16 +69,16 @@
           <h2><span data-icon="flask-conical"></span> Testen</h2>
           <p class="note">Simuliert Chat-Nachrichten oder einen Raid. Kanal-Infos und Clips werden bei Twitch nachgeschaut, aber nichts wird gesendet oder gespeichert.</p>
           <div class="f-row">
-            <div class="field"><label>Name</label><input type="text" id="test-user" value="TestMod" maxlength="25"></div>
-            <div class="field"><label>Rolle</label><select id="test-role"></select></div>
+            <div class="field"><label for="test-user">Name</label><input type="text" id="test-user" value="TestMod" maxlength="25"></div>
+            <div class="field"><label for="test-role">Rolle</label><select id="test-role"></select></div>
           </div>
           <div class="copy-row">
-            <input type="text" id="test-message" placeholder="!so @name">
+            <input type="text" id="test-message" aria-label="Testnachricht" placeholder="!so @name">
             <button class="btn" id="test-run">Senden</button>
           </div>
           <div class="sub">RAID SIMULIEREN</div>
           <div class="raid-row">
-            <input type="text" id="raid-name" placeholder="Kanal, der raidet" maxlength="80">
+            <input type="text" id="raid-name" aria-label="Kanal, der raidet" placeholder="Kanal, der raidet" maxlength="80">
             <input type="number" id="raid-viewers" value="25" min="0" max="100000" title="Zuschauer">
             <button class="btn" id="raid-run">Raid</button>
           </div>

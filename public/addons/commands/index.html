@@ -21,7 +21,7 @@
 
     <div class="layout">
       <main>
-        <input type="search" id="search" placeholder="Command suchen…">
+        <input type="search" id="search" aria-label="Command suchen…" placeholder="Command suchen…">
         <div id="commands"></div>
       </main>
 
@@ -30,14 +30,14 @@
           <h2><span data-icon="flask-conical"></span> Testen</h2>
           <p class="note">Simuliert eine Chat-Nachricht. Es wird nichts in den Chat geschickt und nichts gezählt.</p>
           <div class="test-row">
-            <select id="test-role">
+            <select id="test-role" aria-label="Rolle">
               <option value="everyone">als Zuschauer</option>
               <option value="subscriber">als Sub</option>
               <option value="vip">als VIP</option>
               <option value="moderator">als Mod</option>
               <option value="broadcaster">als du selbst</option>
             </select>
-            <input type="text" id="test-message" placeholder="!discord">
+            <input type="text" id="test-message" aria-label="Testnachricht" placeholder="!discord">
             <button class="btn" id="test-run">Testen</button>
           </div>
           <div id="test-result"></div>

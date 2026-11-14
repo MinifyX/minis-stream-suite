@@ -106,7 +106,7 @@ input[type="text"], input[type="number"], input[type="search"], input[type="pass
 }
 textarea { resize: vertical; min-height: 64px; }
 ::placeholder { color: var(--muted); opacity: 1; }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus); }
+input:focus, select:focus, textarea:focus { outline: 2px solid transparent; border-color: var(--accent); box-shadow: var(--focus); }
 
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .field label { font-size: 13px; font-weight: 600; color: var(--muted); }

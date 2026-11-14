@@ -47,8 +47,8 @@
           <h2><span data-icon="flask-conical"></span> Testen</h2>
           <p class="note">Prüft eine Nachricht mit den <b>gespeicherten</b> Einstellungen. Es wird nichts gesendet, gelöscht oder an Twitch geschickt. Twitch-Emotes erkennt der Test nicht (Emojis schon).</p>
           <div class="f-row">
-            <div class="field"><label>Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
-            <div class="field"><label>Rolle</label>
+            <div class="field"><label for="test-user">Name</label><input type="text" id="test-user" value="TestUser" maxlength="25"></div>
+            <div class="field"><label for="test-role">Rolle</label>
               <select id="test-role">
                 <option value="everyone">Zuschauer</option>
                 <option value="subscriber">Sub</option>
@@ -60,7 +60,7 @@
           </div>
           <label class="check"><input type="checkbox" id="test-permit"> hat gerade ein !permit</label>
           <div class="copy-row">
-            <input type="text" id="test-message" placeholder="Nachricht eingeben…" maxlength="500">
+            <input type="text" id="test-message" aria-label="Testnachricht" placeholder="Nachricht eingeben…" maxlength="500">
             <button class="btn" id="test-run">Prüfen</button>
           </div>
           <div class="btn-row" id="test-quick"></div>
